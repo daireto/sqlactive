@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sqlactive_daireto"
 dynamic = ["version", "dependencies"]
 authors = [
-    { name="Dairo Mosquera", email="dairoandres123@gmail.com" },
+    { name="Dairo Mosquera", email="dairoandres115@outlook.com" },
 ]
 description = "A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy. Bring Django-like queries, automatic timestamps, nested eager loading, and dictionary serialization for SQLAlchemy models."
 readme = "README.md"
@@ -42,7 +42,7 @@ classifiers = [
 [project.urls]
 homepage = "https://github.com/Daireto/sqlactive"
 source = "https://github.com/Daireto/sqlactive"
-documentation = "https://github.com/Daireto/sqlactive"
+documentation = "https://github.com/Daireto/sqlactive/blob/main/docs/MAIN.md"
 issues = "https://github.com/Daireto/sqlactive/issues"
 
 [tool.setuptools.dynamic]
