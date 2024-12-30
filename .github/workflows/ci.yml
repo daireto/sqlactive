@@ -1,8 +1,9 @@
 name: ci
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -29,6 +30,6 @@ jobs:
       - name: Install dependencies
         run: pip install mkdocs-material mike
       - name: Build site
-        run: mike deploy --push --update-aliases ${{ github.event.release.tag_name }} latest
+        run: mike deploy --push --update-aliases ${{ github.ref_name }} latest
       - name: Set latest as default version
         run: mike set-default --push latest
