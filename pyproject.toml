@@ -21,11 +21,6 @@ keywords=[
     "eager load",
     "timestamps",
     "serialization",
-    "sqlite",
-    "postgresql",
-    "mysql",
-    "mariadb",
-    "pymysql",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.10",
