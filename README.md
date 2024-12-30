@@ -26,7 +26,9 @@ A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 Bring Django-like queries, automatic timestamps, nested eager loading,
 and dictionary serialization for SQLAlchemy models.
 
-Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins).
+Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/).
+
+Documentation: https://daireto.github.io/sqlactive/
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -69,9 +71,9 @@ pip install sqlactive
 
 ### 1. Define the Models
 
-The [`ActiveRecordBaseModel`](/sqlactive/base_model.py) class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/pages/active_record_mixin/overview/)
-and [`TimestampMixin`](https://daireto.github.io/sqlactive/pages/timestamp_mixin/).
+The `ActiveRecordBaseModel` class provides a base class for your models. It inherits from
+[`ActiveRecordMixin`](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/overview/)
+and [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/).
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -213,7 +215,7 @@ await user.delete()
 > a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -280,7 +282,7 @@ print(users)
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 5. Perform Queries
@@ -336,7 +338,7 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/pages/smart_query_mixin/#api-reference)
+See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/latest/pages/smart_query_mixin/#api-reference)
 for more details.
 
 > [!IMPORTANT]
@@ -360,7 +362,7 @@ for more details.
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 6. Manage Timestamps
@@ -382,7 +384,7 @@ print(user.updated_at)
 ```
 
 > [!TIP]
-> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/pages/timestamp_mixin/)
+> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/)
 > class to know how to customize the timestamps behavior.
 
 ## Testing
@@ -411,10 +413,7 @@ Find the complete documentation [here](https://daireto.github.io/sqlactive/).
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
+Please read the [contribution guidelines](https://daireto.github.io/sqlactive/latest/contributing/).
 
 ## License
 
@@ -424,5 +423,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 If you find this project useful, give it a ⭐ on GitHub to show your support!
 
-Also, give it a ⭐ to [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins)
+Also, give it a ⭐ to [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/)
 which inspired this project!
