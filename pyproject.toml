@@ -40,10 +40,17 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/Daireto/sqlactive"
-source = "https://github.com/Daireto/sqlactive"
-documentation = "https://github.com/Daireto/sqlactive/blob/main/docs/MAIN.md"
-issues = "https://github.com/Daireto/sqlactive/issues"
+Homepage = "https://github.com/daireto/sqlactive"
+Source = "https://github.com/daireto/sqlactive"
+Documentation = "https://github.com/daireto/sqlactive/blob/main/docs/MAIN.md"
+Issues = "https://github.com/daireto/sqlactive/issues"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["sqlactive_daireto*"]
+exclude = ["docs*", "tests*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "sqlactive_daireto.__version__"}

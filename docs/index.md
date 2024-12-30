@@ -28,8 +28,8 @@ and dictionary serialization for SQLAlchemy models.
 
 Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins).
 
-<!-- omit in toc -->
-## Table of Contents
+The source code for this project is available on [GitHub](https://github.com/daireto/sqlactive).
+
 - [SQLActive](#sqlactive)
   - [Features](#features)
   - [Installation](#installation)
@@ -40,11 +40,7 @@ Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy
     - [4. Perform Bulk Operations](#4-perform-bulk-operations)
     - [5. Perform Queries](#5-perform-queries)
     - [6. Manage Timestamps](#6-manage-timestamps)
-  - [Testing](#testing)
-  - [Documentation](#documentation)
-  - [Contributing](#contributing)
   - [License](#license)
-  - [Support](#support)
 
 ## Features
 
@@ -69,8 +65,8 @@ pip install sqlactive
 
 ### 1. Define the Models
 
-The [`ActiveRecordBaseModel`](/sqlactive/base_model.py) class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](/docs/ACTIVE_RECORD.md) and [`TimestampMixin`](/docs/TIMESTAMP.md).
+The `ActiveRecordBaseModel` class provides a base class for your models.
+It inherits from [`ActiveRecordMixin`](/pages/active_record_mixin/overview/) and [`TimestampMixin`](/pages/timestamp_mixin).
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -118,25 +114,27 @@ class Comment(BaseModel):
     user: Mapped['User'] = relationship(back_populates='comments')
 ```
 
-> [!NOTE]
-> The models can directly inherit from the `ActiveRecordBaseModel` class:
-> ```python
-> from sqlactive import ActiveRecordBaseModel
->
-> class User(ActiveRecordBaseModel):
->     __tablename__ = 'users'
->     # ...
-> ```
+!!! note
 
-> [!TIP]
-> If you don't want to implement automatic timestamps, your base model can inherit
-> from [`ActiveRecordMixin`](/docs/ACTIVE_RECORD.md) directly:
-> ```python
-> from sqlactive import ActiveRecordMixin
->
-> class BaseModel(ActiveRecordMixin):
->     __abstract__ = True
-> ```
+    The models can directly inherit from the `ActiveRecordBaseModel` class:
+
+    ```python
+    from sqlactive import ActiveRecordBaseModel
+    class User(ActiveRecordBaseModel):
+        __tablename__ = 'users'
+        # ...
+    ```
+
+!!! tip
+
+    If you don't want to implement automatic timestamps, your base model can inherit
+    from [`ActiveRecordMixin`](/pages/active_record_mixin/overview/) directly:
+
+    ```python
+    from sqlactive import ActiveRecordMixin
+    class BaseModel(ActiveRecordMixin):
+        __abstract__ = True
+    ```
 
 ### 2. Initialize the Database
 
@@ -171,15 +169,17 @@ async with async_engine.begin() as conn:
 
 The use of the `expire_on_commit` flag is explained in the warning of [this section](#4-perform-bulk-operations).
 
-> [!TIP]
-> Use the `DBConnection` class as a shortcut to initialize the database:
-> ```python
-> from sqlactive import DBConnection
->
-> DATABASE_URL = 'sqlite+aiosqlite://'
-> conn = DBConnection(DATABASE_URL, echo=False)
-> await conn.init_db(BaseModel)
-> ```
+!!! tip
+
+    Use the `DBConnection` class as a shortcut to initialize the database:
+
+    ```python
+    from sqlactive import DBConnection
+
+    DATABASE_URL = 'sqlite+aiosqlite://'
+    conn = DBConnection(DATABASE_URL, echo=False)
+    await conn.init_db(BaseModel)
+    ```
 
 ### 3. Perform CRUD Operations
 
@@ -205,14 +205,16 @@ print(user.age)
 await user.delete()
 ```
 
-> [!CAUTION]
-> The `delete` and `remove` methods are not soft deletes.
-> Both of them permanently delete the row from the database.
-> So, if you want to keep the row in the database, implement
-> a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
+!!! danger
 
-> [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+    The `delete` and `remove` methods are not soft deletes.
+    Both of them permanently delete the row from the database.
+    So, if you want to keep the row in the database, implement
+    a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
+
+!!! tip
+
+    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
 
 ### 4. Perform Bulk Operations
 
@@ -235,50 +237,57 @@ print(users)
 # []
 ```
 
-> [!WARNING]
-> When calling bulk operation methods, i.e. `save_all`, `create_all`, `update_all`
-> and `delete_all`, the `refresh` flag must be set to `True` in order to access
-> the updated attributes of the affected rows.
-> <br>**NOTE**: This may lead to a higher latency due to additional database queries.
-> ```python
-> users = [
->     User(username='John1234', name='John Doe', age=20),
->     User(username='Jane1234', name='Jane Doe', age=21),
->     # ...,
-> ]
-> await User.save_all(users, refresh=True)
-> print(users[0].updated_at)
-> # 2024-12-28 23:00:51
-> ```
-> If `refresh` is not set to `True`, a `sqlalchemy.orm.exc.DetachedInstanceError`
-> may be raised when trying to access the updated attributes because the instances
-> are detached (unavailable after commit).
-> ```python
-> users = [
->     User(username='John1234', name='John Doe', age=20),
->     User(username='Jane1234', name='Jane Doe', age=21),
->     # ...,
-> ]
-> await User.save_all(users)
-> print(users[0].updated_at)
-> # Traceback (most recent call last):
-> #     ...
-> # sqlalchemy.orm.exc.DetachedInstanceError: Instance <User ...> is not bound
-> # to a Session; attribute refresh operation cannot proceed
-> # (Background on this error at: https://sqlalche.me/e/20/bhk3)
-> ```
-> Another option is to set the `expire_on_commit` flag to `False` in the
-> `async_sessionmaker` when initializing the database. However, **this does not update the instances after commit**.
-> It just keeps the instances available after commit.
-> ```python
-> async_sessionmaker = async_sessionmaker(
->     bind=async_engine,
->     expire_on_commit=False,
-> )
-> ```
+!!! warning
 
-> [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+    When calling bulk operation methods, i.e. `save_all`, `create_all`, `update_all`
+    and `delete_all`, the `refresh` flag must be set to `True` in order to access
+    the updated attributes of the affected rows.
+    <br>**NOTE**: This may lead to a higher latency due to additional database queries.
+
+    ```python
+    users = [
+        User(username='John1234', name='John Doe', age=20),
+        User(username='Jane1234', name='Jane Doe', age=21),
+        # ...,
+    ]
+    await User.save_all(users, refresh=True)
+    print(users[0].updated_at)
+    # 2024-12-28 23:00:51
+    ```
+
+    If `refresh` is not set to `True`, a `sqlalchemy.orm.exc.DetachedInstanceError`
+    may be raised when trying to access the updated attributes because the instances
+    are detached (unavailable after commit).
+
+    ```python
+    users = [
+        User(username='John1234', name='John Doe', age=20),
+        User(username='Jane1234', name='Jane Doe', age=21),
+        # ...,
+    ]
+    await User.save_all(users)
+    print(users[0].updated_at)
+    # Traceback (most recent call last):
+    #     ...
+    # sqlalchemy.orm.exc.DetachedInstanceError: Instance <User ...> is not bound
+    # to a Session; attribute refresh operation cannot proceed
+    # (Background on this error at: https://sqlalche.me/e/20/bhk3)
+    ```
+
+    Another option is to set the `expire_on_commit` flag to `False` in the
+    `async_sessionmaker` when initializing the database. However, **this does not update the instances after commit**.
+    It just keeps the instances available after commit.
+
+    ```python
+    async_sessionmaker = async_sessionmaker(
+        bind=async_engine,
+        expire_on_commit=False,
+    )
+    ```
+
+!!! tip
+
+    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
 
 ### 5. Perform Queries
 
@@ -333,30 +342,33 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](/docs/SMART_QUERY.md#api-reference) for more details.
+See the [low-level SmartQueryMixin methods](/pages/smart_query_mixin#api-reference) for more details.
 
-> [!IMPORTANT]
-> `filter_expr` method is very low-level and does NOT do magic Django-like joins. Use `smart_query` for that:
-> ```python
-> query = User.smart_query(
->     criterion=(or_(User.age == 30, User.age == 32),),
->     filters={'username__like': '%8'},
->     sort_columns=(User.username,),
->     sort_attrs=('age',),
->     schema={
->         User.posts: JOINED,
->         User.comments: (SUBQUERY, {
->             Comment.post: SELECT_IN
->         }),
->     },
-> )
-> users = await query.unique_all()
-> print(users)
-> # [<User #1>, <User #3>]
-> ```
+!!! note
 
-> [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+    `filter_expr` method is very low-level and does NOT do magic Django-like joins. Use `smart_query` for that:
+
+    ```python
+    query = User.smart_query(
+        criterion=(or_(User.age == 30, User.age == 32),),
+        filters={'username__like': '%8'},
+        sort_columns=(User.username,),
+        sort_attrs=('age',),
+        schema={
+            User.posts: JOINED,
+            User.comments: (SUBQUERY, {
+                Comment.post: SELECT_IN
+            }),
+        },
+    )
+    users = await query.unique_all()
+    print(users)
+    # [<User #1>, <User #3>]
+    ```
+
+!!! tip
+
+    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
 
 ### 6. Manage Timestamps
 
@@ -376,47 +388,10 @@ print(user.updated_at)
 # 2024-12-28 23:00:52
 ```
 
-> [!TIP]
-> Check the [`TimestampMixin`](/docs/TIMESTAMP.md) class to know how to customize the timestamps behavior.
+!!! tip
 
-## Testing
-
-To run the tests, simply run the following command from the root directory:
-
-```bash
-python -m unittest discover -s tests -t .
-```
-
-To run a specific test, use the following command:
-
-```bash
-python -m unittest tests.<test_name>
-```
-
-Available tests:
-- `test_active_record`
-- `test_inspection`
-- `test_base_model`
-- `test_smart_query`
-
-## Documentation
-
-Find the complete documentation [here](/docs/MAIN.md).
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
+    Check the [`TimestampMixin`](/pages/timestamp_mixin) class to know how to customize the timestamps behavior.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you find this project useful, give it a ⭐ on GitHub to show your support!
-
-Also, give it a ⭐ to [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins)
-which inspired this project!
+This project is licensed under the terms of the MIT License.

@@ -6,7 +6,7 @@ from asyncio import current_task
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, async_scoped_session
 
-from sqlactive.base_model import ActiveRecordBaseModel
+from .base_model import ActiveRecordBaseModel
 
 
 class DBConnection:
