@@ -9,7 +9,7 @@ authors = [
     { name="Dairo Mosquera", email="dairoandres115@outlook.com" },
 ]
 description = "A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy. Bring Django-like queries, automatic timestamps, nested eager loading, and dictionary serialization for SQLAlchemy models."
-readme = "docs/index.md"
+readme = "README.md"
 requires-python = ">=3.10"
 keywords=[
     "sqlalchemy",
