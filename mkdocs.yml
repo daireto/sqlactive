@@ -1,13 +1,16 @@
 site_name: SQLActive
-site_url: https://mydomain.org/
+site_url: https://daireto.github.io/sqlactive/
 repo_name: daireto/sqlactive
-repo_url: https://github.com/daireto/sqlactive
+repo_url: https://github.com/daireto/sqlactive/
 theme:
   name: material
   features:
     - navigation.expand
     - content.code.copy
     - content.code.select
+    - search.suggest
+    - search.highlight
+    - search.share
 nav:
   - Home: index.md
   - Docs:
@@ -17,6 +20,19 @@ nav:
     - TImestampMixin: pages/timestamp_mixin.md
     - SmartQueryMixin: pages/smart_query_mixin.md
     - InspectionMixin: pages/inspection_mixin.md
+  - Development:
+    - Contributing: contributing.md
+extra:
+  version:
+    provider: mike
+    alias: true
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/daireto/sqlactive/
+      name: daireto/sqlactive
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/sqlactive/
+      name: 'PyPI: sqlactive'
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -31,3 +47,6 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+plugins:
+  - search
+  - mike
