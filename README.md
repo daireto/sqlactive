@@ -70,7 +70,8 @@ pip install sqlactive
 ### 1. Define the Models
 
 The [`ActiveRecordBaseModel`](/sqlactive/base_model.py) class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](/docs/ACTIVE_RECORD.md) and [`TimestampMixin`](/docs/TIMESTAMP.md).
+It inherits from [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/pages/active_record_mixin/overview/)
+and [`TimestampMixin`](https://daireto.github.io/sqlactive/pages/timestamp_mixin/).
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -130,7 +131,7 @@ class Comment(BaseModel):
 
 > [!TIP]
 > If you don't want to implement automatic timestamps, your base model can inherit
-> from [`ActiveRecordMixin`](/docs/ACTIVE_RECORD.md) directly:
+> from `ActiveRecordMixin` directly:
 > ```python
 > from sqlactive import ActiveRecordMixin
 >
@@ -212,7 +213,8 @@ await user.delete()
 > a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> class to see all the available methods.
 
 ### 4. Perform Bulk Operations
 
@@ -278,7 +280,8 @@ print(users)
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> class to see all the available methods.
 
 ### 5. Perform Queries
 
@@ -333,7 +336,8 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](/docs/SMART_QUERY.md#api-reference) for more details.
+See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/pages/smart_query_mixin/#api-reference)
+for more details.
 
 > [!IMPORTANT]
 > `filter_expr` method is very low-level and does NOT do magic Django-like joins. Use `smart_query` for that:
@@ -356,7 +360,8 @@ See the [low-level SmartQueryMixin methods](/docs/SMART_QUERY.md#api-reference) 
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](/docs/ACTIVE_RECORD_API.md) class to see all the available methods.
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/pages/active_record_mixin/api_reference/)
+> class to see all the available methods.
 
 ### 6. Manage Timestamps
 
@@ -377,7 +382,8 @@ print(user.updated_at)
 ```
 
 > [!TIP]
-> Check the [`TimestampMixin`](/docs/TIMESTAMP.md) class to know how to customize the timestamps behavior.
+> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/pages/timestamp_mixin/)
+> class to know how to customize the timestamps behavior.
 
 ## Testing
 
@@ -401,7 +407,7 @@ Available tests:
 
 ## Documentation
 
-Find the complete documentation [here](/docs/MAIN.md).
+Find the complete documentation [here](https://daireto.github.io/sqlactive/).
 
 ## Contributing
 
