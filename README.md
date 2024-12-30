@@ -69,8 +69,8 @@ pip install sqlactive
 
 ### 1. Define the Models
 
-The [`ActiveRecordBaseModel`](/sqlactive/base_model.py) class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/pages/active_record_mixin/overview/)
+The `ActiveRecordBaseModel` class provides a base class for your models. It inherits from
+[`ActiveRecordMixin`](https://daireto.github.io/sqlactive/pages/active_record_mixin/overview/)
 and [`TimestampMixin`](https://daireto.github.io/sqlactive/pages/timestamp_mixin/).
 
 ```python
