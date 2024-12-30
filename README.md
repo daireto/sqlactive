@@ -20,7 +20,7 @@
     </a>
 </p>
 
-# SQLActive Test
+# SQLActive
 
 A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 Bring Django-like queries, automatic timestamps, nested eager loading,
