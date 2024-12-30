@@ -4,11 +4,11 @@ The `SmartQueryMixin` class provides advanced query functionality for SQLAlchemy
 models, allowing you to filter, sort, and eager load data in a single query,
 making it easier to retrieve specific data from the database.
 
-It uses the [`InspectionMixin`](/pages/inspection_mixin/) class functionality.
+It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
 
 !!! info
 
-    This mixin is intended to extend the functionality of the [`ActiveRecordMixin`](/pages/active_record_mixin/overview/)
+    This mixin is intended to extend the functionality of the [`ActiveRecordMixin`](active_record_mixin/overview.md)
     on which the examples below are based. It is not intended to be used on its own.
 
 **Table of Contents**

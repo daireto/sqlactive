@@ -4,7 +4,7 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 
 !!! info
 
-    This mixin is intended to extend the functionality of the [`SmartQueryMixin`](/pages/smart_query_mixin/).
+    This mixin is intended to extend the functionality of the [`SmartQueryMixin`](smart_query_mixin.md).
     It is not intended to be used on its own.
 
 **Table of Contents**

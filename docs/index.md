@@ -66,7 +66,7 @@ pip install sqlactive
 ### 1. Define the Models
 
 The `ActiveRecordBaseModel` class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](/pages/active_record_mixin/overview/) and [`TimestampMixin`](/pages/timestamp_mixin).
+It inherits from [`ActiveRecordMixin`](pages/active_record_mixin/overview.md) and [`TimestampMixin`](pages/timestamp_mixin.md).
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -128,7 +128,7 @@ class Comment(BaseModel):
 !!! tip
 
     If you don't want to implement automatic timestamps, your base model can inherit
-    from [`ActiveRecordMixin`](/pages/active_record_mixin/overview/) directly:
+    from [`ActiveRecordMixin`](pages/active_record_mixin/overview.md) directly:
 
     ```python
     from sqlactive import ActiveRecordMixin
@@ -214,7 +214,7 @@ await user.delete()
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](pages/active_record_mixin/api_reference.md) class to see all the available methods.
 
 ### 4. Perform Bulk Operations
 
@@ -287,7 +287,7 @@ print(users)
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](pages/active_record_mixin/api_reference.md) class to see all the available methods.
 
 ### 5. Perform Queries
 
@@ -342,7 +342,7 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](/pages/smart_query_mixin#api-reference) for more details.
+See the [low-level SmartQueryMixin methods](pages/smart_query_mixin.md#api-reference) for more details.
 
 !!! note
 
@@ -368,7 +368,7 @@ See the [low-level SmartQueryMixin methods](/pages/smart_query_mixin#api-referen
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](/pages/active_record_mixin/api_reference/) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](pages/active_record_mixin/api_reference.md) class to see all the available methods.
 
 ### 6. Manage Timestamps
 
@@ -390,7 +390,7 @@ print(user.updated_at)
 
 !!! tip
 
-    Check the [`TimestampMixin`](/pages/timestamp_mixin) class to know how to customize the timestamps behavior.
+    Check the [`TimestampMixin`](pages/timestamp_mixin.md) class to know how to customize the timestamps behavior.
 
 ## License
 

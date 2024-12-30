@@ -46,5 +46,8 @@ ENV/
 env.bak/
 venv.bak/
 
+# mkdocs documentation
+/site
+
 # ruff
 .ruff_cache/
