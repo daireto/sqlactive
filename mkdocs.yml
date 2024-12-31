@@ -12,6 +12,7 @@ theme:
     - search.highlight
     - search.share
   palette:
+    - scheme: slate
     - media: "(prefers-color-scheme: light)"
       scheme: default
       toggle:
