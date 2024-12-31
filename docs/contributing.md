@@ -34,10 +34,15 @@ a smooth collaboration process.
 - Write **NumPy-style docstrings** for all public functions, classes, attributes,
   and properties.
 - Commit messages and pull requests must follow specific prefixes:
-    - `fix:` for bug fixes.
-    - `feat:` for new features.
-    - `docs:` for documentation changes.
     - `ci:` for CI/CD changes.
+    - `test:` Update tests/* files.
+    - `dist:` Changes to dependencies, e.g. `requirements.txt`.
+    - `minor:` Small changes.
+    - `docs:` Updates to documentation. `doc` is also a valid prefix.
+    - `fix:` Bug fixes.
+    - `refactor:` Refactor of existing code.
+    - `nit:` Small code review changes mainly around style or syntax.
+    - `feat:` New features.
 
 ## Your First Pull Request
 
@@ -146,10 +151,15 @@ To suggest a feature:
 ### Commit Message Format
 
 - Use a prefix to categorize your commit:
-    - `fix: ` for bug fixes.
-    - `feat: ` for new features.
-    - `docs: ` for documentation changes.
-    - `ci: ` for CI/CD changes.
+    - `ci:` for CI/CD changes.
+    - `test:` Update tests/* files.
+    - `dist:` Changes to dependencies, e.g. `requirements.txt`.
+    - `minor:` Small changes.
+    - `docs:` Updates to documentation. `doc` is also a valid prefix.
+    - `fix:` Bug fixes.
+    - `refactor:` Refactor of existing code.
+    - `nit:` Small code review changes mainly around style or syntax.
+    - `feat:` New features.
 - Example:
     ```
     feat: add support for PostgreSQL database connections
