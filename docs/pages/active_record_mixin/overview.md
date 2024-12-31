@@ -4,9 +4,9 @@ The `ActiveRecordMixin` class provides ActiveRecord-style functionality
 for SQLAlchemy models, allowing for more intuitive and chainable database
 operations with async/await support.
 
-It uses the [`SmartQueryMixin`](../SMART_QUERY_MIXIN.md) class functionality.
+It uses the [`SmartQueryMixin`](../smart_query_mixin.md) class functionality.
 
-Check the [API Reference](API_REFERENCE.md) for the full list of
+Check the [API Reference](api_reference.md) for the full list of
 available methods.
 
 **Table of Contents**
@@ -253,5 +253,5 @@ on failure.
 
 ## API Reference
 
-Check the [API Reference](API_REFERENCE.md) for the full list of
+Check the [API Reference](api_reference.md) for the full list of
 available methods.
