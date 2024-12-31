@@ -27,6 +27,13 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
             logger.info('Closing DB connection...')
             asyncio.run(cls.conn.close())
 
+    async def test_repr(self):
+        """Test for `__repr__` function."""
+
+        logger.info('Testing `__repr__` function...')
+        user = await User.get_or_fail(1)
+        self.assertEqual('<User #1>', str(user))
+
     async def test_id_str(self):
         """Test for `id_str` property."""
 

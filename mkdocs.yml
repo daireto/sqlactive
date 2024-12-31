@@ -11,15 +11,28 @@ theme:
     - search.suggest
     - search.highlight
     - search.share
+  palette:
+    - scheme: slate
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 nav:
   - Home: index.md
   - Docs:
-    - ActiveRecordMixin:
+    - ActiveRecord Mixin:
       - Overview: pages/active_record_mixin/overview.md
       - API Reference: pages/active_record_mixin/api_reference.md
-    - TImestampMixin: pages/timestamp_mixin.md
-    - SmartQueryMixin: pages/smart_query_mixin.md
-    - InspectionMixin: pages/inspection_mixin.md
+    - TImestamp Mixin: pages/timestamp_mixin.md
+    - Serialization Mixin: pages/serialization_mixin.md
+    - Smart Queries Mixin: pages/smart_query_mixin.md
+    - Inspection Mixin: pages/inspection_mixin.md
   - Development:
     - Contributing: contributing.md
 extra:

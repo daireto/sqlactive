@@ -30,6 +30,12 @@ This is the API reference for the `ActiveRecordMixin` class.
     - [find\_one](#find_one)
     - [find\_one\_or\_none](#find_one_or_none)
     - [find\_all](#find_all)
+    - [find\_first](#find_first)
+    - [find\_unique](#find_unique)
+    - [find\_unique\_all](#find_unique_all)
+    - [find\_unique\_first](#find_unique_first)
+    - [find\_unique\_one](#find_unique_one)
+    - [find\_unique\_one\_or\_none](#find_unique_one_or_none)
     - [order\_by](#order_by)
     - [sort](#sort)
     - [offset](#offset)
@@ -70,7 +76,7 @@ def fill(**kwargs)
 
 > **Returns:**
 
-> - `self`: The instance itself for method chaining.
+> - `Self`: The instance itself for method chaining.
 
 > **Raises:**
 
@@ -91,7 +97,7 @@ async def save()
 
 > **Returns:**
 
-> - `self`: The saved instance for method chaining.
+> - `Self`: The saved instance for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
@@ -115,7 +121,7 @@ async def update(**kwargs)
 
 > **Returns:**
 
-> - `self`: The updated instance for method chaining.
+> - `Self`: The updated instance for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
@@ -169,7 +175,7 @@ async def create(**kwargs)
 
 > **Returns:**
 
-> - `self`: The created instance for method chaining.
+> - `Self`: The created instance for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
@@ -280,7 +286,7 @@ async def get(pk: object)
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None` if not found.
+> - `Self | None`: Instance for method chaining or `None` if not found.
 
 > **Raises:**
 
@@ -305,7 +311,7 @@ async def get_or_fail(pk: object)
 
 > **Returns:**
 
-> - `self`: Instance for method chaining.
+> - `Self`: Instance for method chaining.
 
 > **Raises:**
 
@@ -415,7 +421,7 @@ async def find_one(*criterion: ColumnElement[Any], **filters: Any)
 
 > **Returns:**
 
-> - `self`: Instance for method chaining.
+> - `Self`: Instance for method chaining.
 
 > **Raises:**
 
@@ -439,7 +445,7 @@ async def find_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None`.
+> - `Self | None`: Instance for method chaining or `None`.
 
 > **Raises:**
 
@@ -462,12 +468,137 @@ async def find_all(*criterion: ColumnElement[Any], **filters: Any)
 
 > **Returns:**
 
-> - `list[self]`: List of instances for method chaining.
+> - `list[Self]`: List of instances for method chaining.
 
 > **Example:**
 
 > ```python
 > users = await User.find_all(age__gte=18)
+> ```
+
+### find_first
+```python
+async def find_first(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds a single row matching the criteria or `None`.
+
+> This is same as calling `await cls.find(*criterion, **filters).first()`.
+
+> **Returns:**
+
+> - `Self | None`: Instance for method chaining or `None`.
+
+> **Example:**
+
+> ```python
+> user = await User.find_first(name='Bob')
+> ```
+
+### find_unique
+```python
+async def find_unique(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds all unique rows matching the criteria and
+> returns an `ScalarResult` object with them.
+
+> This is same as calling `await cls.find(*criterion, **filters).unique()`.
+
+> **Returns:**
+
+> - `sqlalchemy.engine.ScalarResult`: Scalars.
+
+> **Example:**
+
+> ```python
+> users_scalars = await User.find_unique(name__like='%John%')
+> users = users_scalars.all()
+> ```
+
+### find_unique_all
+```python
+async def find_unique_all(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds all unique rows matching the criteria and returns a list.
+
+> This is same as calling `await cls.find(*criterion, **filters).unique_all()`.
+
+> **Returns:**
+
+> - `list[Self]`: List of instances.
+
+> **Example:**
+
+> ```python
+> users = await User.find_unique_all(name__like='%John%')
+> ```
+
+### find_unique_first
+```python
+async def find_unique_first(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds a single unique row matching the criteria or `None`.
+
+> This is same as calling `await cls.find(*criterion, **filters).unique_first()`.
+
+> **Returns:**
+
+> - `Self | None`: Instance for method chaining or `None`.
+
+> **Example:**
+
+> ```python
+> user = await User.find_unique_first(name__like='%John%', age=30)
+> ```
+
+### find_unique_one
+```python
+async def find_unique_one(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds a single unique row matching the criteria.
+
+> This is same as calling `await cls.find(*criterion, **filters).unique_one()`.
+
+> **Returns:**
+
+> - `Self`: Instance for method chaining.
+
+> **Raises:**
+
+> - `NoResultFound`: If no row is found.
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+
+> ```python
+> user = await User.find_unique_one(name__like='%John%', age=30)
+> ```
+
+### find_unique_one_or_none
+```python
+async def find_unique_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
+```
+
+> Finds a single unique row matching the criteria or `None`.
+
+> This is same as calling `await cls.find(*criterion, **filters).unique_one_or_none()`.
+
+> **Returns:**
+
+> - `Self | None`: Instance for method chaining or `None`.
+
+> **Raises:**
+
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+
+> ```python
+> user = await User.find_unique_one_or_none(name__like='%John%', age=30)
 > ```
 
 ### order_by
@@ -664,10 +795,11 @@ def with_schema(schema: dict)
 > - `AsyncQuery`: Async query instance for chaining.
 
 > ```python
+> from sqlactive import JOINED, SUBQUERY
 > schema = {
->     User.posts: 'joined',
->     User.comments: ('subquery', {
->         Comment.user: 'joined'
+>     User.posts: JOINED,
+>     User.comments: (SUBQUERY, {
+>         Comment.user: JOINED
 >     })
 > }
 > users = await User.with_schema(schema).all()
@@ -700,7 +832,7 @@ async def first()
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None` if no matches.
+> - `Self | None`: Instance for method chaining or `None` if no matches.
 
 > **Example:**
 
@@ -717,7 +849,7 @@ async def one()
 
 > **Returns:**
 
-> - `self`: Instance for method chaining.
+> - `Self`: Instance for method chaining.
 
 > **Raises:**
 
@@ -739,7 +871,7 @@ async def one_or_none()
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None`.
+> - `Self | None`: Instance for method chaining or `None`.
 
 > **Raises:**
 
@@ -774,7 +906,7 @@ async def all()
 
 > **Returns:**
 
-> - `list[self]`: List of instances.
+> - `list[Self]`: List of instances.
 
 > **Example:**
 
@@ -823,7 +955,7 @@ async def unique_all()
 
 > **Returns:**
 
-> - `list[self]`: List of instances.
+> - `list[Self]`: List of instances.
 
 > **Example:**
 
@@ -840,7 +972,7 @@ async def unique_first()
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None`.
+> - `Self | None`: Instance for method chaining or `None`.
 
 > **Example:**
 
@@ -857,7 +989,7 @@ async def unique_one()
 
 > **Returns:**
 
-> - `self`: Instance for method chaining.
+> - `Self`: Instance for method chaining.
 
 > **Raises:**
 
@@ -879,7 +1011,7 @@ async def unique_one_or_none()
 
 > **Returns:**
 
-> - `self | None`: Instance for method chaining or `None`.
+> - `Self | None`: Instance for method chaining or `None`.
 
 > **Raises:**
 

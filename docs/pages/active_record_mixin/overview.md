@@ -1,4 +1,4 @@
-# Overview
+# ActiveRecord Mixin
 
 The `ActiveRecordMixin` class provides ActiveRecord-style functionality
 for SQLAlchemy models, allowing for more intuitive and chainable database
@@ -11,7 +11,7 @@ available methods.
 
 **Table of Contents**
 
-- [Overview](#overview)
+- [ActiveRecord Mixin](#activerecord-mixin)
   - [Usage](#usage)
   - [Core Features](#core-features)
     - [Creation, Updating, and Deletion](#creation-updating-and-deletion)

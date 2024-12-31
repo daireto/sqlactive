@@ -4,12 +4,17 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 
 !!! info
 
-    This mixin is intended to extend the functionality of the [`SmartQueryMixin`](smart_query_mixin.md).
+    This mixin is intended to extend the functionality of the
+    [`SmartQueryMixin`](smart_query_mixin.md).
     It is not intended to be used on its own.
 
 **Table of Contents**
 
 - [InspectionMixin](#inspectionmixin)
+  - [Instance Methods](#instance-methods)
+    - [__repr__](#repr)
+  - [Class Methods](#class-methods)
+    - [get\_class\_of\_relation](#get_class_of_relation)
   - [Properties](#properties)
     - [id\_str](#id_str)
     - [columns](#columns)
@@ -23,6 +28,56 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     - [filterable\_attributes](#filterable_attributes)
     - [sortable\_attributes](#sortable_attributes)
     - [settable\_attributes](#settable_attributes)
+
+## Instance Methods
+
+### __repr__
+```python
+def __repr__(self)
+```
+
+> Print the model in a readable format including the primary key.
+
+> Format:
+> ```
+>    <ClassName #PrimaryKey>
+> ```
+
+> **Example:**
+
+> ```python
+> user = await User.get(id=1)
+> print(user)
+> # User #1
+> users = await User.find(username__endswith='Doe').all()
+> print(users)
+> # [<User #1>, <User #2>]
+> ```
+
+## Class Methods
+
+### get_class_of_relation
+```python
+def get_class_of_relation(relation_name: str)
+```
+
+> Gets the class of a relationship by its name.
+
+> **Parameters:**
+
+> - `relation_name`: The name of the relationship.
+
+> **Returns:**
+
+> - `type`: The class of the relationship.
+
+> **Example:**
+
+> ```python
+> user = await User.get(id=1)
+> user.get_class_of_relation('posts')
+> # <class 'Post'>
+> ```
 
 ## Properties
 

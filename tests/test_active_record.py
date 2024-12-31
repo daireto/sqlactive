@@ -270,6 +270,65 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         users = await User.find_all(username__like='Ji%')
         self.assertEqual(3, len(users))
 
+    async def test_find_first(self):
+        """Test for `find_first` function."""
+
+        logger.info('Testing `find_first` function...')
+        user = await User.find_first(username='Joe156')
+        self.assertIsNotNone(user)
+        if user:
+            self.assertEqual('Joe Smith', user.name)
+        user = await User.find_first(username='Unknown')
+        self.assertIsNone(user)
+
+    async def test_find_unique(self):
+        """Test for `find_unique` function."""
+
+        logger.info('Testing `find_unique` function...')
+        unique_user_scalars = await User.find_unique(username__like='Ji%')
+        users = unique_user_scalars.all()
+        self.assertEqual(3, len(users))
+
+    async def test_find_unique_all(self):
+        """Test for `find_unique_all` function."""
+
+        logger.info('Testing `find_unique_all` function...')
+        users = await User.find_unique_all(username__like='Ji%')
+        self.assertEqual(3, len(users))
+
+    async def test_find_unique_first(self):
+        """Test for `find_unique_first` function."""
+
+        logger.info('Testing `find_unique_first` function...')
+        user = await User.find_unique_first(username='Joe156')
+        self.assertIsNotNone(user)
+        if user:
+            self.assertEqual('Joe Smith', user.name)
+
+    async def test_find_unique_one(self):
+        """Test for `find_unique_one` function."""
+
+        logger.info('Testing `find_unique_one` function...')
+        with self.assertRaises(MultipleResultsFound) as context:
+            await User.find_unique_one(username__like='Ji%')
+        self.assertEqual('Multiple rows were found when exactly one was required', str(context.exception))
+        user = await User.find_unique_one(username='Joe156')
+        self.assertEqual('Joe Smith', user.name)
+
+    async def test_find_unique_one_or_none(self):
+        """Test for `find_unique_one_or_none` function."""
+
+        logger.info('Testing `find_unique_one_or_none` function...')
+        with self.assertRaises(MultipleResultsFound) as context:
+            await User.find_unique_one_or_none(username__like='Ji%')
+        self.assertEqual('Multiple rows were found when one or none was required', str(context.exception))
+        user = await User.find_unique_one_or_none(username='Joe156')
+        self.assertIsNotNone(user)
+        if user:
+            self.assertEqual('Joe Smith', user.name)
+        user = await User.find_unique_one_or_none(username='Unknown')
+        self.assertIsNone(user)
+
     async def test_order_by(self):
         """Test for `order_by`, `sort` functions."""
 

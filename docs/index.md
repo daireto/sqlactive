@@ -66,7 +66,17 @@ pip install sqlactive
 ### 1. Define the Models
 
 The `ActiveRecordBaseModel` class provides a base class for your models.
-It inherits from [`ActiveRecordMixin`](pages/active_record_mixin/overview.md) and [`TimestampMixin`](pages/timestamp_mixin.md).
+
+It inherits from:
+
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/overview/): Provides a set of ActiveRecord-like
+    helper methods for interacting with the database.
+* [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](https://daireto.github.io/sqlactive/latest/pages/serialization_mixin/): Provides serialization and deserialization methods.
+
+It is recommended to define a `BaseModel` class that inherits from
+`ActiveRecordBaseModel` and use it as the base class for all models
+as shown in the following example:
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -114,6 +124,11 @@ class Comment(BaseModel):
     user: Mapped['User'] = relationship(back_populates='comments')
 ```
 
+!!! warning
+
+    When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
+    in the base class to avoid creating tables for the base class.
+
 !!! note
 
     The models can directly inherit from the `ActiveRecordBaseModel` class:
@@ -125,14 +140,19 @@ class Comment(BaseModel):
         # ...
     ```
 
+    However, it is recommended to create a base class for your models and
+    inherit from it.
+
 !!! tip
 
-    If you don't want to implement automatic timestamps, your base model can inherit
-    from [`ActiveRecordMixin`](pages/active_record_mixin/overview.md) directly:
+    Your `BaseModel` class can also inherit directly from the mixins.
+    For example, if you don't want to implement automatic timestamps don't inherit
+    from `ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
+    and/or `SerializationMixin`:
 
     ```python
-    from sqlactive import ActiveRecordMixin
-    class BaseModel(ActiveRecordMixin):
+    from sqlactive import ActiveRecordMixin, SerializationMixin
+    class BaseModel(ActiveRecordMixin, SerializationMixin):
         __abstract__ = True
     ```
 
@@ -294,6 +314,8 @@ print(users)
 Perform simple and complex queries, eager loading, and dictionary serialization:
 
 ```python
+from sqlactive import JOINED, SUBQUERY
+
 user = await User.filter(name='John Doe').first()
 print(user)
 # <User #1>

@@ -126,6 +126,18 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         `None` if no results are found.
     `find_all(*criterion, **filters)`
         A synonym for `filter` but returns all results.
+    `find_first(*criterion, **filters)`
+        Finds a single row matching the criteria or `None`.
+    `find_unique(*criterion, **filters)`
+        Finds all unique rows matching the criteria and
+    `find_unique_all(*criterion, **filters)`
+        Finds all unique rows matching the criteria and returns a list.
+    `find_unique_first(*criterion, **filters)`
+        Finds a single unique row matching the criteria or `None`.
+    `find_unique_one(*criterion, **filters)`
+        Finds a single unique row matching the criteria.
+    `find_unique_one_or_none(*criterion, **filters)`
+        Finds a single unique row matching the criteria or `None`.
     `scalars()`
         Returns an `ScalarResult` object with all rows.
     `first()`
@@ -612,6 +624,190 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
 
         return await cls.find(*criterion, **filters).all()
+
+    @classmethod
+    async def find_first(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds a single row matching the criteria or `None`.
+
+        This is same as calling `await cls.find(*criterion, **filters).first()`.
+
+        Example using Django-like syntax:
+        >>> user = await User.find_first(name__like='%John%', age=30)
+        >>> user
+        # <User 2>
+        >>> user = await User.find_first(name__like='%Jane%')  # Does not exist
+        >>> user
+        # None
+
+        Example using SQLAlchemy syntax:
+        >>> user = await User.find_first(User.name == 'John Doe')
+        >>> user
+        # <User 2>
+
+        Example using both:
+        >>> user = await User.find_first(User.age == 30, name__like='%John%')
+        >>> user
+        # <User 2>
+        """
+
+        return await cls.find(*criterion, **filters).first()
+
+    @classmethod
+    async def find_unique(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds all unique rows matching the criteria and
+        returns an `ScalarResult` object with them.
+
+        This is same as calling `await cls.find(*criterion, **filters).unique()`.
+
+        Example using Django-like syntax:
+        >>> users_scalars = await User.find_unique(name__like='%John%')
+        >>> users = users_scalars.all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await User.find_unique(name__like='%John%', age=30)
+        >>> users
+        # [<User 2>]
+
+        Example using SQLAlchemy syntax:
+        >>> users_scalars = await User.find_unique(User.name == 'John Doe')
+        >>> users = users_scalars.all()
+        >>> users
+        # [<User 2>]
+
+        Example using both:
+        >>> users_scalars = await User.find_unique(User.age == 30, name__like='%John%')
+        >>> users = users_scalars.all()
+        >>> users
+        # [<User 2>]
+        """
+
+        return await cls.find(*criterion, **filters).unique()
+
+    @classmethod
+    async def find_unique_all(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds all unique rows matching the criteria and returns a list.
+
+        This is same as calling `await cls.find(*criterion, **filters).unique_all()`.
+
+        Example using Django-like syntax:
+        >>> users = await User.find_unique_all(name__like='%John%')
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await User.find_unique_all(name__like='%John%', age=30)
+        >>> users
+        # [<User 2>]
+
+        Example using SQLAlchemy syntax:
+        >>> users = await User.find_unique_all(User.name == 'John Doe')
+        >>> users
+        # [<User 2>]
+
+        Example using both:
+        >>> users = await User.find_unique_all(User.age == 30, name__like='%John%')
+        >>> users
+        # [<User 2>]
+        """
+
+        return await cls.find(*criterion, **filters).unique_all()
+
+    @classmethod
+    async def find_unique_first(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds a single unique row matching the criteria or `None`.
+
+        This is same as calling `await cls.find(*criterion, **filters).unique_first()`.
+
+        Example using Django-like syntax:
+        >>> user = await User.find_unique_first(name__like='%John%', age=30)
+        >>> user
+        # <User 2>
+        >>> user = await User.find_unique_first(name__like='%Jane%')  # Does not exist
+        >>> user
+        # None
+
+        Example using SQLAlchemy syntax:
+        >>> user = await User.find_unique_first(User.name == 'John Doe')
+        >>> user
+        # <User 2>
+
+        Example using both:
+        >>> user = await User.find_unique_first(User.age == 30, name__like='%John%')
+        >>> user
+        # <User 2>
+        """
+
+        return await cls.find(*criterion, **filters).unique_first()
+
+    @classmethod
+    async def find_unique_one(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds a single unique row matching the criteria.
+
+        If multiple results are found, raises MultipleResultsFound.
+
+        This is same as calling `await cls.find(*criterion, **filters).unique_one()`.
+
+        Example using Django-like syntax:
+        >>> user = await User.find_unique_one(name__like='%John%', age=30)
+        >>> user
+        # <User 2>
+        >>> user = await User.find_unique_one(name__like='%Jane%')  # Does not exist
+        >>> user
+        # Traceback (most recent call last):
+        #     ...
+        # NoResultFound: 'No result found.'
+
+        Example using SQLAlchemy syntax:
+        >>> user = await User.find_unique_one(User.name == 'John Doe').all()
+        >>> user
+        # <User 2>
+
+        Example using both:
+        >>> user = await User.find_unique_one(User.age == 30, name__like='%John%').all()
+        >>> user
+        # <User 2>
+
+        Raises
+        ------
+        NoResultFound
+            If no result is found.
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        return await cls.find(*criterion, **filters).unique_one()
+
+    @classmethod
+    async def find_unique_one_or_none(cls, *criterion: ColumnElement[Any], **filters: Any):
+        """Finds a single unique row matching the criteria or `None`.
+
+        If multiple results are found, raises MultipleResultsFound.
+
+        This is same as calling `await cls.find(*criterion, **filters).unique_one_or_none()`.
+
+        Example using Django-like syntax:
+        >>> user = await User.find_unique_one_or_none(name__like='%John%', age=30)
+        >>> user
+        # <User 2>
+        >>> user = await User.find_unique_one_or_none(name__like='%Jane%')  # Does not exist
+        >>> user
+        # None
+
+        Example using SQLAlchemy syntax:
+        >>> user = await User.find_unique_one_or_none(User.name == 'John Doe').all()
+        >>> user
+        # <User 2>
+
+        Example using both:
+        >>> user = await User.find_unique_one_or_none(User.age == 30, name__like='%John%').all()
+        >>> user
+        # <User 2>
+
+        Raises
+        ------
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        return await cls.find(*criterion, **filters).unique_one_or_none()
 
     @classmethod
     def order_by(cls, *columns: str | InstrumentedAttribute | UnaryExpression):

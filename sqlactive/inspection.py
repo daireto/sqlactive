@@ -14,6 +14,41 @@ class InspectionMixin(DeclarativeBase):
 
     __abstract__ = True
 
+    def __repr__(self) -> str:
+        """Print the model in a readable format including the primary key.
+
+        Format:
+            <ClassName #PrimaryKey>
+
+        Example:
+        >>> bob = User.create(name='Bob')
+        >>> bob
+        # <User #1>
+        >>> users = await User.find(name__like='%John%')
+        >>> users
+        # [<User #1>, <User #2>, ...]
+        """
+
+        id_str = ('#' + self.id_str) if self.id_str else ''
+        return f'<{self.__class__.__name__} {id_str}>'
+
+    @classmethod
+    def get_class_of_relation(cls, relation_name: str) -> type:
+        """Gets the class of a relationship by its name.
+
+        Parameters
+        ----------
+        relation_name : str
+            The name of the relationship
+
+        Example:
+        >>> bob = User.create(name='Bob')
+        >>> bob.get_class_of_relation('posts')
+        # <class 'Post'>
+        """
+
+        return cls.__mapper__.relationships[relation_name].mapper.class_
+
     @property
     def id_str(self) -> str:
         """Returns primary key as string.
