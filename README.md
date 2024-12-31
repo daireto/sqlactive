@@ -12,8 +12,8 @@
     <a href="https://pypi.org/project/SQLAlchemy" target="_blank">
         <img src="https://img.shields.io/badge/SQLAlchemy-2.0%2B-orange" alt="Supported SQLAlchemy versions">
     </a>
-    <a href="https://coveralls.io/github/daireto/sqlactive?branch=main" target="_blank">
-        <img src="https://coveralls.io/repos/github/daireto/sqlactive/badge.svg?branch=main" alt="Coverage Status">
+    <a href='https://coveralls.io/github/daireto/sqlactive?branch=main'>
+        <img src='https://coveralls.io/repos/github/daireto/sqlactive/badge.svg?branch=main' alt='Coverage Status' />
     </a>
     <a href="[/LICENSE](https://github.com/astral-sh/ruff)" target="_blank">
         <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="License">
