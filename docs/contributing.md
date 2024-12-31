@@ -68,7 +68,7 @@ If this is your first pull request:
     ```bash
     pip install -r requirements.txt
     ```
-5. Install `Ruff`:
+5. Install `ruff`:
     ```bash
     pip install ruff
     ```

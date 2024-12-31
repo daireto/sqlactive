@@ -43,6 +43,9 @@ Documentation: https://daireto.github.io/sqlactive/
     - [5. Perform Queries](#5-perform-queries)
     - [6. Manage Timestamps](#6-manage-timestamps)
   - [Testing](#testing)
+    - [Unit Tests](#unit-tests)
+    - [Coverage](#coverage)
+    - [Lint](#lint)
   - [Documentation](#documentation)
   - [Contributing](#contributing)
   - [License](#license)
@@ -71,9 +74,18 @@ pip install sqlactive
 
 ### 1. Define the Models
 
-The `ActiveRecordBaseModel` class provides a base class for your models. It inherits from
-[`ActiveRecordMixin`](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/overview/)
-and [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/).
+The `ActiveRecordBaseModel` class provides a base class for your models.
+
+It inherits from:
+
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/overview/): Provides a set of ActiveRecord-like
+    helper methods for interacting with the database.
+* [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](https://daireto.github.io/sqlactive/latest/pages/serialization_mixin/): Provides serialization and deserialization methods.
+
+It is recommended to define a `BaseModel` class that inherits from
+`ActiveRecordBaseModel` and use it as the base class for all models
+as shown in the following example:
 
 ```python
 from sqlalchemy import String, ForeignKey
@@ -121,6 +133,10 @@ class Comment(BaseModel):
     user: Mapped['User'] = relationship(back_populates='comments')
 ```
 
+> [!WARNING]
+> When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
+> in the base class to avoid creating tables for the base class.
+
 > [!NOTE]
 > The models can directly inherit from the `ActiveRecordBaseModel` class:
 > ```python
@@ -130,14 +146,18 @@ class Comment(BaseModel):
 >     __tablename__ = 'users'
 >     # ...
 > ```
+> However, it is recommended to create a base class for your models and
+> inherit from it.
 
 > [!TIP]
-> If you don't want to implement automatic timestamps, your base model can inherit
-> from `ActiveRecordMixin` directly:
+> Your `BaseModel` class can also inherit directly from the mixins.
+> For example, if you don't want to implement automatic timestamps don't inherit
+> from `ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
+> and/or `SerializationMixin`:
 > ```python
-> from sqlactive import ActiveRecordMixin
+> from sqlactive import ActiveRecordMixin, SerializationMixin
 >
-> class BaseModel(ActiveRecordMixin):
+> class BaseModel(ActiveRecordMixin, SerializationMixin):
 >     __abstract__ = True
 > ```
 
@@ -290,6 +310,8 @@ print(users)
 Perform simple and complex queries, eager loading, and dictionary serialization:
 
 ```python
+from sqlactive import JOINED, SUBQUERY
+
 user = await User.filter(name='John Doe').first()
 print(user)
 # <User #1>
@@ -389,6 +411,8 @@ print(user.updated_at)
 
 ## Testing
 
+### Unit Tests
+
 To run the tests, simply run the following command from the root directory:
 
 ```bash
@@ -401,11 +425,47 @@ To run a specific test, use the following command:
 python -m unittest tests.<test_name>
 ```
 
-Available tests:
+**Available tests:**
 - `test_active_record`
 - `test_inspection`
-- `test_base_model`
+- `test_serialization`
 - `test_smart_query`
+
+### Coverage
+
+First, install the `coverage` package:
+
+```bash
+pip install coverage
+```
+
+To check the coverage, run the following command:
+
+```bash
+python -m coverage run -m unittest discover -s tests -t .
+python -m coverage report -m
+```
+
+To generate the coverage report, run the following command:
+
+```bash
+python -m coverage run -m unittest discover -s tests -t .
+python -m coverage html -d htmlcov
+```
+
+### Lint
+
+First, install the `ruff` package:
+
+```bash
+pip install ruff
+```
+
+To check the code style, run the following command:
+
+```bash
+python -m ruff check .
+```
 
 ## Documentation
 

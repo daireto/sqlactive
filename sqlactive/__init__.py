@@ -1,5 +1,13 @@
 """
-Inspired by https://github.com/absent1706/sqlalchemy-mixins
+# SQLActive
+
+A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
+Bring Django-like queries, automatic timestamps, nested eager loading,
+and dictionary serialization for SQLAlchemy models.
+
+Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/).
+
+Documentation: https://daireto.github.io/sqlactive/
 
 This package provides a set of mixins for SQLAlchemy models
 and a base class for all models.
@@ -15,9 +23,10 @@ the model.
 
 The `ActiveRecordBaseModel` class is a base class for all models
 that inherits from `ActiveRecordMixin` class which provides the set
-of ActiveRecord-like helper methods for interacting with the database.
-It also inherits from `TimestampMixin` class which adds the `created_at`
-and `updated_at` timestamp columns.
+of ActiveRecord-like helper methods for interacting with the database,
+`TimestampMixin` class which adds the `created_at` and `updated_at`
+timestamp columns, and `SerializationMixin` class which provides
+serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -49,53 +58,21 @@ as shown in the following example:
 ```
 
 `TimestampMixin` class defines the `created_at` and `updated_at` columns
-with default values and onupdate behavior. To customize the column names,
-override the `__created_at_name__` and `__updated_at_name__` class
-variables as shown in the following example:
+with default values and onupdate behavior. To know how to customize the
+timestamps behavior, check the `TimestampMixin` class documentation in
+`sqlactive.timestamp.TimestampMixin` or in the following link:
+https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/
 
-```python
-    class MyModel(ActiveRecordBaseModel):
-        __created_at_name__ = 'created_at'
-        __updated_at_name__ = 'updated_at'
-```
-
-The `__datetime_func__` class variable can be used to override the default
-datetime function as shown in the following example:
-
-```python
-    from sqlalchemy.sql import func
-
-    class MyModel(ActiveRecordBaseModel):
-        __datetime_func__ = func.current_timestamp()
-```
-
-To avoid adding the `created_at` and `updated_at` timestamp columns and
-use only the ActiveRecord-like helper methods, don't inherit from
-`ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
-as shown in the following example:
+Your `BaseModel` class can also inherit directly from the mixins. For
+example, if you don't want to implement automatic timestamps don't inherit
+from `ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
+and/or `SerializationMixin` as shown in the following example:
 
 ```python
     from sqlalchemy import Mapped, mapped_column
-    from sqlactive import ActiveRecordMixin
+    from sqlactive import ActiveRecordMixin, SerializationMixin
 
-    class BaseModel(ActiveRecordMixin):
-        __abstract__ = True
-
-    class User(BaseModel):
-        __tablename__ = 'users'
-        id: Mapped[int] = mapped_column(primary_key=True)
-        name: Mapped[str] = mapped_column(String(100))
-```
-
-To only add the `created_at` and `updated_at` timestamp columns, don't
-inherit from `ActiveRecordMixin` class. Instead, inherit from
-`TimestampMixin` as shown in the following example:
-
-```python
-    from sqlalchemy import Mapped, mapped_column
-    from sqlactive import TimestampMixin
-
-    class BaseModel(TimestampMixin):
+    class BaseModel(ActiveRecordMixin, SerializationMixin):
         __abstract__ = True
 
     class User(BaseModel):
@@ -152,6 +129,7 @@ If no base model is provided, the `ActiveRecordBaseModel` class will be used as 
 
 from .base_model import ActiveRecordBaseModel
 from .active_record import ActiveRecordMixin
+from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
 from .conn import DBConnection
@@ -160,6 +138,7 @@ from .conn import DBConnection
 __all__ = [
     'ActiveRecordBaseModel',
     'ActiveRecordMixin',
+    'SerializationMixin',
     'TimestampMixin',
     'JOINED',
     'SUBQUERY',
@@ -168,4 +147,4 @@ __all__ = [
 ]
 
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'

@@ -12,16 +12,17 @@ theme:
     - search.highlight
     - search.share
 nav:
-  - Home: index.md
+  - Home: INDEX.md
   - Docs:
-    - ActiveRecordMixin:
-      - Overview: pages/active_record_mixin/overview.md
-      - API Reference: pages/active_record_mixin/api_reference.md
-    - TImestampMixin: pages/timestamp_mixin.md
-    - SmartQueryMixin: pages/smart_query_mixin.md
-    - InspectionMixin: pages/inspection_mixin.md
+    - ActiveRecord Mixin:
+      - Overview: pages/active_record_mixin/OVERVIEW.md
+      - API Reference: pages/active_record_mixin/API_REFERENCE.md
+    - TImestamp Mixin: pages/TIMESTAMP_MIXIN.md
+    - Serialization Mixin: pages/SERIALIZATION_MIXIN.md
+    - Smart Queries Mixin: pages/SMART_QUERY_MIXIN.md
+    - Inspection Mixin: pages/INSPECTION_MIXIN.md
   - Development:
-    - Contributing: contributing.md
+    - Contributing: CONTRIBUTING.md
 extra:
   version:
     provider: mike
