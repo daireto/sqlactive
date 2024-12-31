@@ -16,7 +16,7 @@
         <img src='https://coveralls.io/repos/github/daireto/sqlactive/badge.svg?branch=main' alt='Coverage Status' />
     </a>
     <a href="[/LICENSE](https://github.com/astral-sh/ruff)" target="_blank">
-        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="License">
+        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>
     <a href="/LICENSE" target="_blank">
         <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
