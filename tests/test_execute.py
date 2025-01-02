@@ -2,8 +2,7 @@ import unittest
 
 from sqlalchemy.sql import select, func
 
-from sqlactive.conn import DBConnection
-from sqlactive.execute import execute
+from sqlactive.conn import DBConnection, execute
 from sqlactive.exceptions import NoSessionError
 
 from ._logger import logger
@@ -12,12 +11,12 @@ from ._seed import Seed
 
 
 class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
-    """Tests for `sqlactive.execute` function."""
+    """Tests for `sqlactive.conn.execute` function."""
 
     DB_URL = 'sqlite+aiosqlite://'
 
     async def test_execute_with_base_model(self):
-        """Tests for `sqlactive.execute` function
+        """Tests for `sqlactive.conn.execute` function
         using a `BaseModel` class.
         """
 
@@ -38,7 +37,7 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
         await conn.close(BaseModel)
 
     async def test_execute_with_active_record_base_model(self):
-        """Tests for `sqlactive.execute` function
+        """Tests for `sqlactive.conn.execute` function
         using the `ActiveRecordBaseModel` class.
         """
 

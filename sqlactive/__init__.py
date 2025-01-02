@@ -193,8 +193,7 @@ from .active_record import ActiveRecordMixin
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
-from .conn import DBConnection
-from .execute import execute
+from .conn import DBConnection, execute
 
 
 __all__ = [
