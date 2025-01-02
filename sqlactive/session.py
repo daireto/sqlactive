@@ -23,6 +23,12 @@ class SessionMixin:
 
         cls._session = session
 
+    @classmethod
+    def close_session(cls) -> None:
+        """Closes the session."""
+
+        cls._session = None
+
     @classproperty
     def _AsyncSession(cls) -> async_scoped_session[AsyncSession]:
         """Async session factory.

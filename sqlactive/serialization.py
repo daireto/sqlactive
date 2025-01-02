@@ -2,10 +2,13 @@
 
 import json
 
-from typing import Iterable, Self, overload
+from typing import Iterable, TypeVar, overload
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from .inspection import InspectionMixin
+
+
+Self = TypeVar('Self', bound='SerializationMixin')
 
 
 class SerializationMixin(InspectionMixin):

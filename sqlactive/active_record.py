@@ -1,6 +1,6 @@
 """This module defines `ActiveRecordMixin` class."""
 
-from typing import Any, Self, Sequence, cast
+from typing import Any, TypeVar, Sequence, cast
 
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause, select
@@ -13,6 +13,9 @@ from .utils import classproperty
 from .session import SessionMixin
 from .async_query import AsyncQuery
 from .smart_query import SmartQueryMixin
+
+
+Self = TypeVar('Self', bound='ActiveRecordMixin')
 
 
 class ActiveRecordMixin(SessionMixin, SmartQueryMixin):

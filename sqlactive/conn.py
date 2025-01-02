@@ -36,41 +36,64 @@ class DBConnection:
             conn = DBConnection(DATABASE_URL, echo=True)
         ```
 
-        After that, the `init_db` method can be called to initialize the
-        database tables, as shown in the following example:
+        The `init_db` method can be called to initialize the database tables:
 
         ```python
-            from sqlactive import ActiveRecordBaseModel, DBConnection
+            from sqlactive import DBConnection
 
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db()) # Initialize the database
+        ```
+
+        If your base model is not `ActiveRecordBaseModel` you must pass your
+        base model class to this method in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordMixin, SerializationMixin
+
+            class BaseModel(ActiveRecordMixin, SerializationMixin):
+                __abstract__ = True
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+        ```
+
+        The `close` method can be called to close the database
+        connection. It also sets the `session` attribute of
+        the base model to `None`:
+
+        ```python
+            from sqlactive import DBConnection
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+
+            # Perform operations...
+
+            asyncio.run(conn.close()) # Close the connection
+        ```
+
+        If your base model is not `ActiveRecordBaseModel`,
+        you should pass your base model class to the `close` method
+        in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordBaseModel
+
+            # Note that it does not matter if your base model
+            # inherits from `ActiveRecordBaseModel`, you still
+            # need to pass it to this method
             class BaseModel(ActiveRecordBaseModel):
                 __abstract__ = True
 
             DATABASE_URL = 'sqlite+aiosqlite://'
             conn = DBConnection(DATABASE_URL, echo=True)
-            asyncio.run(conn.init_db(BaseModel))
-        ```
 
-        If no base model is provided, the `ActiveRecordBaseModel` class will
-        be used as the base model:
+            # Perform operations...
 
-        ```python
-            from sqlactive import DBConnection
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-            asyncio.run(conn.init_db())
-        ```
-
-        Finally, the `close` method can be called to close the database
-        connection, as shown in the following example:
-
-        ```python
-            from sqlactive import DBConnection
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-            ... # Perform operations
-            asyncio.run(conn.close())
+            asyncio.run(conn.close(BaseModel)) # Pass your base model
         ```
 
         Parameters
@@ -86,13 +109,25 @@ class DBConnection:
         self.async_sessionmaker = async_sessionmaker(bind=self.async_engine, expire_on_commit=False)
         self.async_scoped_session = async_scoped_session(self.async_sessionmaker, scopefunc=current_task)
 
-    async def init_db(self, base_model: type[ActiveRecordBaseModel] | None = ActiveRecordBaseModel) -> None:
+    async def init_db(self, base_model: type[ActiveRecordBaseModel] | None = None) -> None:
         """Initializes the database tables.
 
-        Parameters
-        ----------
-        base_model : type[ActiveRecordBaseModel] | None, optional
-            Base model class, by default `ActiveRecordBaseModel`.
+        If your base model is not `ActiveRecordBaseModel` you must pass
+        your base model class to this method in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordBaseModel
+
+            # Note that it does not matter if your base model
+            # inherits from `ActiveRecordBaseModel`, you still
+            # need to pass it to this method
+            class BaseModel(ActiveRecordBaseModel):
+                __abstract__ = True
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+        ```
         """
 
         if not base_model:
@@ -103,7 +138,34 @@ class DBConnection:
         async with self.async_engine.begin() as conn:
             await conn.run_sync(base_model.metadata.create_all)
 
-    async def close(self) -> None:
-        """Closes the database connection."""
+    async def close(self, base_model: type[ActiveRecordBaseModel] | None = None) -> None:
+        """Closes the database connection
+        and sets the `session` attribute of the base model to `None`.
+
+        If your base model is not `ActiveRecordBaseModel`,
+        you should pass your base model class to this method
+        in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordBaseModel
+
+            # Note that it does not matter if your base model
+            # inherits from `ActiveRecordBaseModel`, you still
+            # need to pass it to this method
+            class BaseModel(ActiveRecordBaseModel):
+                __abstract__ = True
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db(BaseModel))
+
+            # Perform operations...
+
+            asyncio.run(conn.close(BaseModel))  # Pass your base model
+        ```
+        """
 
         await self.async_engine.dispose()
+        if not base_model:
+            base_model = ActiveRecordBaseModel
+        base_model.close_session()
