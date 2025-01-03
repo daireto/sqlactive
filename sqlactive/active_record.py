@@ -1,7 +1,8 @@
 """This module defines `ActiveRecordMixin` class."""
 
+from typing import Any, cast
+from typing_extensions import Self
 from collections.abc import Sequence
-from typing import Any, Self, cast
 
 from sqlalchemy.sql import FromClause, Select, select
 from sqlalchemy.sql.base import ExecutableOption

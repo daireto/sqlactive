@@ -1,29 +1,33 @@
 """`Seed` class to seed database with test data."""
 
 from sqlactive.conn import DBConnection
+from sqlactive.base_model import ActiveRecordBaseModel
 
 from ._logger import logger
-from ._models import BaseModel, User, Post, Comment
+from ._models import User, Post, Comment
 
 
 class Seed:
 
-    def __init__(self, conn: DBConnection):
+    def __init__(self, conn: DBConnection, base_model: type[ActiveRecordBaseModel] | None = None):
         """Creates a new seeder.
 
         Parameters
         ----------
         conn : DBConnection
             Database connection.
+        base_model : type[ActiveRecordBaseModel], optional
+            Base model class, by default ActiveRecordBaseModel.
         """
 
         self.conn = conn
+        self.base_model = base_model
 
     async def run(self):
         """Seeds the database with test data."""
 
         logger.info('Initializing database...')
-        await self.conn.init_db(BaseModel)
+        await self.conn.init_db(self.base_model)
         logger.info('Seeding users...')
         await self.seed_users()
         logger.info('Seeding posts...')

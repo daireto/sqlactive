@@ -2,7 +2,8 @@
 
 import json
 
-from typing import Self, overload
+from typing import overload
+from typing_extensions import Self
 from collections.abc import Iterable
 from sqlalchemy.orm.exc import DetachedInstanceError
 

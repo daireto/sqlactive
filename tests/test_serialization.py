@@ -16,7 +16,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
-        logger.info('ActiveRecordBaseModel tests...')
+        logger.info('SerializationMixin tests...')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
         seed = Seed(cls.conn)

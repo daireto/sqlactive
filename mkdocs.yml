@@ -26,13 +26,15 @@ theme:
 nav:
   - Home: index.md
   - Docs:
-    - ActiveRecord Mixin:
-      - Overview: pages/active_record_mixin/overview.md
-      - API Reference: pages/active_record_mixin/api_reference.md
-    - TImestamp Mixin: pages/timestamp_mixin.md
-    - Serialization Mixin: pages/serialization_mixin.md
-    - Smart Queries Mixin: pages/smart_query_mixin.md
-    - Inspection Mixin: pages/inspection_mixin.md
+    - Mixins:
+      - ActiveRecord Mixin:
+        - Overview: pages/active_record_mixin/overview.md
+        - API Reference: pages/active_record_mixin/api_reference.md
+      - TImestamp Mixin: pages/timestamp_mixin.md
+      - Serialization Mixin: pages/serialization_mixin.md
+      - Smart Queries Mixin: pages/smart_query_mixin.md
+      - Inspection Mixin: pages/inspection_mixin.md
+    - DB Connection Helper: pages/db_connection_helper.md
   - Development:
     - Contributing: contributing.md
 extra:

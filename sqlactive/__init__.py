@@ -9,6 +9,8 @@ Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy
 
 Documentation: https://daireto.github.io/sqlactive/
 
+### Overview
+
 This package provides a set of mixins for SQLAlchemy models
 and a base class for all models.
 
@@ -104,27 +106,86 @@ in the base class to avoid creating tables for the base class.
 # []
 
 ### DBConnection helper
-To create a DB connection, create a instance of the `DBConnection` class and call the `init_db` method
-as shown in the following example:
+To create a DB connection, create an instance of the `DBConnection` class and call
+the `init_db` method:
+
 ```python
     from sqlactive import ActiveRecordBaseModel, DBConnection
-
-    class BaseModel(ActiveRecordBaseModel):
-        __abstract__ = True
-
-    DATABASE_URL = 'sqlite+aiosqlite://'
-    conn = DBConnection(DATABASE_URL, echo=True)
-    asyncio.run(conn.init_db(BaseModel))
-```
-
-If no base model is provided, the `ActiveRecordBaseModel` class will be used as the base model:
-```python
-    from sqlactive import DBConnection
 
     DATABASE_URL = 'sqlite+aiosqlite://'
     conn = DBConnection(DATABASE_URL, echo=True)
     asyncio.run(conn.init_db())
 ```
+
+To close the connection, call the `close` method:
+
+```python
+    from sqlactive import ActiveRecordBaseModel, DBConnection
+
+    DATABASE_URL = 'sqlite+aiosqlite://'
+    conn = DBConnection(DATABASE_URL, echo=True)
+    asyncio.run(conn.init_db())
+
+    # Perform operations...
+
+    asyncio.run(conn.close())
+```
+
+If your base model is not `ActiveRecordBaseModel` you must pass your base
+model class to the `base_model` argument of the `init_db` and `close` methods:
+
+```python
+    from sqlactive import DBConnection, ActiveRecordBaseModel
+
+    # Note that it does not matter if your base model
+    # inherits from `ActiveRecordBaseModel`, you still
+    # need to pass it to this method
+    class BaseModel(ActiveRecordBaseModel):
+        __abstract__ = True
+
+    DATABASE_URL = 'sqlite+aiosqlite://'
+    conn = DBConnection(DATABASE_URL, echo=True)
+    asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+
+    # Perform operations...
+
+    asyncio.run(conn.close(BaseModel))  # Pass your base model
+```
+
+### Execute native SQLAlchemy queries
+You can execute native SQLAlchemy queries using the `execute` method:
+
+```python
+    from sqlalchemy import select, func
+    from sqlactive import execute
+
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query)
+```
+
+If your base model is not `ActiveRecordBaseModel` you must pass your base
+model class to the `base_model` argument of the `execute` method:
+
+```python
+    from sqlalchemy import select, func
+    from sqlactive import ActiveRecordBaseModel, execute
+
+    # Note that it does not matter if your base model
+    # inherits from `ActiveRecordBaseModel`, you still
+    # need to pass it to this method
+    class BaseModel(ActiveRecordBaseModel):
+        __abstract__ = True
+
+    class User(BaseModel):
+        __tablename__ = 'users'
+        # ...
+
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query, BaseModel)
+```
+
+NOTE: Your base model must have a session in order to use this method.
+Otherwise, it will raise an `NoSessionError` exception.
 """
 
 from .base_model import ActiveRecordBaseModel
@@ -132,7 +193,7 @@ from .active_record import ActiveRecordMixin
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
-from .conn import DBConnection
+from .conn import DBConnection, execute
 
 
 __all__ = [
@@ -143,7 +204,8 @@ __all__ = [
     'JOINED',
     'SUBQUERY',
     'SELECT_IN',
-    'DBConnection'
+    'DBConnection',
+    'execute',
 ]
 
 

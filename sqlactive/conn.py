@@ -1,17 +1,83 @@
 """This module defines `DBConnection` class."""
 
-from typing import Any
+from typing import Any, TypeVar
 from asyncio import current_task
 
+from sqlalchemy.sql.selectable import TypedReturnsRows
+from sqlalchemy.engine import Result
+from sqlalchemy.engine.interfaces import _CoreAnyExecuteParams
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, async_scoped_session
 
 from .base_model import ActiveRecordBaseModel
 
 
+_T = TypeVar('_T', bound=Any)
+
+
 class DBConnection:
     """Provides functions for connecting to a database
     and initializing tables.
+
+    The `init_db` method can be called to initialize the database tables:
+
+    ```python
+        from sqlactive import DBConnection
+
+        DATABASE_URL = 'sqlite+aiosqlite://'
+        conn = DBConnection(DATABASE_URL, echo=True)
+        asyncio.run(conn.init_db()) # Initialize the database
+    ```
+
+    If your base model is not `ActiveRecordBaseModel` you must pass your
+    base model class to the `init_db` method in the `base_model` argument:
+
+    ```python
+        from sqlactive import DBConnection, ActiveRecordBaseModel
+
+        class BaseModel(ActiveRecordBaseModel):
+            __abstract__ = True
+
+        DATABASE_URL = 'sqlite+aiosqlite://'
+        conn = DBConnection(DATABASE_URL, echo=True)
+        asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+    ```
+
+    The `close` method can be called to close the database
+    connection. It also sets the `session` attribute of
+    the base model to `None`:
+
+    ```python
+        from sqlactive import DBConnection
+
+        DATABASE_URL = 'sqlite+aiosqlite://'
+        conn = DBConnection(DATABASE_URL, echo=True)
+
+        # Perform operations...
+
+        asyncio.run(conn.close()) # Close the connection
+    ```
+
+    If your base model is not `ActiveRecordBaseModel`
+    you should pass your base model class to the `close` method
+    in the `base_model` argument:
+
+    ```python
+        from sqlactive import DBConnection, ActiveRecordBaseModel
+
+        # Note that it does not matter if your base model
+        # inherits from `ActiveRecordBaseModel`, you still
+        # need to pass it to this method
+        class BaseModel(ActiveRecordBaseModel):
+            __abstract__ = True
+
+        DATABASE_URL = 'sqlite+aiosqlite://'
+        conn = DBConnection(DATABASE_URL, echo=True)
+
+        # Perform operations...
+
+        asyncio.run(conn.close(BaseModel)) # Pass your base model
+    ```
     """
 
     def __init__(self, url: str | URL, **kw: Any) -> None:
@@ -27,52 +93,6 @@ class DBConnection:
         an async scoped session instance which scope function is `current_task`
         from the `asyncio` module.
 
-        Example:
-
-        ```python
-            from sqlactive import DBConnection
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-        ```
-
-        After that, the `init_db` method can be called to initialize the
-        database tables, as shown in the following example:
-
-        ```python
-            from sqlactive import ActiveRecordBaseModel, DBConnection
-
-            class BaseModel(ActiveRecordBaseModel):
-                __abstract__ = True
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-            asyncio.run(conn.init_db(BaseModel))
-        ```
-
-        If no base model is provided, the `ActiveRecordBaseModel` class will
-        be used as the base model:
-
-        ```python
-            from sqlactive import DBConnection
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-            asyncio.run(conn.init_db())
-        ```
-
-        Finally, the `close` method can be called to close the database
-        connection, as shown in the following example:
-
-        ```python
-            from sqlactive import DBConnection
-
-            DATABASE_URL = 'sqlite+aiosqlite://'
-            conn = DBConnection(DATABASE_URL, echo=True)
-            ... # Perform operations
-            asyncio.run(conn.close())
-        ```
-
         Parameters
         ----------
         url : str | URL
@@ -86,13 +106,25 @@ class DBConnection:
         self.async_sessionmaker = async_sessionmaker(bind=self.async_engine, expire_on_commit=False)
         self.async_scoped_session = async_scoped_session(self.async_sessionmaker, scopefunc=current_task)
 
-    async def init_db(self, base_model: type[ActiveRecordBaseModel] | None = ActiveRecordBaseModel) -> None:
+    async def init_db(self, base_model: type[ActiveRecordBaseModel] | None = None) -> None:
         """Initializes the database tables.
 
-        Parameters
-        ----------
-        base_model : type[ActiveRecordBaseModel] | None, optional
-            Base model class, by default `ActiveRecordBaseModel`.
+        If your base model is not `ActiveRecordBaseModel` you must pass
+        your base model class to this method in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordBaseModel
+
+            # Note that it does not matter if your base model
+            # inherits from `ActiveRecordBaseModel`, you still
+            # need to pass it to this method
+            class BaseModel(ActiveRecordBaseModel):
+                __abstract__ = True
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+        ```
         """
 
         if not base_model:
@@ -103,7 +135,79 @@ class DBConnection:
         async with self.async_engine.begin() as conn:
             await conn.run_sync(base_model.metadata.create_all)
 
-    async def close(self) -> None:
-        """Closes the database connection."""
+    async def close(self, base_model: type[ActiveRecordBaseModel] | None = None) -> None:
+        """Closes the database connection
+        and sets the `session` attribute of the base model to `None`.
+
+        If your base model is not `ActiveRecordBaseModel`
+        you should pass your base model class to this method
+        in the `base_model` argument:
+
+        ```python
+            from sqlactive import DBConnection, ActiveRecordBaseModel
+
+            # Note that it does not matter if your base model
+            # inherits from `ActiveRecordBaseModel`, you still
+            # need to pass it to this method
+            class BaseModel(ActiveRecordBaseModel):
+                __abstract__ = True
+
+            DATABASE_URL = 'sqlite+aiosqlite://'
+            conn = DBConnection(DATABASE_URL, echo=True)
+            asyncio.run(conn.init_db(BaseModel))
+
+            # Perform operations...
+
+            asyncio.run(conn.close(BaseModel))  # Pass your base model
+        ```
+        """
 
         await self.async_engine.dispose()
+        if not base_model:
+            base_model = ActiveRecordBaseModel
+        base_model.close_session()
+
+
+async def execute(statement: TypedReturnsRows[_T], base_model: type[ActiveRecordBaseModel] | None = ActiveRecordBaseModel, params: _CoreAnyExecuteParams | None = None, **kwargs) -> Result[_T]:
+    """Executes a statement using the `AsyncSession`
+    of the `ActiveRecordBaseModel` and return a buffered
+    `sqlalchemy.engine.Result` object.
+
+    ```python
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query)
+    ```
+
+    The `statement`, `params` and `kwargs` arguments
+    of this function are the same as the arguments
+    of the `execute` method of the
+    `sqlalchemy.ext.asyncio.AsyncSession` class.
+
+    If your base model is not `ActiveRecordBaseModel`
+    you must pass your base model class to this method
+    in the `base_model` argument:
+
+    ```python
+    # Note that it does not matter if your base model
+    # inherits from `ActiveRecordBaseModel`, you still
+    # need to pass it to this method
+    class BaseModel(ActiveRecordBaseModel):
+        __abstract__ = True
+
+    class User(BaseModel):
+        __tablename__ = 'users'
+        # ...
+
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query, BaseModel)
+    ```
+
+    NOTE: Your base model must have a session in order to use
+    this method. Otherwise, it will raise
+    an `NoSessionError` exception.
+    """
+
+    if not base_model:
+        base_model = ActiveRecordBaseModel
+    async with base_model._AsyncSession() as session:
+        return await session.execute(statement, params, **kwargs)

@@ -44,7 +44,8 @@ Documentation: https://daireto.github.io/sqlactive/
     - [3. Perform CRUD Operations](#3-perform-crud-operations)
     - [4. Perform Bulk Operations](#4-perform-bulk-operations)
     - [5. Perform Queries](#5-perform-queries)
-    - [6. Manage Timestamps](#6-manage-timestamps)
+    - [6. Perform Native Queries](#6-perform-native-queries)
+    - [7. Manage Timestamps](#7-manage-timestamps)
   - [Testing](#testing)
     - [Unit Tests](#unit-tests)
     - [Coverage](#coverage)
@@ -198,7 +199,9 @@ async with async_engine.begin() as conn:
 The use of the `expire_on_commit` flag is explained in the warning of [this section](#4-perform-bulk-operations).
 
 > [!TIP]
-> Use the `DBConnection` class as a shortcut to initialize the database:
+> Use the `DBConnection` class as a shortcut to initialize the database.
+> The `DBConnection` class is a wrapper around the `async_engine`, `async_sessionmaker`
+> and `async_scoped_session` objects:
 > ```python
 > from sqlactive import DBConnection
 >
@@ -206,6 +209,7 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 > conn = DBConnection(DATABASE_URL, echo=False)
 > await conn.init_db(BaseModel)
 > ```
+> See the [DB Connection Helper](https://daireto.github.io/sqlactive/latest/pages/db_connection_helper/) section for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -390,7 +394,42 @@ for more details.
 > Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
-### 6. Manage Timestamps
+### 6. Perform Native Queries
+
+Perform native SQLAlchemy queries using the `execute` method:
+
+```python
+    from sqlalchemy import select, func
+    from sqlactive import execute
+
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query)
+    # [(20, 1), (22, 4), (25, 12)]
+```
+
+If your base model is not `ActiveRecordBaseModel` you must pass your base
+model class to the `base_model` argument of the `execute` method:
+
+```python
+    from sqlalchemy import select, func
+    from sqlactive import ActiveRecordBaseModel, execute
+
+    # Note that it does not matter if your base model
+    # inherits from `ActiveRecordBaseModel`, you still
+    # need to pass it to this method
+    class BaseModel(ActiveRecordBaseModel):
+        __abstract__ = True
+
+    class User(BaseModel):
+        __tablename__ = 'users'
+        # ...
+
+    query = select(User.age, func.count(User.id)).group_by(User.age)
+    result = await execute(query, BaseModel)
+    # [(20, 1), (22, 4), (25, 12)]
+```
+
+### 7. Manage Timestamps
 
 Timestamps (`created_at` and `updated_at`) are automatically managed:
 
