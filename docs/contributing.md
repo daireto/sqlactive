@@ -9,7 +9,7 @@ moment to review this document before submitting a pull request.
   - [Why should you read these guidelines?](#why-should-you-read-these-guidelines)
   - [Ground Rules](#ground-rules)
     - [Responsibilities](#responsibilities)
-    - [Tools \& Workflow](#tools--workflow)
+    - [Tools and Workflow](#tools-and-workflow)
   - [Your First Pull Request](#your-first-pull-request)
     - [Getting Started](#getting-started)
     - [Setup Instructions](#setup-instructions)
@@ -48,7 +48,7 @@ a smooth collaboration process.
 - Be respectful and welcoming. Follow the
   [Python Community Code of Conduct](https://www.python.org/psf/codeofconduct/).
 
-### Tools & Workflow
+### Tools and Workflow
 
 - Use **Ruff** as the linter and formatter (**Black** could be an alternative).
 - Write **NumPy-style docstrings** for all public functions, classes, attributes,
