@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="docs/images/logo.png" alt="SQLActive" />
+    <img src="https://raw.githubusercontent.com/Daireto/sqlactive/main/docs/images/logo.png" alt="SQLActive" />
 </p>
 
 <p align="center">
