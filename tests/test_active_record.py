@@ -2,15 +2,15 @@ import asyncio
 import unittest
 
 from datetime import datetime, timezone
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.operators import or_
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError, InvalidRequestError
 
 from sqlactive import JOINED, SUBQUERY, SELECT_IN
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import User, Post, Comment
+from ._models import BaseModel, User, Post, Comment, Sell
 from ._seed import Seed
 
 
@@ -21,17 +21,25 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
-        logger.info('ActiveRecordMixin tests...')
+        logger.info('***** ActiveRecordMixin tests *****')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
-        seed = Seed(cls.conn)
+        seed = Seed(cls.conn, BaseModel)
         asyncio.run(seed.run())
 
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close())
+            asyncio.run(cls.conn.close(BaseModel))
+
+    def test_get_primary_key_name(self):
+        """Test for `_get_primary_key_name` function."""
+
+        logger.info('Testing `_get_primary_key_name` function...')
+        with self.assertRaises(InvalidRequestError) as context:
+            Sell._get_primary_key_name()
+        self.assertIn('has a composite primary key', str(context.exception))
 
     def test_fill(self):
         """Test for `fill` function."""
@@ -42,6 +50,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob28', user.username)
         self.assertEqual('Bob Williams', user.name)
         self.assertEqual(32, user.age)
+        with self.assertRaises(KeyError) as context:
+            user.fill(**{'foo': 'bar'})
+        self.assertIn('`foo`', str(context.exception))
 
     async def test_save(self):
         """Test for `save` function."""
@@ -53,6 +64,10 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(user.id)
         self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
         self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
+        with self.assertRaises(IntegrityError) as context:
+            user = User(username='Test28', name='Test User', age=20)
+            await user.save()
+        self.assertIn('UNIQUE constraint failed: users.username', str(context.exception))
 
     async def test_save_all(self):
         """Test for `save_all`function."""
@@ -75,6 +90,13 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(user.id)
             self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
             self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
+        with self.assertRaises(IntegrityError) as context:
+            users = [
+                User(username='Test100', name='Test User 1', age=20),
+                User(username='Test200', name='Test User 2', age=30),
+            ]
+            await User.save_all(users)
+        self.assertIn('UNIQUE constraint failed: users.username', str(context.exception))
 
     async def test_create(self):
         """Test for `create`, `insert`, `add` functions."""
@@ -106,9 +128,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
     async def test_create_all(self):
         """Test for `create_all`function."""
 
-        logger.info(
-            'Testing `create_all` function...'
-        )
+        logger.info('Testing `create_all` function...')
         users = [
             User(username='Test110', name='Test User 1', age=20),
             User(username='Test210', name='Test User 2', age=30),
@@ -168,6 +188,10 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         user2 = await User.find(username='Jessica3248').one_or_none()
         self.assertIsNone(user1)
         self.assertIsNone(user2)
+        with self.assertRaises(InvalidRequestError) as context:
+            user3 = User(username='Unknown', name='Unknown', age=20)
+            await user3.delete()
+        self.assertIn('is not persisted', str(context.exception))
 
     async def test_delete_all(self):
         """Test for `delete_all` function."""
@@ -187,6 +211,13 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         users = await User.find(username__startswith='DeleteTest').all()
         await User.delete_all(users)
         users = await User.find(username__startswith='DeleteTest').all()
+        with self.assertRaises(InvalidRequestError) as context:
+            users = [
+                User(username='Unknown121', name='Unknown User 1', age=20),
+                User(username='Unknown221', name='Unknown User 2', age=30),
+            ]
+            await User.delete_all(users)
+        self.assertIn('is not persisted', str(context.exception))
 
     async def test_destroy(self):
         """Test for `destroy` function."""
@@ -202,6 +233,11 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(user1)
         self.assertIsNone(user2)
         self.assertIsNone(user3)
+        with self.assertRaises(IntegrityError) as context:
+            user = await User.create(username='Pablo123546', name='Test User 1', age=20)
+            await Post.create(title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id)
+            await User.destroy(user.id)
+        self.assertIn('NOT NULL constraint failed', str(context.exception))
 
     async def test_get(self):
         """Test for `get` function."""
@@ -211,6 +247,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(user)
         if user:
             self.assertEqual('Bill65', user.username)
+        user = await User.get(100)
+        self.assertIsNone(user)
 
     async def test_get_or_fail(self):
         """Test for `get_or_fail` function."""
@@ -335,28 +373,36 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `order_by`, `sort` functions...')
         users = await User.find(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
-        users = await User.find(username__like='Ji%').order_by(User.username).all()
+        users = await User.order_by(User.username).filter(username__like='Ji%').all()
         self.assertEqual('Jill874', users[0].username)
-        users = await User.find(username__like='Ji%').sort(User.age).all()
+        users = await User.sort(User.age).filter(username__like='Ji%').all()
         self.assertEqual('Jimmy156', users[0].username)
+        posts = await Post.sort('-rating', 'user___name').all()
+        self.assertEqual(25, len(posts))
 
     async def test_offset(self):
         """Test for `offset`, `skip` functions."""
 
         logger.info('Testing `offset`, `skip` functions...')
-        users = await User.find(username__like='Ji%').offset(1).all()
+        users = await User.offset(1).filter(username__like='Ji%').all()
         self.assertEqual(2, len(users))
-        users = await User.find(username__like='Ji%').skip(2).all()
+        users = await User.skip(2).filter(username__like='Ji%').all()
         self.assertEqual(1, len(users))
+        with self.assertRaises(ValueError) as context:
+            await User.offset(-1).filter(username__like='Ji%').all()
+        self.assertEqual('Offset must be positive.', str(context.exception))
 
     async def test_limit(self):
         """Test for `limit`, `take` functions."""
 
         logger.info('Testing `limit`, `take` functions...')
-        users = await User.find(username__like='Ji%').limit(2).all()
+        users = await User.limit(2).filter(username__like='Ji%').all()
         self.assertEqual(2, len(users))
-        users = await User.find(username__like='Ji%').take(1).all()
+        users = await User.take(1).filter(username__like='Ji%').all()
         self.assertEqual(1, len(users))
+        with self.assertRaises(ValueError) as context:
+            await User.limit(-1).filter(username__like='Ji%').all()
+        self.assertEqual('Limit must be positive.', str(context.exception))
 
     async def test_join(self):
         """Test for `join` function."""
@@ -366,6 +412,15 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         USERS_THAT_HAVE_COMMENTS = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.assertEqual(USERS_THAT_HAVE_COMMENTS, [user.id for user in users])
         self.assertEqual('Lorem ipsum dolor sit amet, consectetur adipiscing elit.', users[0].comments[0].body)
+        with self.assertRaises(ValueError) as context:
+            await User.join(User.posts, (User.comments, 1)).all() # type: ignore
+        self.assertIn('`1` is not boolean', str(context.exception))
+        with self.assertRaises(KeyError) as context:
+            await User.join(Post.comments).all() # type: ignore
+        self.assertIn('`Post.comments`', str(context.exception))
+        with self.assertRaises(KeyError) as context:
+            await User.join((Post.comments, True)).all() # type: ignore
+        self.assertIn('`Post.comments`', str(context.exception))
 
     async def test_with_subquery(self):
         """Test for `with_subquery` function."""
@@ -375,6 +430,15 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         users = await User.with_subquery(User.posts, (User.comments, True)).all()
         self.assertEqual(users_count, len(users), 'message')
         self.assertEqual('Lorem ipsum dolor sit amet, consectetur adipiscing elit.', users[0].comments[0].body)
+        with self.assertRaises(ValueError) as context:
+            await User.with_subquery(User.posts, (User.comments, 1)).all() # type: ignore
+        self.assertIn('`1` is not boolean', str(context.exception))
+        with self.assertRaises(KeyError) as context:
+            await User.with_subquery(Post.comments).all() # type: ignore
+        self.assertIn('`Post.comments`', str(context.exception))
+        with self.assertRaises(KeyError) as context:
+            await User.with_subquery((Post.comments, True)).all() # type: ignore
+        self.assertIn('`Post.comments`', str(context.exception))
 
     async def test_with_schema(self):
         """Test for `with_schema` function."""
@@ -414,6 +478,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `one`, `fetch_one` functions...')
         with self.assertRaises(MultipleResultsFound) as context:
             await User.one()
+        with self.assertRaises(MultipleResultsFound) as context:
+            await User.fetch_one()
         self.assertEqual('Multiple rows were found when exactly one was required', str(context.exception))
         user = await User.find(username='Joe156').fetch_one()
         self.assertEqual('Joe Smith', user.name)
@@ -424,6 +490,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `one_or_none`, `fetch_one_or_none` functions...')
         with self.assertRaises(MultipleResultsFound) as context:
             await User.one_or_none()
+        with self.assertRaises(MultipleResultsFound) as context:
+            await User.fetch_one_or_none()
         self.assertEqual('Multiple rows were found when one or none was required', str(context.exception))
         user = await User.find(username='Joe156').fetch_one_or_none()
         self.assertIsNotNone(user)
@@ -438,11 +506,11 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `all`, `fetch_all`, `to_list` functions...')
         users = await User.all()
         self.assertEqual(34, len(users))
+        users = await User.fetch_all()
+        self.assertEqual(34, len(users))
+        users = await User.to_list()
+        self.assertEqual(34, len(users))
         self.assertEqual('Mike Turner', users[10].name)
-        users = await User.where(username__like='Ji%').fetch_all()
-        self.assertEqual(3, len(users))
-        posts = await Post.where(rating=3).to_list()
-        self.assertEqual(5, len(posts))
 
     async def test_unique(self):
         """Test for `unique` function."""

@@ -333,7 +333,8 @@ def options(*args: ExecutableOption)
 
 > !!! warning
 >
->     Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
+>     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
+>
 >         When including `joinedload()` in reference to a one-to-many or
 >         many-to-many collection, the `Result.unique()` method must be
 >         applied to the returned result, which will make the incoming rows
@@ -347,7 +348,7 @@ def options(*args: ExecutableOption)
 >         returned objects are made unique on primary key.
 >
 >     To learn more about options, see
->     https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options
+>     [`sqlalchemy.orm.Query.options`](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options) docs.
 
 > **Parameters:**
 
@@ -355,7 +356,7 @@ def options(*args: ExecutableOption)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -369,7 +370,7 @@ def options(*args: ExecutableOption)
 
 ### filter
 ```python
-def filter(*criterion: ColumnElement[Any], **filters: Any)
+def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Creates a filtered query using SQLAlchemy or Django-style filters.
@@ -381,7 +382,7 @@ def filter(*criterion: ColumnElement[Any], **filters: Any)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -398,21 +399,21 @@ def filter(*criterion: ColumnElement[Any], **filters: Any)
 
 ### where
 ```python
-def where(*criterion: ColumnElement[Any], **filters: Any)
+def where(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
 ### find
 ```python
-def find(*criterion: ColumnElement[Any], **filters: Any)
+def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
 ### find_one
 ```python
-async def find_one(*criterion: ColumnElement[Any], **filters: Any)
+async def find_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria.
@@ -436,7 +437,7 @@ async def find_one(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_one_or_none
 ```python
-async def find_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
+async def find_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria or `None`.
@@ -459,7 +460,7 @@ async def find_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_all
 ```python
-async def find_all(*criterion: ColumnElement[Any], **filters: Any)
+async def find_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all rows matching the criteria.
@@ -478,7 +479,7 @@ async def find_all(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_first
 ```python
-async def find_first(*criterion: ColumnElement[Any], **filters: Any)
+async def find_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria or `None`.
@@ -497,7 +498,7 @@ async def find_first(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique
 ```python
-async def find_unique(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all unique rows matching the criteria and
@@ -518,7 +519,7 @@ async def find_unique(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_all
 ```python
-async def find_unique_all(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all unique rows matching the criteria and returns a list.
@@ -537,7 +538,7 @@ async def find_unique_all(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_first
 ```python
-async def find_unique_first(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria or `None`.
@@ -556,7 +557,7 @@ async def find_unique_first(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_one
 ```python
-async def find_unique_one(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria.
@@ -580,7 +581,7 @@ async def find_unique_one(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_one_or_none
 ```python
-async def find_unique_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria or `None`.
@@ -603,7 +604,7 @@ async def find_unique_one_or_none(*criterion: ColumnElement[Any], **filters: Any
 
 ### order_by
 ```python
-def order_by(*columns: str | InstrumentedAttribute | UnaryExpression)
+def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
 
 > Creates a query with ORDER BY clause.
@@ -614,7 +615,7 @@ def order_by(*columns: str | InstrumentedAttribute | UnaryExpression)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -628,7 +629,7 @@ def order_by(*columns: str | InstrumentedAttribute | UnaryExpression)
 
 ### sort
 ```python
-def sort(*columns: str | InstrumentedAttribute | UnaryExpression)
+def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
 
 > Synonym for `order_by()`.
@@ -646,7 +647,7 @@ def offset(offset: int)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -678,7 +679,7 @@ def limit(limit: int)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -713,7 +714,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -746,7 +747,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 >     so that the additional queries emitted by `subqueryload()` include the same
 >     ordering as used by the parent query. Without it, there is a chance that
 >     the inner query could return the wrong rows, as specified in
->     https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering
+>     [SQLAlchemy docs](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering).
 >
 >     ```python
 >     # incorrect, no ORDER BY
@@ -765,7 +766,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -778,7 +779,9 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 ### with_schema
 ```python
-def with_schema(schema: dict)
+def with_schema(
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+)
 ```
 
 > Creates a query with complex eager loading schema.
@@ -792,7 +795,7 @@ def with_schema(schema: dict)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > ```python
 > from sqlactive import JOINED, SUBQUERY
@@ -1025,7 +1028,13 @@ async def unique_one_or_none()
 
 ### smart_query
 ```python
-def smart_query(criterion=None, filters=None, sort_columns=None, sort_attrs=None, schema=None)
+def smart_query(
+    criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+    filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
+    sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+    sort_attrs: Sequence[str] | None = None,
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+)
 ```
 
 > Creates a query combining filtering, sorting, and eager loading.
@@ -1040,7 +1049,7 @@ def smart_query(criterion=None, filters=None, sort_columns=None, sort_attrs=None
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 

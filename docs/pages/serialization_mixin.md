@@ -19,7 +19,12 @@ It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
 
 ### to_dict
 ```python
-def to_dict(nested: bool = False, hybrid_attributes: bool = False, exclude: list[str] | None = None)
+def to_dict(
+    nested: bool = False,
+    hybrid_attributes: bool = False,
+    exclude: list[str] | None = None,
+    nested_exclude: list[str] | None = None,
+)
 ```
 
 > Serializes the model to a dictionary.
@@ -32,7 +37,7 @@ def to_dict(nested: bool = False, hybrid_attributes: bool = False, exclude: list
 
 > **Returns:**
 
-> - `dict`: Serialized model.
+> - `dict[str, Any]`: Serialized model.
 
 > **Example:**
 
@@ -50,7 +55,15 @@ def to_dict(nested: bool = False, hybrid_attributes: bool = False, exclude: list
 
 ### to_json
 ```python
-def to_json(nested: bool = False, hybrid_attributes: bool = False, exclude: list[str] | None = None, ensure_ascii: bool = False, indent: int | str | None = None, sort_keys: bool = False)
+def to_json(
+    nested: bool = False,
+    hybrid_attributes: bool = False,
+    exclude: list[str] | None = None,
+    nested_exclude: list[str] | None = None,
+    ensure_ascii: bool = False,
+    indent: int | str | None = None,
+    sort_keys: bool = False
+)
 ```
 
 > Serializes the model to JSON.
@@ -88,7 +101,11 @@ def to_json(nested: bool = False, hybrid_attributes: bool = False, exclude: list
 
 ### from_dict
 ```python
-def from_dict(data: dict | list, exclude: list[str] | None = None)
+def from_dict(
+    data: dict[str, Any] | list[dict[str, Any]],
+    exclude: list[str] | None = None,
+    nested_exclude: list[str] | None = None
+)
 ```
 
 > Deserializes a dictionary to the model.
@@ -124,7 +141,11 @@ def from_dict(data: dict | list, exclude: list[str] | None = None)
 
 ### from_json
 ```python
-def from_json(json_string: str, exclude: list[str] | None = None)
+def from_json(
+    json_string: str,
+    exclude: list[str] | None = None,
+    nested_exclude: list[str] | None = None
+)
 ```
 
 > Deserializes a JSON string to the model.

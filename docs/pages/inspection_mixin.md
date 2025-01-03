@@ -5,7 +5,7 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`SmartQueryMixin`](smart_query_mixin.md).
+    [`SmartQueryMixin`](smart_query_mixin.md) and [`SerializationMixin`](serialization_mixin.md).
     It is not intended to be used on its own.
 
 **Table of Contents**
@@ -85,7 +85,9 @@ def get_class_of_relation(relation_name: str)
 > Returns primary key as string.
 
 > If there is a composite primary key, returns a hyphenated string,
-> as follows: '1-2-3'.
+> as follows: `'1-2-3'`.
+
+> If there is no primary key, returns `'None'`.
 
 > ```python
 > bob = User.create(name='Bob')

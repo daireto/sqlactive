@@ -4,7 +4,7 @@ import unittest
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import User
+from ._models import BaseModel, User, Sell
 from ._seed import Seed
 
 
@@ -15,17 +15,17 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
-        logger.info('InspectionMixin tests...')
+        logger.info('***** InspectionMixin tests *****')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
-        seed = Seed(cls.conn)
+        seed = Seed(cls.conn, BaseModel)
         asyncio.run(seed.run())
 
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close())
+            asyncio.run(cls.conn.close(BaseModel))
 
     async def test_repr(self):
         """Test for `__repr__` function."""
@@ -40,6 +40,10 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `id_str` property...')
         user = await User.get_or_fail(1)
         self.assertEqual('1', user.id_str)
+        sell = await Sell.limit(1).one()
+        self.assertEqual('1-1', sell.id_str)
+        unknown_sell = Sell(id=1, product_id=1)
+        self.assertEqual('None', unknown_sell.id_str)
 
     def test_columns(self):
         """Test for `columns` classproperty."""
@@ -76,13 +80,26 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `hybrid_methods` classproperty...')
         self.assertCountEqual(['older_than'], User.hybrid_methods)
+        self.assertTrue(User(age=35).older_than(User(age=30)))
+        self.assertFalse(User(age=20).older_than(User(age=30)))
 
     def test_filterable_attributes(self):
         """Test for `filterable_attributes` classproperty."""
 
         logger.info('Testing `filterable_attributes` classproperty...')
         self.assertCountEqual(
-            ['posts', 'comments', 'id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult', 'older_than'],
+            [
+                'posts',
+                'comments',
+                'id',
+                'username',
+                'name',
+                'age',
+                'created_at',
+                'updated_at',
+                'is_adult',
+                'older_than',
+            ],
             User.filterable_attributes,
         )
 
@@ -90,7 +107,9 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `sortable_attributes` classproperty."""
 
         logger.info('Testing `sortable_attributes` classproperty...')
-        self.assertCountEqual(['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult'], User.sortable_attributes)
+        self.assertCountEqual(
+            ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult'], User.sortable_attributes
+        )
 
     def test_settable_attributes(self):
         """Test for `settable_attributes` classproperty."""

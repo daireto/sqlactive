@@ -1,6 +1,7 @@
 """Utils for Active SQLAlchemy."""
 
-from typing import Any, Callable, Generic, TypeVar
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
 
 _T = TypeVar('_T')

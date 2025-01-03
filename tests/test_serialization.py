@@ -5,7 +5,7 @@ import unittest
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import User, Post
+from ._models import BaseModel, User, Post
 from ._seed import Seed
 
 
@@ -16,17 +16,17 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
-        logger.info('ActiveRecordBaseModel tests...')
+        logger.info('***** SerializationMixin tests *****')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
-        seed = Seed(cls.conn)
+        seed = Seed(cls.conn, BaseModel)
         asyncio.run(seed.run())
 
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close())
+            asyncio.run(cls.conn.close(BaseModel))
 
     async def test_to_dict(self):
         """Test for `to_dict` function."""
@@ -76,6 +76,29 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
                 'is_adult': user.is_adult,
             },
             user.to_dict(nested=True, hybrid_attributes=True, exclude=['created_at', 'updated_at']),
+        )
+        post = await Post.with_subquery(Post.user).filter(id=1).one()
+        self.assertDictEqual(
+            {
+                'id': 1,
+                'title': 'Lorem ipsum',
+                'body': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                'rating': 4,
+                'user_id': 1,
+                'user': {
+                    'id': 1,
+                    'username': 'Bob28',
+                    'name': 'Bob Williams',
+                    'age': 30,
+                    'is_adult': True,
+                },
+            },
+            post.to_dict(
+                nested=True,
+                hybrid_attributes=True,
+                exclude=['created_at', 'updated_at'],
+                nested_exclude=['created_at', 'updated_at'],
+            ),
         )
 
     async def test_to_json(self):
@@ -142,6 +165,42 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         )
         for i in range(len(user.posts)):
             self.assertDictEqual(EXPECTED_POSTS[i].to_dict(), user.posts[i].to_dict())
+
+        user = User.from_dict(
+            {
+                'id': 1,
+                'username': 'username',
+                'name': 'name',
+                'age': 0,
+                'foo': 'bar',
+                'posts': [
+                    {'id': 1, 'title': 'title', 'body': 'body', 'rating': 0, 'user_id': 1},
+                    {'id': 2, 'title': 'title', 'body': 'body', 'rating': 0, 'user_id': 1},
+                ],
+            },
+            exclude=['foo'],
+        )
+        self.assertEqual(user.id, 1)
+        self.assertEqual(user.username, 'username')
+        self.assertEqual(user.name, 'name')
+        self.assertEqual(user.age, 0)
+        self.assertEqual(user.is_adult, False)
+
+        with self.assertRaises(KeyError) as context:
+            user = User.from_dict(
+                {
+                    'id': 1,
+                    'username': 'username',
+                    'name': 'name',
+                    'age': 0,
+                    'foo': 'bar',
+                    'posts': [
+                        {'id': 1, 'title': 'title', 'body': 'body', 'rating': 0, 'user_id': 1},
+                        {'id': 2, 'title': 'title', 'body': 'body', 'rating': 0, 'user_id': 1},
+                    ],
+                }
+            )
+        self.assertIn('`foo`', str(context.exception))
 
     def test_from_json(self):
         """Test for `from_json` function."""

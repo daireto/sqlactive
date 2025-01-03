@@ -1,15 +1,19 @@
 """This module defines `SmartQueryMixin` class."""
 
+from typing import Any
+from typing_extensions import Self
 from collections import OrderedDict
-from typing import Any, Callable, Sequence, Generator
+from collections.abc import Callable, Generator, Sequence
 
 from sqlalchemy.inspection import inspect
+from sqlalchemy.sql import Select, asc, desc, operators, extract
+from sqlalchemy.sql.operators import OperatorType
+from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
+from sqlalchemy.sql.elements import UnaryExpression
+from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql import asc, desc, operators, extract
-from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
-from sqlalchemy.orm import Query, aliased, joinedload, subqueryload, selectinload
 
 from .inspection import InspectionMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
@@ -157,7 +161,7 @@ class SmartQueryMixin(InspectionMixin):
             # if attribute is filtered by method, call this method
             if attr in _class.hybrid_methods:
                 method = getattr(_class, attr)
-                expressions.append(method(value, mapper=mapper))
+                expressions.append(method(value))
             # else just add simple condition (== for scalars or IN for lists)
             else:
                 # determine attribute name and operator
@@ -269,13 +273,13 @@ class SmartQueryMixin(InspectionMixin):
     @classmethod
     def _build_smart_query(
         cls,
-        query: Query,
-        criterion: tuple[ColumnElement[Any], ...] | None = None,
-        filters: dict[str, Any] | list[dict[str, Any]] | None = None,
-        sort_columns: Sequence[InstrumentedAttribute | UnaryExpression] | None = None,
+        query: Select[tuple[Any, ...]],
+        criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
+        sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
-    ) -> Query:
+    ) -> Select[tuple[Any, ...]]:
         """Builds a smart query.
 
         Does magic Django-like joins like `post___user___name__startswith='Bob'`
@@ -296,13 +300,13 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        query : Query
+        query : Select[tuple[Any, ...]]
             Query for the model.
-        criterion : tuple[ColumnElement[Any], ...] | None, optional
+        criterion : Sequence[_ColumnExpressionArgument[bool]] | None, optional
             SQLAlchemy syntax filter expressions, by default None.
-        filters : dict[str, Any] | list[dict[str, Any]] | None, optional
+        filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None, optional
             Django-like filter expressions, by default None.
-        sort_columns : Sequence[InstrumentedAttribute | UnaryExpression] | None, optional
+        sort_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None, optional
             Standalone sort columns, by default None.
         sort_attrs : Sequence[str] | None, optional
             Django-like sort expressions, by default None.
@@ -311,7 +315,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        Query
+        Select[tuple[Any, ...]]
             Smart query.
 
         Raises
@@ -325,7 +329,7 @@ class SmartQueryMixin(InspectionMixin):
         if not sort_attrs:
             sort_attrs = []
 
-        root_cls = cls._get_root_cls(query)  # for example, User or Post
+        root_cls = query.__dict__['_propagate_attrs']['plugin_subject'].class_  # for example, User or Post
         attrs = list(cls._flatten_filter_keys(filters)) + list(map(lambda s: s.lstrip(cls._DESC_PREFIX), sort_attrs))
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]] = OrderedDict({})
         cls._parse_path_and_make_aliases(root_cls, '', attrs, aliases)
@@ -352,31 +356,6 @@ class SmartQueryMixin(InspectionMixin):
             query = query.options(*cls._eager_expr_from_schema(schema))
 
         return query
-
-    @classmethod
-    def _get_root_cls(cls, query: Query) -> type['SmartQueryMixin']:
-        """Gets the root class for query.
-
-        Parameters
-        ----------
-        query : Query
-            Query for the model.
-
-        Returns
-        -------
-        SessionMixin
-            Root class.
-
-        Raises
-        ------
-        KeyError
-            If root class is not found.
-        """
-
-        try:
-            return query.__dict__['_propagate_attrs']['plugin_subject'].class_
-        except KeyError as e:
-            raise KeyError(f'Could not find root class for query: {e}')
 
     @classmethod
     def _flatten_filter_keys(cls, filters: dict | list) -> Generator[str, None, None]:
@@ -456,7 +435,7 @@ class SmartQueryMixin(InspectionMixin):
             entity_path: ''
             attrs: ['product___subject_ids', 'user_id', '-group_id',
                     'user___name', 'product___name']
-            aliases: {}
+            aliases: OrderedDict()
             ```
 
         Sample results:
@@ -510,8 +489,8 @@ class SmartQueryMixin(InspectionMixin):
     @classmethod
     def _recurse_filters(
         cls,
-        filters: dict[str, Any] | list[dict[str, Any]],
-        root_cls: type['SmartQueryMixin'],
+        filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]],
+        root_cls: type[Self],
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]],
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
@@ -544,7 +523,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        filters : dict | list
+        filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]]
             Django-like filter expressions.
         root_cls : type[SmartQueryMixin]
             Model class.
@@ -584,32 +563,32 @@ class SmartQueryMixin(InspectionMixin):
     @classmethod
     def _sort_query(
         cls,
-        query: Query,
+        query: Select[tuple[Any, ...]],
         sort_attrs: Sequence[str],
-        root_cls: type['SmartQueryMixin'],
+        root_cls: type[Self],
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]],
-    ) -> Query:
+    ) -> Select[tuple[Any, ...]]:
         """Sorts the query.
 
         Example:
         ```python
             sort_attrs = ['-created_at', 'user___name']
             aliases = OrderedDict({
-                'user': (aliased(User), User.name),
+                'user': (aliased(User), Post.user),
             })
         ```
 
         Generates:
         ```python
             query = query.order_by(
-                desc(Product.created_at),
-                asc(User.name),
+                desc(Post.created_at),
+                asc(Post.user),
             )
         ```
 
         Parameters
         ----------
-        query : Query
+        query : Select[tuple[Any, ...]]
             Query for the model.
         sort_attrs : Sequence[str]
             Sort columns.
@@ -620,7 +599,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        Query
+        Select[tuple[Any, ...]]
             Sorted query.
 
         Raises

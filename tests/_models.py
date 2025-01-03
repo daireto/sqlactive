@@ -19,8 +19,8 @@ class User(BaseModel):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     age: Mapped[int] = mapped_column(nullable=False)
 
-    posts: Mapped[list['Post']] = relationship(back_populates='user', cascade='all, delete-orphan')
-    comments: Mapped[list['Comment']] = relationship(back_populates='user', cascade='all, delete-orphan')
+    posts: Mapped[list['Post']] = relationship(back_populates='user')
+    comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
     @hybrid_property
     def is_adult(self) -> int:
@@ -29,6 +29,7 @@ class User(BaseModel):
     @hybrid_method
     def older_than(self, other: 'User') -> bool:
         return self.age > other.age
+
 
 class Post(BaseModel):
     __tablename__ = 'posts'
@@ -40,7 +41,7 @@ class Post(BaseModel):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
 
     user: Mapped['User'] = relationship(back_populates='posts')
-    comments: Mapped[list['Comment']] = relationship(back_populates='post', cascade='all, delete-orphan')
+    comments: Mapped[list['Comment']] = relationship(back_populates='post')
 
 
 class Comment(BaseModel):
@@ -53,3 +54,19 @@ class Comment(BaseModel):
 
     post: Mapped['Post'] = relationship(back_populates='comments')
     user: Mapped['User'] = relationship(back_populates='comments')
+
+
+class Product(BaseModel):
+    __tablename__ = 'products'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(100), nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
+
+
+class Sell(BaseModel):
+    __tablename__ = 'sells'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)

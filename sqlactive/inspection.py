@@ -1,5 +1,7 @@
 """This module defines `InspectionMixin` class."""
 
+from typing_extensions import Self
+
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
@@ -33,7 +35,7 @@ class InspectionMixin(DeclarativeBase):
         return f'<{self.__class__.__name__} {id_str}>'
 
     @classmethod
-    def get_class_of_relation(cls, relation_name: str) -> type:
+    def get_class_of_relation(cls, relation_name: str) -> type[Self]:
         """Gets the class of a relationship by its name.
 
         Parameters
