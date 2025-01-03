@@ -333,7 +333,8 @@ def options(*args: ExecutableOption)
 
 > !!! warning
 >
->     Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
+>     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
+>
 >         When including `joinedload()` in reference to a one-to-many or
 >         many-to-many collection, the `Result.unique()` method must be
 >         applied to the returned result, which will make the incoming rows
@@ -347,7 +348,7 @@ def options(*args: ExecutableOption)
 >         returned objects are made unique on primary key.
 >
 >     To learn more about options, see
->     https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options
+>     [`sqlalchemy.orm.Query.options`](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options) docs.
 
 > **Parameters:**
 
@@ -746,7 +747,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 >     so that the additional queries emitted by `subqueryload()` include the same
 >     ordering as used by the parent query. Without it, there is a chance that
 >     the inner query could return the wrong rows, as specified in
->     https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering
+>     [SQLAlchemy docs](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering).
 >
 >     ```python
 >     # incorrect, no ORDER BY

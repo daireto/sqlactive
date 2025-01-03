@@ -5,7 +5,7 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`SmartQueryMixin`](smart_query_mixin.md).
+    [`SmartQueryMixin`](smart_query_mixin.md) and [`SerializationMixin`](serialization_mixin.md).
     It is not intended to be used on its own.
 
 **Table of Contents**
