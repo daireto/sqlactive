@@ -4,7 +4,7 @@ from sqlactive.conn import DBConnection
 from sqlactive.base_model import ActiveRecordBaseModel
 
 from ._logger import logger
-from ._models import User, Post, Comment
+from ._models import User, Post, Comment, Product, Sell
 
 
 class Seed:
@@ -34,6 +34,10 @@ class Seed:
         await self.seed_posts()
         logger.info('Seeding comments...')
         await self.seed_comments()
+        logger.info('Seeding products...')
+        await self.seed_products()
+        logger.info('Seeding sells...')
+        await self.seed_sells()
         logger.info('Database seeded.')
 
     async def seed_users(self):
@@ -320,5 +324,37 @@ class Seed:
                     post_id=9,
                     user_id=14,
                 ),
+            ]
+        )
+
+    async def seed_products(self):
+        """Seeds the database with test products."""
+
+        await Product.create_all(
+            [
+                Product(name='Product 1', description='Description 1', price=10.0),
+                Product(name='Product 2', description='Description 2', price=20.0),
+                Product(name='Product 3', description='Description 3', price=30.0),
+                Product(name='Product 4', description='Description 4', price=40.0),
+                Product(name='Product 5', description='Description 5', price=50.0),
+                Product(name='Product 6', description='Description 6', price=60.0),
+                Product(name='Product 7', description='Description 7', price=70.0),
+                Product(name='Product 8', description='Description 8', price=80.0),
+            ]
+        )
+
+    async def seed_sells(self):
+        """Seeds the database with test sells."""
+
+        await Sell.create_all(
+            [
+                Sell(id=1, product_id=1),
+                Sell(id=2, product_id=2),
+                Sell(id=3, product_id=3),
+                Sell(id=4, product_id=4),
+                Sell(id=5, product_id=5),
+                Sell(id=6, product_id=6),
+                Sell(id=7, product_id=7),
+                Sell(id=8, product_id=8),
             ]
         )

@@ -2,7 +2,7 @@
 
 import json
 
-from typing import overload
+from typing import Any, overload
 from typing_extensions import Self
 from collections.abc import Iterable
 from sqlalchemy.orm.exc import DetachedInstanceError
@@ -15,7 +15,13 @@ class SerializationMixin(InspectionMixin):
 
     __abstract__ = True
 
-    def to_dict(self, nested: bool = False, hybrid_attributes: bool = False, exclude: list[str] | None = None) -> dict:
+    def to_dict(
+        self,
+        nested: bool = False,
+        hybrid_attributes: bool = False,
+        exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Serializes the model to a dictionary.
 
         Parameters
@@ -26,10 +32,12 @@ class SerializationMixin(InspectionMixin):
             Set to `True` to include hybrid attributes, by default False.
         exclude : list[str] | None, optional
             Exclude specific attributes from the result, by default None.
+        nested_exclude : list[str] | None, optional
+            Exclude specific attributes from nested relationships, by default None.
 
         Returns
         -------
-        dict
+        dict[str, Any]
             Serialized model.
         """
 
@@ -53,10 +61,10 @@ class SerializationMixin(InspectionMixin):
                     obj = getattr(self, key)
 
                     if isinstance(obj, SerializationMixin):
-                        result[key] = obj.to_dict(hybrid_attributes=hybrid_attributes)
+                        result[key] = obj.to_dict(hybrid_attributes=hybrid_attributes, exclude=nested_exclude)
                     elif isinstance(obj, Iterable):
                         result[key] = [
-                            o.to_dict(hybrid_attributes=hybrid_attributes)
+                            o.to_dict(hybrid_attributes=hybrid_attributes, exclude=nested_exclude)
                             for o in obj
                             if isinstance(o, SerializationMixin)
                         ]
@@ -70,6 +78,7 @@ class SerializationMixin(InspectionMixin):
         nested: bool = False,
         hybrid_attributes: bool = False,
         exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
         ensure_ascii: bool = False,
         indent: int | str | None = None,
         sort_keys: bool = False,
@@ -86,6 +95,8 @@ class SerializationMixin(InspectionMixin):
             Set to `True` to include hybrid attributes, by default False.
         exclude : list[str] | None, optional
             Exclude specific attributes from the result, by default None.
+        nested_exclude : list[str] | None, optional
+            Exclude specific attributes from nested relationships, by default None.
         ensure_ascii : bool, optional
             If False, then the return value can contain non-ASCII characters
             if they appear in strings contained in obj. Otherwise, all such
@@ -104,29 +115,37 @@ class SerializationMixin(InspectionMixin):
             Serialized model.
         """
 
-        dumped_model = self.to_dict(nested=nested, hybrid_attributes=hybrid_attributes, exclude=exclude)
+        dumped_model = self.to_dict(
+            nested=nested, hybrid_attributes=hybrid_attributes, exclude=exclude, nested_exclude=nested_exclude
+        )
         return json.dumps(obj=dumped_model, ensure_ascii=ensure_ascii, indent=indent, sort_keys=sort_keys, default=str)
 
     @overload
     @classmethod
-    def from_dict(cls, data: dict, exclude: list[str] | None = None) -> Self: ...
+    def from_dict(
+        cls, data: dict, exclude: list[str] | None = None, nested_exclude: list[str] | None = None
+    ) -> Self: ...
 
     @overload
     @classmethod
-    def from_dict(cls, data: list, exclude: list[str] | None = None) -> list[Self]: ...
+    def from_dict(
+        cls, data: list, exclude: list[str] | None = None, nested_exclude: list[str] | None = None
+    ) -> list[Self]: ...
 
     @classmethod
-    def from_dict(cls, data: dict | list, exclude: list[str] | None = None):
+    def from_dict(cls, data: dict[str, Any] | list[dict[str, Any]], exclude: list[str] | None = None, nested_exclude: list[str] | None = None):
         """Deserializes a dictionary to the model.
 
         Sets the attributes of the model with the values of the dictionary.
 
         Parameters
         ----------
-        data : dict | list
+        data : dict[str, Any] | list[dict[str, Any]]
             Data to deserialize.
         exclude : list[str] | None, optional
             Exclude specific keys from the dictionary, by default None.
+        nested_exclude : list[str] | None, optional
+            Exclude specific attributes from nested relationships, by default None.
 
         Returns
         -------
@@ -135,17 +154,12 @@ class SerializationMixin(InspectionMixin):
 
         Raises
         ------
-        TypeError
-            If loaded JSON is not a dictionary or a list.
         KeyError
             If attribute doesn't exist.
         """
 
-        if not isinstance(data, (dict, list)):
-            raise TypeError(f'Expected dict or list, got {type(data)}.')
-
         if isinstance(data, list):
-            return [cls.from_dict(d, exclude) for d in data]
+            return [cls.from_dict(d, exclude, nested_exclude) for d in data]
 
         obj = cls()
         for name in data.keys():
@@ -155,7 +169,7 @@ class SerializationMixin(InspectionMixin):
                 continue
             if name in obj.relations:
                 relation_class = cls.get_class_of_relation(name)
-                setattr(obj, name, relation_class.from_dict(data[name]))
+                setattr(obj, name, relation_class.from_dict(data[name], exclude=nested_exclude))
                 continue
             if name in obj.columns:
                 setattr(obj, name, data[name])
@@ -165,7 +179,7 @@ class SerializationMixin(InspectionMixin):
         return obj
 
     @classmethod
-    def from_json(cls, json_string: str, exclude: list[str] | None = None):
+    def from_json(cls, json_string: str, exclude: list[str] | None = None, nested_exclude: list[str] | None = None):
         """Deserializes a JSON string to the model.
 
         Calls the `json.loads` method and sets the attributes of the model
@@ -177,6 +191,8 @@ class SerializationMixin(InspectionMixin):
             JSON string.
         exclude : list[str] | None, optional
             Exclude specific keys from the dictionary, by default None.
+        nested_exclude : list[str] | None, optional
+            Exclude specific attributes from nested relationships, by default None.
 
         Returns
         -------
@@ -185,4 +201,4 @@ class SerializationMixin(InspectionMixin):
         """
 
         data = json.loads(json_string)
-        return cls.from_dict(data, exclude)
+        return cls.from_dict(data, exclude, nested_exclude)

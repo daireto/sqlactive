@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from sqlalchemy.sql import FromClause, Select, select
 from sqlalchemy.sql.base import ExecutableOption
+from sqlalchemy.sql.operators import OperatorType
 from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.exc import InvalidRequestError, NoResultFound
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
@@ -318,8 +319,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Deletes multiple rows by primary key."""
 
         primary_key_name = cls._get_primary_key_name()
-        if not primary_key_name:
-            return None
         async with cls._AsyncSession() as session:
             try:
                 query = cls._build_smart_query(cls._query, filters={f'{primary_key_name}__in': ids})
@@ -358,8 +357,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
 
         primary_key_name = cls._get_primary_key_name()
-        if not primary_key_name:
-            return None
         async_query = cls._get_async_query()
         return await async_query.filter(**{primary_key_name: pk}).one_or_none()
 
@@ -1343,7 +1340,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def smart_query(
         cls,
         criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
-        filters: dict[str, Any] | list[dict[str, Any]] | None = None,
+        filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
         sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
@@ -1368,15 +1365,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        criterion : tuple[ColumnElement[Any], ...] | None, optional
+        criterion : Sequence[_ColumnExpressionArgument[bool]] | None
             SQLAlchemy syntax filter expressions, by default None.
-        filters : dict | list | None, optional
+        filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
             Filter expressions, by default None.
-        sort_columns : Sequence[InstrumentedAttribute | UnaryExpression] | None, optional
+        sort_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
             Standalone sort columns, by default None.
-        sort_attrs : Sequence[str] | None, optional
+        sort_attrs : Sequence[str] | None
             Django-like sort expressions, by default None.
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None, optional
+        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None
             Schema for the eager loading, by default None.
 
         Returns
@@ -1423,12 +1420,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Raises
         ------
         InvalidRequestError
-            If the model does not have a primary key or has a composite primary key.
+            If the model has a composite primary key.
         """
 
         primary_keys = cast(FromClause, cls.__table__.primary_key).columns
-        if primary_keys is None:
-            raise InvalidRequestError(f'Model {cls.__name__} does not have a primary key.')
         if len(primary_keys) > 1:
             raise InvalidRequestError(f'Model {cls.__name__} has a composite primary key.')
         return primary_keys[0].name

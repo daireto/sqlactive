@@ -355,7 +355,7 @@ def options(*args: ExecutableOption)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -381,7 +381,7 @@ def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -614,7 +614,7 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -646,7 +646,7 @@ def offset(offset: int)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -678,7 +678,7 @@ def limit(limit: int)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -713,7 +713,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -765,7 +765,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -778,7 +778,9 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 ### with_schema
 ```python
-def with_schema(schema: dict)
+def with_schema(
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+)
 ```
 
 > Creates a query with complex eager loading schema.
@@ -792,7 +794,7 @@ def with_schema(schema: dict)
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > ```python
 > from sqlactive import JOINED, SUBQUERY
@@ -1027,10 +1029,10 @@ async def unique_one_or_none()
 ```python
 def smart_query(
     criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
-    filters: dict[str, Any] | list[dict[str, Any]] | None = None,
+    filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
     sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     sort_attrs: Sequence[str] | None = None,
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
 )
 ```
 
@@ -1046,7 +1048,7 @@ def smart_query(
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance for chaining.
+> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
 
 > **Example:**
 

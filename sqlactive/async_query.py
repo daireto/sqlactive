@@ -61,7 +61,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         session : async_scoped_session[AsyncSession] | None, optional
             Async session factory, by default None.
 
-        NOTE: If no session is provided, a NoSessionError will be raised
+        NOTE: If no session is provided, a `NoSessionError` will be raised
         when attempting to execute the query. Please, provide a session
         by passing it in this constructor or by calling the `set_session`
         method.
@@ -86,6 +86,12 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """Returns the original `sqlalchemy.sql.Select` instance."""
 
         return self._query
+
+    @query.setter
+    def query(self, query: Select[tuple[_T, ...]]):
+        """Sets the original `sqlalchemy.sql.Select` instance."""
+
+        self._query = query
 
     @property
     def _AsyncSession(self) -> async_scoped_session[AsyncSession]:
@@ -373,7 +379,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> comment = await async_query.join(Comment.user, (Comment.post, True)).first()
+        >>> comment = await async_query.join(Comment.user, (Comment.post, True), model=Comment).first()
         >>> comment
         # <Comment 1>
         >>> comment.user # LEFT OUTER JOIN
@@ -583,7 +589,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             return await session.execute(self._query, params, **kwargs)
 
     async def scalars(self) -> ScalarResult[_T]:
-        """Returns an `ScalarResult` object with all rows.
+        """Returns a `sqlalchemy.engine.ScalarResult` object containing all rows.
 
         This is same as calling `(await self.execute()).scalars()`.
 
@@ -750,9 +756,10 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return await self.all()
 
     async def unique(self) -> ScalarResult[_T]:
-        """Returns an `ScalarResult` object with all unique rows.
+        """Returns a `sqlalchemy.engine.ScalarResult` object
+        containing all unique rows.
 
-        This is same as calling `(await self.scalars()).unique()`
+        This is same as calling `(await self.scalars()).unique()`.
 
         Example:
         >>> query = select(User)
@@ -774,7 +781,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
     async def unique_all(self) -> Sequence[_T]:
         """Fetches all unique rows.
 
-        This is same as calling `(await self.unique()).all()`
+        This is same as calling `(await self.unique()).all()`.
 
         Example:
         >>> query = select(User)
@@ -793,7 +800,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """Fetches the first unique row or `None`
         if no results are found.
 
-        This is same as calling `(await self.unique()).first()`
+        This is same as calling `(await self.unique()).first()`.
 
         Example:
         >>> query = select(User)
@@ -815,7 +822,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.unique()).one()`
+        This is same as calling `(await self.unique()).one()`.
 
         Example:
         >>> query = select(User)
@@ -843,7 +850,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.unique()).one_or_none()`
+        This is same as calling `(await self.unique()).one_or_none()`.
 
         Example:
         >>> query = select(User)

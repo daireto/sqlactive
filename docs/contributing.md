@@ -3,6 +3,26 @@
 Thank you for your interest in contributing to SQLActive! Please take a
 moment to review this document before submitting a pull request.
 
+**Table of Contents**
+
+- [Contributing Guidelines](#contributing-guidelines)
+  - [Why should you read these guidelines?](#why-should-you-read-these-guidelines)
+  - [Ground Rules](#ground-rules)
+    - [Responsibilities](#responsibilities)
+    - [Tools \& Workflow](#tools--workflow)
+  - [Your First Pull Request](#your-first-pull-request)
+    - [Getting Started](#getting-started)
+    - [Setup Instructions](#setup-instructions)
+  - [Reporting Issues](#reporting-issues)
+    - [Security Issues](#security-issues)
+    - [Filing a Bug Report](#filing-a-bug-report)
+  - [Suggesting Features or Enhancements](#suggesting-features-or-enhancements)
+  - [Code Conventions](#code-conventions)
+    - [Code Style](#code-style)
+    - [Commit Message Format](#commit-message-format)
+    - [Pull Request Checklist](#pull-request-checklist)
+  - [Thank You!](#thank-you)
+
 ## Why should you read these guidelines?
 
 Following these guidelines ensures that your contributions align with

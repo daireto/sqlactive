@@ -163,12 +163,17 @@ class DBConnection:
         """
 
         await self.async_engine.dispose()
-        if not base_model:
-            base_model = ActiveRecordBaseModel
-        base_model.close_session()
+        if base_model:
+            base_model.close_session()
+        ActiveRecordBaseModel.close_session()
 
 
-async def execute(statement: TypedReturnsRows[_T], base_model: type[ActiveRecordBaseModel] | None = ActiveRecordBaseModel, params: _CoreAnyExecuteParams | None = None, **kwargs) -> Result[_T]:
+async def execute(
+    statement: TypedReturnsRows[_T],
+    base_model: type[ActiveRecordBaseModel] | None = None,
+    params: _CoreAnyExecuteParams | None = None,
+    **kwargs,
+) -> Result[_T]:
     """Executes a statement using the `AsyncSession`
     of the `ActiveRecordBaseModel` and return a buffered
     `sqlalchemy.engine.Result` object.

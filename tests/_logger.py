@@ -22,12 +22,4 @@ def get_logger(name: str | None = None):
     return logger
 
 
-def show_preview(logger: logging.Logger):
-    logger.debug('A quirky message only developers care about')
-    logger.info('Curious users might want to know this')
-    logger.warning('Something is wrong and any user should be informed')
-    logger.error('Serious stuff, this is red for a reason')
-    logger.critical('OH NO everything is on fire')
-
-
 logger = get_logger('sqlactive.tests')

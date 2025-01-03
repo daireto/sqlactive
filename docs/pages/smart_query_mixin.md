@@ -235,7 +235,9 @@ def order_expr(*columns: str)
 
 ### eager_expr
 ```python
-def eager_expr(schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict])
+def eager_expr(
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+)
 ```
 
 > Takes schema like
