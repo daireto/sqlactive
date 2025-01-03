@@ -1,8 +1,9 @@
 """This module defines `SmartQueryMixin` class."""
 
+from typing import Any
+from typing_extensions import Self
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Sequence
-from typing import Any, Self
 
 from sqlalchemy.inspection import inspect
 from sqlalchemy.sql import Select, asc, desc, operators, extract
