@@ -1,11 +1,11 @@
 """This module defines `ActiveRecordMixin` class."""
 
-from typing import Any, Self, Sequence, cast
+from collections.abc import Sequence
+from typing import Any, Self, cast
 
-from sqlalchemy.orm import Query
-from sqlalchemy.sql import FromClause, select
+from sqlalchemy.sql import FromClause, Select, select
 from sqlalchemy.sql.base import ExecutableOption
-from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
+from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.exc import InvalidRequestError, NoResultFound
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
@@ -447,7 +447,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.options(*args)
 
     @classmethod
-    def filter(cls, *criterion: ColumnElement[Any], **filters: Any):
+    def filter(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Creates a filtered query using SQLAlchemy or Django-style filters.
 
         Creates the WHERE clause of the query.
@@ -477,7 +477,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.filter(*criterion, **filters)
 
     @classmethod
-    def where(cls, *criterion: ColumnElement[Any], **filters: Any):
+    def where(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """A synonym for `filter`.
 
         Example using Django-like syntax:
@@ -502,7 +502,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.filter(*criterion, **filters)
 
     @classmethod
-    def find(cls, *criterion: ColumnElement[Any], **filters: Any):
+    def find(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """A synonym for `filter`.
 
         Example using Django-like syntax:
@@ -527,7 +527,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.filter(*criterion, **filters)
 
     @classmethod
-    async def find_one(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_one(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single row matching the criteria.
 
         If multiple results are found, raises MultipleResultsFound.
@@ -565,7 +565,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).one()
 
     @classmethod
-    async def find_one_or_none(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_one_or_none(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single row matching the criteria or `None`.
 
         If multiple results are found, raises MultipleResultsFound.
@@ -599,7 +599,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).one_or_none()
 
     @classmethod
-    async def find_all(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_all(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds all rows matching the criteria.
 
         This is same as calling `await cls.find(*criterion, **filters).all()`
@@ -626,7 +626,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).all()
 
     @classmethod
-    async def find_first(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_first(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single row matching the criteria or `None`.
 
         This is same as calling `await cls.find(*criterion, **filters).first()`.
@@ -653,7 +653,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).first()
 
     @classmethod
-    async def find_unique(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_unique(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds all unique rows matching the criteria and
         returns an `ScalarResult` object with them.
 
@@ -684,7 +684,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).unique()
 
     @classmethod
-    async def find_unique_all(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_unique_all(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds all unique rows matching the criteria and returns a list.
 
         This is same as calling `await cls.find(*criterion, **filters).unique_all()`.
@@ -711,7 +711,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).unique_all()
 
     @classmethod
-    async def find_unique_first(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_unique_first(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single unique row matching the criteria or `None`.
 
         This is same as calling `await cls.find(*criterion, **filters).unique_first()`.
@@ -738,7 +738,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).unique_first()
 
     @classmethod
-    async def find_unique_one(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_unique_one(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single unique row matching the criteria.
 
         If multiple results are found, raises MultipleResultsFound.
@@ -776,7 +776,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).unique_one()
 
     @classmethod
-    async def find_unique_one_or_none(cls, *criterion: ColumnElement[Any], **filters: Any):
+    async def find_unique_one_or_none(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
         """Finds a single unique row matching the criteria or `None`.
 
         If multiple results are found, raises MultipleResultsFound.
@@ -810,7 +810,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.find(*criterion, **filters).unique_one_or_none()
 
     @classmethod
-    def order_by(cls, *columns: str | InstrumentedAttribute | UnaryExpression):
+    def order_by(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """Creates a query with ORDER BY clause.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -827,7 +827,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.order_by(User.created_at.desc()).all()
         >>> users
         # [<User 100>, <User 99>, ...]
-        >>> posts = await Post.order_by(desc(Post.rating), Post.user.name).all()
+        >>> posts = await Post.order_by(desc(Post.rating)).all()
         >>> posts
         # [<Post 1>, <Post 4>, ...]
         """
@@ -836,7 +836,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.order_by(*columns)
 
     @classmethod
-    def sort(cls, *columns: str | InstrumentedAttribute | UnaryExpression):
+    def sort(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """A synonym for `order_by`.
 
         Example using Django-like syntax:
@@ -851,7 +851,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.sort(User.created_at.desc()).all()
         >>> users
         # [<User 100>, <User 99>, ...]
-        >>> posts = await Post.sort(desc(Post.rating), Post.user.name).all()
+        >>> posts = await Post.sort(desc(Post.rating)).all()
         >>> posts
         # [<Post 1>, <Post 4>, ...]
         """
@@ -1341,9 +1341,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     @classmethod
     def smart_query(
         cls,
-        criterion: tuple[ColumnElement[Any], ...] | None = None,
+        criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
         filters: dict[str, Any] | list[dict[str, Any]] | None = None,
-        sort_columns: Sequence[InstrumentedAttribute | UnaryExpression] | None = None,
+        sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ):
@@ -1395,12 +1395,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls._get_async_query(query)
 
     @classmethod
-    def _get_async_query(cls, query: Query | None = None):
+    def _get_async_query(cls, query: Select[tuple[Self, ...]] | None = None):
         """Returns an `AsyncQuery` object.
 
         Parameters
         ----------
-        query : Query | None, optional
+        query : Select[tuple[Self, ...]] | None, optional
             SQLAlchemy query for the model, by default None.
         """
 
@@ -1433,7 +1433,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return primary_keys[0].name
 
     @classproperty
-    def _query(cls) -> Query:
+    def _query(cls) -> Select[tuple[Self, ...]]:
         """Returns a query for the model."""
 
         return select(cls)  # type: ignore

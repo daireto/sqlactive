@@ -1,15 +1,17 @@
 """This module defines `SmartQueryMixin` class."""
 
 from collections import OrderedDict
-from typing import Any, Callable, Sequence, Generator
+from collections.abc import Callable, Generator, Sequence
+from typing import Any, Self
 
 from sqlalchemy.inspection import inspect
+from sqlalchemy.sql import Select, asc, desc, operators, extract
+from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
+from sqlalchemy.sql.elements import UnaryExpression
+from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql import asc, desc, operators, extract
-from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
-from sqlalchemy.orm import Query, aliased, joinedload, subqueryload, selectinload
 
 from .inspection import InspectionMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
@@ -269,13 +271,13 @@ class SmartQueryMixin(InspectionMixin):
     @classmethod
     def _build_smart_query(
         cls,
-        query: Query,
-        criterion: tuple[ColumnElement[Any], ...] | None = None,
+        query: Select[tuple[Any, ...]],
+        criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
         filters: dict[str, Any] | list[dict[str, Any]] | None = None,
-        sort_columns: Sequence[InstrumentedAttribute | UnaryExpression] | None = None,
+        sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
-    ) -> Query:
+    ) -> Select[tuple[Any, ...]]:
         """Builds a smart query.
 
         Does magic Django-like joins like `post___user___name__startswith='Bob'`
@@ -296,13 +298,13 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        query : Query
+        query : Select[tuple[Any, ...]]
             Query for the model.
-        criterion : tuple[ColumnElement[Any], ...] | None, optional
+        criterion : Sequence[_ColumnExpressionArgument[bool]] | None, optional
             SQLAlchemy syntax filter expressions, by default None.
         filters : dict[str, Any] | list[dict[str, Any]] | None, optional
             Django-like filter expressions, by default None.
-        sort_columns : Sequence[InstrumentedAttribute | UnaryExpression] | None, optional
+        sort_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None, optional
             Standalone sort columns, by default None.
         sort_attrs : Sequence[str] | None, optional
             Django-like sort expressions, by default None.
@@ -311,7 +313,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        Query
+        Select[tuple[Any, ...]]
             Smart query.
 
         Raises
@@ -354,12 +356,12 @@ class SmartQueryMixin(InspectionMixin):
         return query
 
     @classmethod
-    def _get_root_cls(cls, query: Query) -> type['SmartQueryMixin']:
+    def _get_root_cls(cls, query: Select[tuple[Any, ...]]) -> type[Self]:
         """Gets the root class for query.
 
         Parameters
         ----------
-        query : Query
+        query : Select[tuple[Any, ...]]
             Query for the model.
 
         Returns
@@ -511,7 +513,7 @@ class SmartQueryMixin(InspectionMixin):
     def _recurse_filters(
         cls,
         filters: dict[str, Any] | list[dict[str, Any]],
-        root_cls: type['SmartQueryMixin'],
+        root_cls: type[Self],
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]],
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
@@ -584,11 +586,11 @@ class SmartQueryMixin(InspectionMixin):
     @classmethod
     def _sort_query(
         cls,
-        query: Query,
+        query: Select[tuple[Any, ...]],
         sort_attrs: Sequence[str],
-        root_cls: type['SmartQueryMixin'],
+        root_cls: type[Self],
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]],
-    ) -> Query:
+    ) -> Select[tuple[Any, ...]]:
         """Sorts the query.
 
         Example:
@@ -609,7 +611,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        query : Query
+        query : Select[tuple[Any, ...]]
             Query for the model.
         sort_attrs : Sequence[str]
             Sort columns.
@@ -620,7 +622,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        Query
+        Select[tuple[Any, ...]]
             Sorted query.
 
         Raises

@@ -1,13 +1,15 @@
 """This module defines `AsyncQuery` class."""
 
-from typing import Any, Generic, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
 
+from sqlalchemy.sql import Select
 from sqlalchemy.sql.base import ExecutableOption
-from sqlalchemy.sql.elements import ColumnElement, UnaryExpression
+from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.engine import Result, ScalarResult
 from sqlalchemy.engine.interfaces import _CoreAnyExecuteParams
 from sqlalchemy.ext.asyncio import async_scoped_session, AsyncSession
-from sqlalchemy.orm import Query, joinedload, subqueryload, selectinload
+from sqlalchemy.orm import joinedload, subqueryload, selectinload
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 
 from .exceptions import NoSessionError
@@ -18,33 +20,44 @@ _T = TypeVar('_T')
 
 
 class AsyncQuery(SmartQueryMixin, Generic[_T]):
-    """Async wrapper for SQLAlchemy `Query` to
-    create async smart queries.
+    """Async wrapper for `sqlalchemy.sql.Select`.
+
+    Provides a set of helper methods for asynchronously executing the query.
 
     Example of usage:
 
     ```python
         query = select(User)
-        async_query = AsyncQuery(query)
+        async_query = AsyncQuery(query, User._session)
         async_query = async_query.filter(name__like='%John%').sort('-created_at').limit(2)
         users = await async_query.all()
         >>> users
         # [<User 1>, <User 2>]
     ```
+
+    To get the `sqlalchemy.sql.Select` instance to use native SQLAlchemy methods
+    use the `query` property:
+
+    ```python
+        query = select(User)
+        async_query = AsyncQuery(query, User._session)
+        async_query.query
+        # <sqlalchemy.sql.Select object at 0x7f7f7f7f7f7f7f7f>
+    ```
     """
 
     __abstract__ = True
 
-    _query: Query[_T]
+    _query: Select[tuple[_T, ...]]
     _session: async_scoped_session[AsyncSession] | None = None
 
-    def __init__(self, query: Query, session: async_scoped_session[AsyncSession] | None = None) -> None:
+    def __init__(self, query: Select[tuple[_T, ...]], session: async_scoped_session[AsyncSession] | None = None) -> None:
         """Builds an async wrapper for SQLAlchemy `Query`.
 
         Parameters
         ----------
-        query : Query
-            SQLAlchemy query.
+        query : Select[tuple[_T, ...]]
+            The `sqlalchemy.sql.Select` instance.
         session : async_scoped_session[AsyncSession] | None, optional
             Async session factory, by default None.
 
@@ -67,6 +80,12 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """
 
         self._session = session
+
+    @property
+    def query(self):
+        """Returns the original `sqlalchemy.sql.Select` instance."""
+
+        return self._query
 
     @property
     def _AsyncSession(self) -> async_scoped_session[AsyncSession]:
@@ -149,7 +168,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         self._query = self._query.options(*args)
         return self
 
-    def filter(self, *criterion: ColumnElement[Any], **filters: Any) -> 'AsyncQuery[_T]':
+    def filter(self, *criterion: _ColumnExpressionArgument[bool], **filters: Any) -> 'AsyncQuery[_T]':
         """Filters the query.
 
         Creates the WHERE clause of the query.
@@ -184,7 +203,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         self._query = self._build_smart_query(query=self._query, criterion=criterion, filters=filters)
         return self
 
-    def order_by(self, *columns: str | InstrumentedAttribute | UnaryExpression) -> 'AsyncQuery[_T]':
+    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> 'AsyncQuery[_T]':
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -209,7 +228,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # [<User 100>, <User 99>, ...]
         >>> query = select(Post)
         >>> async_query = AsyncQuery(query)
-        >>> posts = await async_query.order_by(desc(Post.rating), Post.user.name).all()
+        >>> posts = await async_query.order_by(desc(Post.rating)).all()
         >>> posts
         # [<Post 1>, <Post 4>, ...]
         """
@@ -225,7 +244,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         self._query = self._build_smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
         return self
 
-    def sort(self, *columns: str | InstrumentedAttribute | UnaryExpression) -> 'AsyncQuery[_T]':
+    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> 'AsyncQuery[_T]':
         """A synonym for `order_by`.
 
         Example using Django-like syntax:
@@ -248,7 +267,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # [<User 100>, <User 99>, ...]
         >>> query = select(Post)
         >>> async_query = AsyncQuery(query)
-        >>> posts = await async_query.sort(desc(Post.rating), Post.user.name).all()
+        >>> posts = await async_query.sort(desc(Post.rating)).all()
         >>> posts
         # [<Post 1>, <Post 4>, ...]
         """

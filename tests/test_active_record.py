@@ -339,6 +339,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Jill874', users[0].username)
         users = await User.find(username__like='Ji%').sort(User.age).all()
         self.assertEqual('Jimmy156', users[0].username)
+        posts = await Post.sort('-rating', 'user___name').all()
+        self.assertEqual(24, len(posts))
 
     async def test_offset(self):
         """Test for `offset`, `skip` functions."""

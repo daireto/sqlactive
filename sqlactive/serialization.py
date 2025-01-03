@@ -2,7 +2,8 @@
 
 import json
 
-from typing import Iterable, Self, overload
+from typing import Self, overload
+from collections.abc import Iterable
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from .inspection import InspectionMixin

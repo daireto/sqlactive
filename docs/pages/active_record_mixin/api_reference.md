@@ -369,7 +369,7 @@ def options(*args: ExecutableOption)
 
 ### filter
 ```python
-def filter(*criterion: ColumnElement[Any], **filters: Any)
+def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Creates a filtered query using SQLAlchemy or Django-style filters.
@@ -398,21 +398,21 @@ def filter(*criterion: ColumnElement[Any], **filters: Any)
 
 ### where
 ```python
-def where(*criterion: ColumnElement[Any], **filters: Any)
+def where(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
 ### find
 ```python
-def find(*criterion: ColumnElement[Any], **filters: Any)
+def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
 ### find_one
 ```python
-async def find_one(*criterion: ColumnElement[Any], **filters: Any)
+async def find_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria.
@@ -436,7 +436,7 @@ async def find_one(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_one_or_none
 ```python
-async def find_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
+async def find_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria or `None`.
@@ -459,7 +459,7 @@ async def find_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_all
 ```python
-async def find_all(*criterion: ColumnElement[Any], **filters: Any)
+async def find_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all rows matching the criteria.
@@ -478,7 +478,7 @@ async def find_all(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_first
 ```python
-async def find_first(*criterion: ColumnElement[Any], **filters: Any)
+async def find_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single row matching the criteria or `None`.
@@ -497,7 +497,7 @@ async def find_first(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique
 ```python
-async def find_unique(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all unique rows matching the criteria and
@@ -518,7 +518,7 @@ async def find_unique(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_all
 ```python
-async def find_unique_all(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds all unique rows matching the criteria and returns a list.
@@ -537,7 +537,7 @@ async def find_unique_all(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_first
 ```python
-async def find_unique_first(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria or `None`.
@@ -556,7 +556,7 @@ async def find_unique_first(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_one
 ```python
-async def find_unique_one(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria.
@@ -580,7 +580,7 @@ async def find_unique_one(*criterion: ColumnElement[Any], **filters: Any)
 
 ### find_unique_one_or_none
 ```python
-async def find_unique_one_or_none(*criterion: ColumnElement[Any], **filters: Any)
+async def find_unique_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Finds a single unique row matching the criteria or `None`.
@@ -603,7 +603,7 @@ async def find_unique_one_or_none(*criterion: ColumnElement[Any], **filters: Any
 
 ### order_by
 ```python
-def order_by(*columns: str | InstrumentedAttribute | UnaryExpression)
+def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
 
 > Creates a query with ORDER BY clause.
@@ -628,7 +628,7 @@ def order_by(*columns: str | InstrumentedAttribute | UnaryExpression)
 
 ### sort
 ```python
-def sort(*columns: str | InstrumentedAttribute | UnaryExpression)
+def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
 
 > Synonym for `order_by()`.
@@ -1025,7 +1025,13 @@ async def unique_one_or_none()
 
 ### smart_query
 ```python
-def smart_query(criterion=None, filters=None, sort_columns=None, sort_attrs=None, schema=None)
+def smart_query(
+    criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+    filters: dict[str, Any] | list[dict[str, Any]] | None = None,
+    sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+    sort_attrs: Sequence[str] | None = None,
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None
+)
 ```
 
 > Creates a query combining filtering, sorting, and eager loading.
