@@ -250,6 +250,28 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         user = await User.get(100)
         self.assertIsNone(user)
 
+        user = await User.get(2, join=[User.posts, (User.comments, True)])
+        if user:
+            self.assertEqual(2, user.posts[0].id)
+            self.assertEqual(3, user.comments[0].id)
+            self.assertEqual(4, user.comments[1].id)
+        user = await User.get(2, subquery=[User.posts, (User.comments, True)])
+        if user:
+            self.assertEqual(2, user.posts[0].id)
+            self.assertEqual(3, user.comments[0].id)
+            self.assertEqual(4, user.comments[1].id)
+        user = await User.get(
+            pk=2,
+            schema={
+                User.posts: JOINED,
+                User.comments: (SUBQUERY, {Comment.post: SELECT_IN}),
+            },
+        )
+        if user:
+            self.assertEqual(2, user.posts[0].id)
+            self.assertEqual(3, user.comments[0].id)
+            self.assertEqual(2, user.comments[0].post.id)
+
     async def test_get_or_fail(self):
         """Test for `get_or_fail` function."""
 
@@ -259,6 +281,25 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NoResultFound) as context:
             await User.get_or_fail(0)
         self.assertIn('User with id `0` was not found', str(context.exception))
+
+        user = await User.get_or_fail(2, join=[User.posts, (User.comments, True)])
+        self.assertEqual(2, user.posts[0].id)
+        self.assertEqual(3, user.comments[0].id)
+        self.assertEqual(4, user.comments[1].id)
+        user = await User.get_or_fail(2, subquery=[User.posts, (User.comments, True)])
+        self.assertEqual(2, user.posts[0].id)
+        self.assertEqual(3, user.comments[0].id)
+        self.assertEqual(4, user.comments[1].id)
+        user = await User.get_or_fail(
+            pk=2,
+            schema={
+                User.posts: JOINED,
+                User.comments: (SUBQUERY, {Comment.post: SELECT_IN}),
+            },
+        )
+        self.assertEqual(2, user.posts[0].id)
+        self.assertEqual(3, user.comments[0].id)
+        self.assertEqual(2, user.comments[0].post.id)
 
     async def test_options(self):
         """Test for `options` function."""
@@ -413,13 +454,13 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(USERS_THAT_HAVE_COMMENTS, [user.id for user in users])
         self.assertEqual('Lorem ipsum dolor sit amet, consectetur adipiscing elit.', users[0].comments[0].body)
         with self.assertRaises(ValueError) as context:
-            await User.join(User.posts, (User.comments, 1)).all() # type: ignore
+            await User.join(User.posts, (User.comments, 1)).all()  # type: ignore
         self.assertIn('`1` is not boolean', str(context.exception))
         with self.assertRaises(KeyError) as context:
-            await User.join(Post.comments).all() # type: ignore
+            await User.join(Post.comments).all()  # type: ignore
         self.assertIn('`Post.comments`', str(context.exception))
         with self.assertRaises(KeyError) as context:
-            await User.join((Post.comments, True)).all() # type: ignore
+            await User.join((Post.comments, True)).all()  # type: ignore
         self.assertIn('`Post.comments`', str(context.exception))
 
     async def test_with_subquery(self):
@@ -431,13 +472,13 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(users_count, len(users), 'message')
         self.assertEqual('Lorem ipsum dolor sit amet, consectetur adipiscing elit.', users[0].comments[0].body)
         with self.assertRaises(ValueError) as context:
-            await User.with_subquery(User.posts, (User.comments, 1)).all() # type: ignore
+            await User.with_subquery(User.posts, (User.comments, 1)).all()  # type: ignore
         self.assertIn('`1` is not boolean', str(context.exception))
         with self.assertRaises(KeyError) as context:
-            await User.with_subquery(Post.comments).all() # type: ignore
+            await User.with_subquery(Post.comments).all()  # type: ignore
         self.assertIn('`Post.comments`', str(context.exception))
         with self.assertRaises(KeyError) as context:
-            await User.with_subquery((Post.comments, True)).all() # type: ignore
+            await User.with_subquery((Post.comments, True)).all()  # type: ignore
         self.assertIn('`Post.comments`', str(context.exception))
 
     async def test_with_schema(self):

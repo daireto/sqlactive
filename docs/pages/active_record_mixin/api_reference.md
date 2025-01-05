@@ -275,7 +275,12 @@ async def destroy(*ids: object)
 
 ### get
 ```python
-async def get(pk: object)
+async def get(
+    pk: object,
+    join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+    subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+)
 ```
 
 > Fetches a row by primary key.
@@ -283,6 +288,9 @@ async def get(pk: object)
 > **Parameters:**
 
 > - `pk`: Primary key value.
+> - `join`: Paths to join eager load. See the docs of [`join`](#join) method for details.
+> - `subquery`: Paths to subquery eager load. See the docs of [`with_subquery`](#with_subquery) method for details.
+> - `schema`: Schema for the eager loading. See the docs of [`with_schema`](#with_schema) method for details.
 
 > **Returns:**
 
@@ -300,7 +308,12 @@ async def get(pk: object)
 
 ### get_or_fail
 ```python
-async def get_or_fail(pk: object)
+async def get_or_fail(
+    pk: object,
+    join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+    subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+)
 ```
 
 > Fetches a row by primary key or raises an exception if not found.
@@ -308,6 +321,9 @@ async def get_or_fail(pk: object)
 > **Parameters:**
 
 > - `pk`: Primary key value.
+> - `join`: Paths to join eager load. See the docs of [`join`](#join) method for details.
+> - `subquery`: Paths to subquery eager load. See the docs of [`with_subquery`](#with_subquery) method for details.
+> - `schema`: Schema for the eager loading. See the docs of [`with_schema`](#with_schema) method for details.
 
 > **Returns:**
 
