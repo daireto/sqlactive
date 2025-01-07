@@ -50,6 +50,9 @@ extra:
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/sqlactive/
       name: 'PyPI: sqlactive'
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/dairo-andres-mosquera-blandon-189ba7341/
+      name: 'LinkedIn: Dairo Mosquera'
 markdown_extensions:
   - admonition
   - pymdownx.details
