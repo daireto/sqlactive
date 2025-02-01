@@ -295,7 +295,7 @@ def join(
 > **Example:**
 
 > ```python
-> query = select(comments)
+> query = select(Comment)
 > async_query = AsyncQuery(query)
 >
 > comments = await async_query.join(

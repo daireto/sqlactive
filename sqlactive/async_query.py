@@ -377,7 +377,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         If it is `True`, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
 
         Example:
-        >>> query = select(User)
+        >>> query = select(Comment)
         >>> async_query = AsyncQuery(query)
         >>> comment = await async_query.join(Comment.user, (Comment.post, True), model=Comment).first()
         >>> comment
