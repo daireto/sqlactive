@@ -23,6 +23,7 @@
     </a>
 </p>
 
+<!-- omit in toc -->
 # SQLActive
 
 A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
@@ -35,25 +36,24 @@ Documentation: https://daireto.github.io/sqlactive/
 
 <!-- omit in toc -->
 ## Table of Contents
-- [SQLActive](#sqlactive)
-  - [Features](#features)
-  - [Installation](#installation)
-  - [Usage](#usage)
-    - [1. Define the Models](#1-define-the-models)
-    - [2. Initialize the Database](#2-initialize-the-database)
-    - [3. Perform CRUD Operations](#3-perform-crud-operations)
-    - [4. Perform Bulk Operations](#4-perform-bulk-operations)
-    - [5. Perform Queries](#5-perform-queries)
-    - [6. Perform Native Queries](#6-perform-native-queries)
-    - [7. Manage Timestamps](#7-manage-timestamps)
-  - [Testing](#testing)
-    - [Unit Tests](#unit-tests)
-    - [Coverage](#coverage)
-    - [Lint](#lint)
-  - [Documentation](#documentation)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Support](#support)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [1. Define the Models](#1-define-the-models)
+  - [2. Initialize the Database](#2-initialize-the-database)
+  - [3. Perform CRUD Operations](#3-perform-crud-operations)
+  - [4. Perform Bulk Operations](#4-perform-bulk-operations)
+  - [5. Perform Queries](#5-perform-queries)
+  - [6. Perform Native Queries](#6-perform-native-queries)
+  - [7. Manage Timestamps](#7-manage-timestamps)
+- [Testing](#testing)
+  - [Unit Tests](#unit-tests)
+  - [Coverage](#coverage)
+  - [Lint](#lint)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
 ## Features
 
