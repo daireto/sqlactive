@@ -5,7 +5,6 @@ repo_url: https://github.com/daireto/sqlactive/
 theme:
   name: material
   features:
-    - navigation.expand
     - content.code.copy
     - content.code.select
     - search.suggest
@@ -32,25 +31,22 @@ theme:
         icon: material/brightness-4
         name: Switch to system preference
 nav:
-  - Home: index.md
-  - Docs:
+  - Overview: index.md
+  - Getting started: getting-started.md
+  - API Documentation:
+    - DB Connection Helper: api/db_connection_helper.md
+    - Native SQLAlchemy Queries: api/execute.md
     - Mixins:
-      - ActiveRecord Mixin:
-        - Overview: pages/active_record_mixin/overview.md
-        - API Reference: pages/active_record_mixin/api_reference.md
-        - AsyncQuery: pages/active_record_mixin/async_query.md
-      - TImestamp Mixin: pages/timestamp_mixin.md
-      - Serialization Mixin: pages/serialization_mixin.md
-      - Smart Queries Mixin: pages/smart_query_mixin.md
-      - Inspection Mixin: pages/inspection_mixin.md
-    - Native SQLAlchemy Queries: pages/execute.md
-    - DB Connection Helper: pages/db_connection_helper.md
-  - Development:
-    - Contributing: contributing.md
+      - Active-Record Mixin:
+        - Overview: api/active_record_mixin/overview.md
+        - API Reference: api/active_record_mixin/api_reference.md
+        - Async Query: api/active_record_mixin/async_query.md
+      - TImestamp Mixin: api/timestamp_mixin.md
+      - Serialization Mixin: api/serialization_mixin.md
+      - Smart Queries Mixin: api/smart_query_mixin.md
+      - Inspection Mixin: api/inspection_mixin.md
+  - Contributing: contributing.md
 extra:
-  version:
-    provider: mike
-    alias: true
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/daireto/sqlactive/

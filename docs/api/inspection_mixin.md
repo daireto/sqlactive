@@ -8,27 +8,6 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     [`SmartQueryMixin`](smart_query_mixin.md) and [`SerializationMixin`](serialization_mixin.md).
     It is not intended to be used on its own.
 
-**Table of Contents**
-
-- [InspectionMixin](#inspectionmixin)
-  - [Instance Methods](#instance-methods)
-    - [__repr__](#repr)
-  - [Class Methods](#class-methods)
-    - [get\_class\_of\_relation](#get_class_of_relation)
-  - [Properties](#properties)
-    - [id\_str](#id_str)
-    - [columns](#columns)
-    - [primary\_keys\_full](#primary_keys_full)
-    - [primary\_keys](#primary_keys)
-    - [relations](#relations)
-    - [settable\_relations](#settable_relations)
-    - [hybrid\_properties](#hybrid_properties)
-    - [hybrid\_methods\_full](#hybrid_methods_full)
-    - [hybrid\_methods](#hybrid_methods)
-    - [filterable\_attributes](#filterable_attributes)
-    - [sortable\_attributes](#sortable_attributes)
-    - [settable\_attributes](#settable_attributes)
-
 ## Instance Methods
 
 ### __repr__

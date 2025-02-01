@@ -9,28 +9,6 @@ It uses the [`SmartQueryMixin`](../smart_query_mixin.md) class functionality.
 Check the [API Reference](api_reference.md) for the full list of
 available methods.
 
-**Table of Contents**
-
-- [ActiveRecord Mixin](#activerecord-mixin)
-  - [Usage](#usage)
-  - [Core Features](#core-features)
-    - [Creation, Updating, and Deletion](#creation-updating-and-deletion)
-      - [Creating Records](#creating-records)
-      - [Updating Records](#updating-records)
-      - [Deleting Records](#deleting-records)
-    - [Querying](#querying)
-      - [Basic Queries](#basic-queries)
-      - [Filtering](#filtering)
-      - [Sorting and Pagination](#sorting-and-pagination)
-    - [Eager Loading](#eager-loading)
-      - [Join Loading](#join-loading)
-      - [Subquery Loading](#subquery-loading)
-      - [Complex Schema Loading](#complex-schema-loading)
-    - [Smart Queries](#smart-queries)
-  - [Important Notes](#important-notes)
-  - [Error Handling](#error-handling)
-  - [API Reference](#api-reference)
-
 ## Usage
 
 To use the `ActiveRecordMixin`, create a base model class that inherits from it

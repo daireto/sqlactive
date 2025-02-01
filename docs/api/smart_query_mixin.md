@@ -12,19 +12,6 @@ It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
     [`ActiveRecordMixin`](active_record_mixin/overview.md)
     on which the examples below are based. It is not intended to be used on its own.
 
-**Table of Contents**
-
-- [SmartQueryMixin](#smartquerymixin)
-  - [Core Features](#core-features)
-    - [Smart Queries](#smart-queries)
-    - [Filtering](#filtering)
-    - [Sorting](#sorting)
-    - [Eager Loading](#eager-loading)
-  - [API Reference](#api-reference)
-    - [filter\_expr](#filter_expr)
-    - [order\_expr](#order_expr)
-    - [eager\_expr](#eager_expr)
-
 ## Core Features
 
 ### Smart Queries

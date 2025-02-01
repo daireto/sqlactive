@@ -12,7 +12,7 @@
     <a href="https://pypi.org/project/SQLAlchemy" target="_blank">
         <img src="https://img.shields.io/badge/SQLAlchemy-2.0%2B-orange" alt="Supported SQLAlchemy versions">
     </a>
-    <a href="[/LICENSE](https://github.com/astral-sh/ruff)" target="_blank">
+    <a href="https://github.com/astral-sh/ruff" target="_blank">
         <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>
     <a href='https://coveralls.io/github/daireto/sqlactive?branch=main'>
@@ -46,6 +46,7 @@ Documentation: https://daireto.github.io/sqlactive/
   - [5. Perform Queries](#5-perform-queries)
   - [6. Perform Native Queries](#6-perform-native-queries)
   - [7. Manage Timestamps](#7-manage-timestamps)
+  - [8. Serialization and Deserialization](#8-serialization-and-deserialization)
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
   - [Coverage](#coverage)
@@ -68,7 +69,7 @@ Documentation: https://daireto.github.io/sqlactive/
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/):
+You can simply install sqlactive from the [PyPI](https://pypi.org/project/sqlactive/):
 
 ```bash
 pip install sqlactive
@@ -82,10 +83,10 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/overview/): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin/overview/): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
-* [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](https://daireto.github.io/sqlactive/latest/pages/serialization_mixin/): Provides serialization and deserialization methods.
+* [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization_mixin/): Provides serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -96,9 +97,11 @@ from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlactive import ActiveRecordBaseModel
 
-# Define the BaseModel class
+
+# Define a base class for your models (recommended)
 class BaseModel(ActiveRecordBaseModel):
     __abstract__ = True
+
 
 # Define the models
 class User(BaseModel):
@@ -111,6 +114,7 @@ class User(BaseModel):
 
     posts: Mapped[list['Post']] = relationship(back_populates='user')
     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+
 
 class Post(BaseModel):
     __tablename__ = 'posts'
@@ -209,7 +213,7 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 > conn = DBConnection(DATABASE_URL, echo=False)
 > await conn.init_db(BaseModel)
 > ```
-> See the [DB Connection Helper](https://daireto.github.io/sqlactive/latest/pages/db_connection_helper/) section for more information.
+> See the [DB Connection Helper](https://daireto.github.io/sqlactive/api/db_connection_helper/) section for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -242,7 +246,7 @@ await user.delete()
 > a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -309,7 +313,7 @@ print(users)
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 5. Perform Queries
@@ -350,10 +354,6 @@ schema = {
 user = await User.with_schema(schema).unique_first()
 print(user.comments[0].post.title)
 # Lorem ipsum
-
-user_dict = user.to_dict(nested=True)
-print(user_dict)
-# {'id': 1, 'username': 'John1234', 'name': 'John Doe', ...}
 ```
 
 For more flexibility, the low-level `filter_expr` method can be used:
@@ -367,7 +367,7 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/latest/pages/smart_query_mixin/#api-reference)
+See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/api/smart_query_mixin/#api-reference)
 for more details.
 
 > [!IMPORTANT]
@@ -391,7 +391,7 @@ for more details.
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/latest/pages/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
 > class to see all the available methods.
 
 ### 6. Perform Native Queries
@@ -448,8 +448,36 @@ print(user.updated_at)
 ```
 
 > [!TIP]
-> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/)
+> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/)
 > class to know how to customize the timestamps behavior.
+
+### 8. Serialization and Deserialization
+
+Models can be serialized and deserialized using the `to_dict` and `from_dict` methods:
+
+```python
+user = await User.create(username='John1234', name='John Doe', age=25)
+user_dict = user.to_dict()
+print(user_dict)
+# {'id': 1, 'username': 'John1234', 'name': 'John Doe', ...}
+
+user = User.from_dict(user_dict)
+print(user.name)
+# John Doe
+```
+
+Also, models can be serialized and deserialized using the `to_json` and `from_json` methods:
+
+```python
+user = await User.create(username='John1234', name='John Doe', age=25)
+user_json = user.to_json()
+print(user_json)
+# {"id": 1, "username": "John1234", "name": "John Doe", ...}
+
+user = User.from_json(user_json)
+print(user.name)
+# John Doe
+```
 
 ## Testing
 
@@ -515,7 +543,7 @@ Find the complete documentation [here](https://daireto.github.io/sqlactive/).
 
 ## Contributing
 
-Please read the [contribution guidelines](https://daireto.github.io/sqlactive/latest/contributing/).
+Please read the [contribution guidelines](/docs/contributing.md).
 
 ## License
 

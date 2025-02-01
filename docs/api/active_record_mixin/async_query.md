@@ -1,39 +1,6 @@
-# AsyncQuery
+# Async Query
 
-This class is an Async wrapper for `sqlalchemy.sql.Select`.
-
-**Table of Contents**
-
-- [AsyncQuery](#asyncquery)
-  - [Usage](#usage)
-  - [API Reference](#api-reference)
-    - [options](#options)
-    - [filter](#filter)
-    - [order\_by](#order_by)
-    - [sort](#sort)
-    - [offset](#offset)
-    - [skip](#skip)
-    - [limit](#limit)
-    - [take](#take)
-    - [join](#join)
-    - [with\_subquery](#with_subquery)
-    - [with\_schema](#with_schema)
-    - [execute](#execute)
-    - [scalars](#scalars)
-    - [first](#first)
-    - [one](#one)
-    - [one\_or\_none](#one_or_none)
-    - [fetch\_one](#fetch_one)
-    - [fetch\_one\_or\_none](#fetch_one_or_none)
-    - [all](#all)
-    - [fetch\_all](#fetch_all)
-    - [to\_list](#to_list)
-    - [unique](#unique)
-    - [unique\_all](#unique_all)
-    - [unique\_first](#unique_first)
-    - [unique\_one](#unique_one)
-    - [unique\_one\_or\_none](#unique_one_or_none)
-  - [Access the Native Query Object](#access-the-native-query-object)
+The `AsyncQuery` class is an Async wrapper for `sqlalchemy.sql.Select`.
 
 ## Usage
 

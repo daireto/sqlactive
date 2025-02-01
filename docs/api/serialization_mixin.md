@@ -5,16 +5,6 @@ SQLAlchemy models.
 
 It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
 
-**Table of Contents**
-
-- [SerializationMixin](#serializationmixin)
-  - [Serialization](#serialization)
-    - [to\_dict](#to_dict)
-    - [to\_json](#to_json)
-  - [Deserialization](#deserialization)
-    - [from\_dict](#from_dict)
-    - [from\_json](#from_json)
-
 ## Serialization
 
 ### to_dict

@@ -3,26 +3,6 @@
 Thank you for your interest in contributing to SQLActive! Please take a
 moment to review this document before submitting a pull request.
 
-**Table of Contents**
-
-- [Contributing Guidelines](#contributing-guidelines)
-  - [Why should you read these guidelines?](#why-should-you-read-these-guidelines)
-  - [Ground Rules](#ground-rules)
-    - [Responsibilities](#responsibilities)
-    - [Tools and Workflow](#tools-and-workflow)
-  - [Your First Pull Request](#your-first-pull-request)
-    - [Getting Started](#getting-started)
-    - [Setup Instructions](#setup-instructions)
-  - [Reporting Issues](#reporting-issues)
-    - [Security Issues](#security-issues)
-    - [Filing a Bug Report](#filing-a-bug-report)
-  - [Suggesting Features or Enhancements](#suggesting-features-or-enhancements)
-  - [Code Conventions](#code-conventions)
-    - [Code Style](#code-style)
-    - [Commit Message Format](#commit-message-format)
-    - [Pull Request Checklist](#pull-request-checklist)
-  - [Thank You!](#thank-you)
-
 ## Why should you read these guidelines?
 
 Following these guidelines ensures that your contributions align with
@@ -180,9 +160,13 @@ To suggest a feature:
     - `refactor:` Refactor of existing code.
     - `nit:` Small code review changes mainly around style or syntax.
     - `feat:` New features.
-- Example:
+- Examples:
     ```
     feat: add support for PostgreSQL database connections
+    fix: fix a bug in the database connection
+    ci: update the CI workflow
+    test: add tests for the new feature
+    docs: update the documentation
     ```
 
 ### Pull Request Checklist
