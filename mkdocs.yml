@@ -4,6 +4,7 @@ repo_name: daireto/sqlactive
 repo_url: https://github.com/daireto/sqlactive/
 theme:
   name: material
+  favicon: images/favicon.png
   features:
     - content.code.copy
     - content.code.select
