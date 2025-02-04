@@ -1,20 +1,24 @@
 """This module defines `ActiveRecordMixin` class."""
 
-from typing import Any, cast
-from typing_extensions import Self
 from collections.abc import Sequence
-
+from sqlalchemy.engine import Result, Row, ScalarResult
+from sqlalchemy.exc import InvalidRequestError, NoResultFound
 from sqlalchemy.sql import FromClause, Select, select
+from sqlalchemy.sql._typing import (
+    _ColumnExpressionArgument,
+    _ColumnExpressionOrStrLabelArgument,
+    _ColumnsClauseArgument,
+)
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.operators import OperatorType
-from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
-from sqlalchemy.exc import InvalidRequestError, NoResultFound
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from typing import Any, Literal, cast, overload
+from typing_extensions import Self
 
-from .utils import classproperty
 from .session import SessionMixin
 from .async_query import AsyncQuery
 from .smart_query import SmartQueryMixin
+from .utils import classproperty
 
 
 class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
@@ -51,128 +55,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     >>> User.all()
     # []
 
-    Methods
-    -------
-    ### Creation, updating, and deletion
-
-    `save()`
-        Saves the row.
-    `create(**kwargs)`
-        Creates a new row.
-    `insert(**kwargs)`
-        A synonym for `create`.
-    `add(**kwargs)`
-        A synonym for `create`.
-    `update(**kwargs)`
-        Updates the row.
-    `edit(**kwargs)`
-        A synonym for `update`.
-    `delete()`
-        Deletes the row.
-    `remove()`
-        A synonym for `delete`.
-    `save_all(rows, refresh)`
-        Saves many rows.
-    `create_all(rows, refresh)`
-        Creates many rows.
-    `update_all(rows, refresh)`
-        Updates many rows.
-    `delete_all(rows)`
-        Deletes many rows.
-    `destroy()`
-        Deletes multiple rows by primary key.
-
-    ### Query building
-
-    `options(*args)`
-        Applies the given list of mapper options.
-    `filter(*criterion, **filters)`
-        Creates filtered query.
-    `where(*criterion, **filters)`
-        A synonym for `filter`.
-    `find(*criterion, **filters)`
-        A synonym for `filter`.
-    `order_by(*columns)`
-        Applies one or more ORDER BY criteria to the query.
-    `sort(*columns)`
-        A synonym for `order_by`.
-    `offset(offset)`
-        Creates query with an OFFSET clause.
-    `skip(skip)`
-        A synonym for `offset`.
-    `limit(limit)`
-        Creates query with a LIMIT clause.
-    `take(take)`
-        A synonym for `limit`.
-    `join(*paths)`
-        Joined eager loading using LEFT OUTER JOIN.
-    `with_subquery(*paths)`
-        Subqueryload or Selectinload eager loading.
-    `with_schema(schema)`
-        Joined, subqueryload and selectinload eager loading.
-    `smart_query(criterion, filters, sort_columns, sort_attrs, schema)`
-        Builds a smart query.
-
-    ### Fetching and reading
-
-    `get(pk)`
-        Fetches a row by primary key or `None` if no results are found.
-    `get_or_fail(pk)`
-        Fetches a row by primary key or raises an exception
-        if no results are found.
-    `find_one(*criterion, **filters)`
-        A synonym for `filter` but returns only one row or
-        raises an exception if no results are found.
-    `find_one_or_none(*criterion, **filters)`
-        A synonym for `filter` but returns only one row or
-        `None` if no results are found.
-    `find_all(*criterion, **filters)`
-        A synonym for `filter` but returns all results.
-    `find_first(*criterion, **filters)`
-        Finds a single row matching the criteria or `None`.
-    `find_unique(*criterion, **filters)`
-        Finds all unique rows matching the criteria and
-    `find_unique_all(*criterion, **filters)`
-        Finds all unique rows matching the criteria and returns a list.
-    `find_unique_first(*criterion, **filters)`
-        Finds a single unique row matching the criteria or `None`.
-    `find_unique_one(*criterion, **filters)`
-        Finds a single unique row matching the criteria.
-    `find_unique_one_or_none(*criterion, **filters)`
-        Finds a single unique row matching the criteria or `None`.
-    `scalars()`
-        Returns an `ScalarResult` object with all rows.
-    `first()`
-        Fetches the first row or `None` if no results are found.
-    `one()`
-        Fetches one row or raises an exception if no results are found.
-    `one_or_none()`
-        Fetches one row or `None` if no results are found.
-    `fetch_one()`
-        A synonym for `one`.
-    `fetch_one_or_none()`
-        A synonym for `one_or_none`.
-    `all()`
-        Fetches all rows.
-    `fetch_all()`
-        A synonym for `all`.
-    `to_list()`
-        A synonym for `all`.
-    `unique()`
-        Returns an `ScalarResult` object with all unique rows.
-    `unique_all()`
-        Fetches all unique rows.
-    `unique_first()`
-        Fetches the first unique row or `None` if no results are found.
-    `unique_one()`
-        Fetches one unique row or raises an exception if no results are found.
-    `unique_one_or_none()`
-        Fetches one unique row or `None` if no results are found.
-
-    ### Additional methods
-
-    `fill(**kwargs)`
-        Fills the object with values from `kwargs`.
+    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
+    for the full list of available methods.
     """
 
     __abstract__ = True
@@ -212,11 +96,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         return await self.fill(**kwargs).save()
 
-    async def edit(self, **kwargs):
-        """A synonym for `update`."""
-
-        return await self.update(**kwargs)
-
     async def delete(self):
         """Deletes the row."""
 
@@ -234,22 +113,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await self.delete()
 
     @classmethod
-    async def create(cls, **kwargs):
-        """Creates a new row."""
+    async def insert(cls, **kwargs):
+        """Inserts a new row."""
 
         return await cls().fill(**kwargs).save()
 
     @classmethod
-    async def insert(cls, **kwargs):
-        """A synonym for `create`."""
+    async def create(cls, **kwargs):
+        """A synonym for `insert`."""
 
-        return await cls.create(**kwargs)
-
-    @classmethod
-    async def add(cls, **kwargs):
-        """A synonym for `create`."""
-
-        return await cls.create(**kwargs)
+        return await cls.insert(**kwargs)
 
     @classmethod
     async def save_all(cls, rows: Sequence[Self], refresh: bool = False):
@@ -276,11 +149,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     @classmethod
-    async def create_all(cls, rows: Sequence[Self], refresh: bool = False):
-        """Creates many rows.
+    async def insert_all(cls, rows: Sequence[Self], refresh: bool = False):
+        """Inserts many rows.
 
         This is mostly a shortcut for `save_all`
-        when creating new rows.
+        when inserting new rows.
         """
 
         return await cls.save_all(rows, refresh)
@@ -321,7 +194,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         primary_key_name = cls._get_primary_key_name()
         async with cls._AsyncSession() as session:
             try:
-                query = cls._build_smart_query(cls._query, filters={f'{primary_key_name}__in': ids})
+                query = cls.build_smart_query(cls._query, filters={f'{primary_key_name}__in': ids})
                 rows = (await session.execute(query)).scalars().all()
                 for row in rows:
                     await session.delete(row)
@@ -430,6 +303,402 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             raise NoResultFound(f'{cls.__name__} with id `{pk}` was not found.')
 
     @classmethod
+    async def scalars(cls):
+        """Returns a `sqlalchemy.engine.ScalarResult` instance
+        containing all results.
+
+        Example:
+        >>> scalar_result = await User.scalars()
+        >>> scalar_result
+        # <sqlalchemy.engine.result.ScalarResult>
+        >>> users = scalar_result.all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> scalar_result = await User.filter(name='John Doe').scalars()
+        >>> users = scalar_result.all()
+        >>> users
+        # [<User 2>]
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.scalars()
+
+    @overload
+    @classmethod
+    async def first(cls) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def first(cls, scalar: Literal[True]) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def first(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    @classmethod
+    async def first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+
+    @classmethod
+    async def first(cls, scalar: bool = True):
+        """Fetches the first row or `None` if no results are found.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.first()
+        >>> user
+        # <User 1>
+        >>> user = await User.first(scalar=False)
+        >>> user
+        # (<User 1>,)
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.first(scalar)
+
+    @overload
+    @classmethod
+    async def one(cls) -> Self: ...
+
+    @overload
+    @classmethod
+    async def one(cls, scalar: Literal[True]) -> Self: ...
+
+    @overload
+    @classmethod
+    async def one(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+
+    @overload
+    @classmethod
+    async def one(cls, scalar: bool) -> Self | Row[tuple[Any, ...]]: ...
+
+    @classmethod
+    async def one(cls, scalar: bool = True):
+        """Fetches one row or raises an exception
+        if no results are found.
+
+        If multiple results are found, raises `MultipleResultsFound`.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.filter(name='John Doe').one()
+        >>> user
+        # <User 1>
+        >>> user = await User.filter(name='John Doe').one(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await User.filter(name='Unknown').one()
+        # Traceback (most recent call last):
+        #     ...
+        # NoResultFound: 'No result found.'
+
+        Raises
+        ------
+        NoResultFound
+            If no result is found.
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.one(scalar)
+
+    @overload
+    @classmethod
+    async def one_or_none(cls) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def one_or_none(cls, scalar: Literal[True]) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def one_or_none(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    @classmethod
+    async def one_or_none(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+
+    @classmethod
+    async def one_or_none(cls, scalar: bool = True):
+        """Fetches one row or `None` if no results are found.
+
+        If multiple results are found, raises `MultipleResultsFound`.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.filter(name='John Doe').one_or_none()
+        >>> user
+        # <User 1>
+        >>> user = await User.filter(name='John Doe').one_or_none(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await User.filter(name='Unknown').one_or_none()
+        >>> user
+        # None
+
+        Raises
+        ------
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.one_or_none(scalar)
+
+    @overload
+    @classmethod
+    async def all(cls) -> Sequence[Self]: ...
+
+    @overload
+    @classmethod
+    async def all(cls, scalars: Literal[True]) -> Sequence[Self]: ...
+
+    @overload
+    @classmethod
+    async def all(cls, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+
+    @overload
+    @classmethod
+    async def all(cls, scalars: bool) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
+
+    @classmethod
+    async def all(cls, scalars: bool = True):
+        """Fetches all rows.
+
+        If `scalars` is `True`, returns scalar values.
+
+        Example:
+        >>> users = await User.all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await User.all(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.all(scalars)
+
+    @overload
+    @classmethod
+    async def unique(cls) -> ScalarResult[Self]: ...
+
+    @overload
+    @classmethod
+    async def unique(cls, scalars: Literal[True]) -> ScalarResult[Self]: ...
+
+    @overload
+    @classmethod
+    async def unique(cls, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
+
+    @overload
+    @classmethod
+    async def unique(cls, scalars: bool) -> ScalarResult[Self] | Result[tuple[Any, ...]]: ...
+
+    @classmethod
+    async def unique(cls, scalars: bool = True):
+        """Apply unique filtering to the objects returned
+        in the result instance.
+
+        If `scalars` is `True`, returns a `sqlalchemy.engine.ScalarResult`
+        instance. Otherwise, returns a `sqlalchemy.engine.Result` instance.
+
+        Example:
+        >>> users = await User.unique()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await User.unique(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.unique(scalars)
+
+    @overload
+    @classmethod
+    async def unique_first(cls) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def unique_first(cls, scalar: Literal[True]) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def unique_first(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    @classmethod
+    async def unique_first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+
+    @classmethod
+    async def unique_first(cls, scalar: bool = True):
+        """Fetches the first unique row or `None` if no results are found.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.unique_first()
+        >>> user
+        # <User 1>
+        >>> user = await User.unique_first(scalar=False)
+        >>> user
+        # (<User 1>,)
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.unique_first(scalar)
+
+    @overload
+    @classmethod
+    async def unique_one(cls) -> Self: ...
+
+    @overload
+    @classmethod
+    async def unique_one(cls, scalar: Literal[True]) -> Self: ...
+
+    @overload
+    @classmethod
+    async def unique_one(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+
+    @overload
+    @classmethod
+    async def unique_one(cls, scalar: bool) -> Self | Row[tuple[Any, ...]]: ...
+
+    @classmethod
+    async def unique_one(cls, scalar: bool = True):
+        """Fetches one unique row or raises an exception
+        if no results are found.
+
+        If multiple results are found, raises `MultipleResultsFound`.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.filter(name='John Doe').unique_one()
+        >>> user
+        # <User 1>
+        >>> user = await User.filter(name='John Doe').unique_one(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await User.filter(name='Unknown').unique_one()
+        # Traceback (most recent call last):
+        #     ...
+        # NoResultFound: 'No result found.'
+
+        Raises
+        ------
+        NoResultFound
+            If no result is found.
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.unique_one(scalar)
+
+    @overload
+    @classmethod
+    async def unique_one_or_none(cls) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def unique_one_or_none(cls, scalar: Literal[True]) -> Self | None: ...
+
+    @overload
+    @classmethod
+    async def unique_one_or_none(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    @classmethod
+    async def unique_one_or_none(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+
+    @classmethod
+    async def unique_one_or_none(cls, scalar: bool = True):
+        """Fetches one unique row or `None` if no results are found.
+
+        If multiple results are found, raises `MultipleResultsFound`.
+
+        If `scalar` is `True`, returns a scalar value.
+
+        Example:
+        >>> user = await User.filter(name='John Doe').unique_one_or_none()
+        >>> user
+        # <User 1>
+        >>> user = await User.filter(name='John Doe').unique_one_or_none(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await User.filter(name='Unknown').unique_one_or_none()
+        >>> user
+        # None
+
+        Raises
+        ------
+        MultipleResultsFound
+            If multiple results are found.
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.unique_one_or_none(scalar)
+
+    @overload
+    @classmethod
+    async def unique_all(cls) -> Sequence[Self]: ...
+
+    @overload
+    @classmethod
+    async def unique_all(cls, scalars: Literal[True]) -> Sequence[Self]: ...
+
+    @overload
+    @classmethod
+    async def unique_all(cls, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+
+    @overload
+    @classmethod
+    async def unique_all(cls, scalars: bool) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
+
+    @classmethod
+    async def unique_all(cls, scalars: bool = True):
+        """Fetches all unique rows.
+
+        If `scalars` is `True`, returns scalar values.
+
+        Example:
+        >>> users = await User.unique_all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await User.unique_all(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
+        """
+
+        async_query = cls._get_async_query()
+        return await async_query.unique_all(scalars)
+
+    @classmethod
+    def select(cls, *entities: _ColumnsClauseArgument[Any]):
+        """Replaces the original `sqlalchemy.sql.Select` instance with a new one.
+
+        Example:
+        >>> User.select(User.name, User.age)
+        # SELECT users.name, users.age FROM users
+        >>> User.select(User.age, func.max(User.age))
+        # SELECT users.age, max(users.age) AS max_1 FROM users
+
+        Raises
+        ------
+        ValueError
+            If no entities are selected.
+        """
+
+        async_query = cls._get_async_query()
+        return async_query.select(*entities)
+
+    @classmethod
     def options(cls, *args: ExecutableOption):
         """Creates a query and applies the given list of mapper options.
 
@@ -451,7 +720,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options
 
         Example 1:
-        >>> users = await User.options(joinedload(User.posts)).unique_all()
+        >>> users = await User.options(joinedload(User.posts)).unique()
         >>> users
         # [<User 1>, <User 2>, ...]
         >>> users[0].posts
@@ -482,38 +751,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.options(*args)
 
     @classmethod
-    def filter(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Creates a filtered query using SQLAlchemy or Django-style filters.
-
-        Creates the WHERE clause of the query.
+    def where(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
-
-        Example using Django-like syntax:
-        >>> users = await User.filter(name__like='%John%').all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.filter(name__like='%John%', age=30).all()
-        >>> users
-        # [<User 2>]
-
-        Example using SQLAlchemy syntax:
-        >>> users = await User.filter(User.name == 'John Doe').all()
-        >>> users
-        # [<User 2>]
-
-        Example using both:
-        >>> users = await User.filter(User.age == 30, name__like='%John%').all()
-        >>> users
-        # [<User 2>]
-        """
-
-        async_query = cls._get_async_query()
-        return async_query.filter(*criterion, **filters)
-
-    @classmethod
-    def where(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `filter`.
 
         Example using Django-like syntax:
         >>> users = await User.where(name__like='%John%').all()
@@ -534,319 +775,24 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [<User 2>]
         """
 
-        return cls.filter(*criterion, **filters)
+        async_query = cls._get_async_query()
+        return async_query.where(*criteria, **filters)
 
     @classmethod
-    def find(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `filter`.
+    def filter(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """A synonym for `where`."""
 
-        Example using Django-like syntax:
-        >>> users = await User.find(name__like='%John%').all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.find(name__like='%John%', age=30).all()
-        >>> users
-        # [<User 2>]
-
-        Example using SQLAlchemy syntax:
-        >>> users = await User.find(User.name == 'John Doe').all()
-        >>> users
-        # [<User 2>]
-
-        Example using both:
-        >>> users = await User.find(User.age == 30, name__like='%John%').all()
-        >>> users
-        # [<User 2>]
-        """
-
-        return cls.filter(*criterion, **filters)
+        return cls.where(*criteria, **filters)
 
     @classmethod
-    async def find_one(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single row matching the criteria.
+    def find(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """A synonym for `where`."""
 
-        If multiple results are found, raises MultipleResultsFound.
-
-        This is same as calling `await cls.find(*criterion, **filters).one()`
-
-        Example using Django-like syntax:
-        >>> user = await User.find_one(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_one(name__like='%Jane%')  # Does not exist
-        >>> user
-        # Traceback (most recent call last):
-        #     ...
-        # NoResultFound: 'No result found.'
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_one(User.name == 'John Doe').all()
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_one(User.age == 30, name__like='%John%').all()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        NoResultFound
-            If no result is found.
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        return await cls.find(*criterion, **filters).one()
-
-    @classmethod
-    async def find_one_or_none(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single row matching the criteria or `None`.
-
-        If multiple results are found, raises MultipleResultsFound.
-
-        This is same as calling `await cls.find(*criterion, **filters).one_or_none()`
-
-        Example using Django-like syntax:
-        >>> user = await User.find_one_or_none(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_one_or_none(name__like='%Jane%')  # Does not exist
-        >>> user
-        # None
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_one_or_none(User.name == 'John Doe').all()
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_one_or_none(User.age == 30, name__like='%John%').all()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        return await cls.find(*criterion, **filters).one_or_none()
-
-    @classmethod
-    async def find_all(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds all rows matching the criteria.
-
-        This is same as calling `await cls.find(*criterion, **filters).all()`
-
-        Example using Django-like syntax:
-        >>> users = await User.find_all(name__like='%John%')
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.find_all(name__like='%John%', age=30)
-        >>> users
-        # [<User 2>]
-
-        Example using SQLAlchemy syntax:
-        >>> users = await User.find_all(User.name == 'John Doe')
-        >>> users
-        # [<User 2>]
-
-        Example using both:
-        >>> users = await User.find_all(User.age == 30, name__like='%John%')
-        >>> users
-        # [<User 2>]
-        """
-
-        return await cls.find(*criterion, **filters).all()
-
-    @classmethod
-    async def find_first(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single row matching the criteria or `None`.
-
-        This is same as calling `await cls.find(*criterion, **filters).first()`.
-
-        Example using Django-like syntax:
-        >>> user = await User.find_first(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_first(name__like='%Jane%')  # Does not exist
-        >>> user
-        # None
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_first(User.name == 'John Doe')
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_first(User.age == 30, name__like='%John%')
-        >>> user
-        # <User 2>
-        """
-
-        return await cls.find(*criterion, **filters).first()
-
-    @classmethod
-    async def find_unique(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds all unique rows matching the criteria and
-        returns an `ScalarResult` object with them.
-
-        This is same as calling `await cls.find(*criterion, **filters).unique()`.
-
-        Example using Django-like syntax:
-        >>> users_scalars = await User.find_unique(name__like='%John%')
-        >>> users = users_scalars.all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.find_unique(name__like='%John%', age=30)
-        >>> users
-        # [<User 2>]
-
-        Example using SQLAlchemy syntax:
-        >>> users_scalars = await User.find_unique(User.name == 'John Doe')
-        >>> users = users_scalars.all()
-        >>> users
-        # [<User 2>]
-
-        Example using both:
-        >>> users_scalars = await User.find_unique(User.age == 30, name__like='%John%')
-        >>> users = users_scalars.all()
-        >>> users
-        # [<User 2>]
-        """
-
-        return await cls.find(*criterion, **filters).unique()
-
-    @classmethod
-    async def find_unique_all(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds all unique rows matching the criteria and returns a list.
-
-        This is same as calling `await cls.find(*criterion, **filters).unique_all()`.
-
-        Example using Django-like syntax:
-        >>> users = await User.find_unique_all(name__like='%John%')
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.find_unique_all(name__like='%John%', age=30)
-        >>> users
-        # [<User 2>]
-
-        Example using SQLAlchemy syntax:
-        >>> users = await User.find_unique_all(User.name == 'John Doe')
-        >>> users
-        # [<User 2>]
-
-        Example using both:
-        >>> users = await User.find_unique_all(User.age == 30, name__like='%John%')
-        >>> users
-        # [<User 2>]
-        """
-
-        return await cls.find(*criterion, **filters).unique_all()
-
-    @classmethod
-    async def find_unique_first(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single unique row matching the criteria or `None`.
-
-        This is same as calling `await cls.find(*criterion, **filters).unique_first()`.
-
-        Example using Django-like syntax:
-        >>> user = await User.find_unique_first(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_unique_first(name__like='%Jane%')  # Does not exist
-        >>> user
-        # None
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_unique_first(User.name == 'John Doe')
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_unique_first(User.age == 30, name__like='%John%')
-        >>> user
-        # <User 2>
-        """
-
-        return await cls.find(*criterion, **filters).unique_first()
-
-    @classmethod
-    async def find_unique_one(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single unique row matching the criteria.
-
-        If multiple results are found, raises MultipleResultsFound.
-
-        This is same as calling `await cls.find(*criterion, **filters).unique_one()`.
-
-        Example using Django-like syntax:
-        >>> user = await User.find_unique_one(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_unique_one(name__like='%Jane%')  # Does not exist
-        >>> user
-        # Traceback (most recent call last):
-        #     ...
-        # NoResultFound: 'No result found.'
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_unique_one(User.name == 'John Doe').all()
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_unique_one(User.age == 30, name__like='%John%').all()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        NoResultFound
-            If no result is found.
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        return await cls.find(*criterion, **filters).unique_one()
-
-    @classmethod
-    async def find_unique_one_or_none(cls, *criterion: _ColumnExpressionArgument[bool], **filters: Any):
-        """Finds a single unique row matching the criteria or `None`.
-
-        If multiple results are found, raises MultipleResultsFound.
-
-        This is same as calling `await cls.find(*criterion, **filters).unique_one_or_none()`.
-
-        Example using Django-like syntax:
-        >>> user = await User.find_unique_one_or_none(name__like='%John%', age=30)
-        >>> user
-        # <User 2>
-        >>> user = await User.find_unique_one_or_none(name__like='%Jane%')  # Does not exist
-        >>> user
-        # None
-
-        Example using SQLAlchemy syntax:
-        >>> user = await User.find_unique_one_or_none(User.name == 'John Doe').all()
-        >>> user
-        # <User 2>
-
-        Example using both:
-        >>> user = await User.find_unique_one_or_none(User.age == 30, name__like='%John%').all()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        return await cls.find(*criterion, **filters).unique_one_or_none()
+        return cls.where(*criteria, **filters)
 
     @classmethod
     def order_by(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
-        """Creates a query with ORDER BY clause.
+        """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -872,30 +818,49 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def sort(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
-        """A synonym for `order_by`.
-
-        Example using Django-like syntax:
-        >>> users = await User.sort('-created_at').all()
-        >>> users
-        # [<User 100>, <User 99>, ...]
-        >>> posts = await Post.sort('-rating', 'user___name').all()
-        >>> posts
-        # [<Post 1>, <Post 4>, ...]
-
-        Example using SQLAlchemy syntax:
-        >>> users = await User.sort(User.created_at.desc()).all()
-        >>> users
-        # [<User 100>, <User 99>, ...]
-        >>> posts = await Post.sort(desc(Post.rating)).all()
-        >>> posts
-        # [<Post 1>, <Post 4>, ...]
-        """
+        """A synonym for `order_by`."""
 
         return cls.order_by(*columns)
 
     @classmethod
+    def group_by(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+        """Applies one or more GROUP BY criteria to the query.
+
+        It supports both Django-like syntax and SQLAlchemy syntax.
+
+        NOTE: It is recommended to select specific columns (e.g. `select(User.id, User.name)`)
+        instead of all columns of a model (e.g. `select(User)`). You can call `select()` again
+        if you want to select specific columns.
+
+        Example using Django-like syntax:
+        >>> rows = await User.group_by('age').select(User.age, func.count(User.name)).fetch_rows()
+        >>> rows
+        # [(30, 2), (32, 1), ...]
+        >>> query = await Post.group_by('rating', 'user___name')
+        >>> query = query.select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> rows = query.fetch_rows()
+        >>> rows
+        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+
+        Example using SQLAlchemy syntax:
+        >>> query = select(User.age, func.count(User.name))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by(User.age).fetch_rows()
+        >>> rows
+        # [(30, 2), (32, 1), ...]
+        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by(Post.rating, Post.user.name).fetch_rows()
+        >>> rows
+        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+        """
+
+        async_query = cls._get_async_query()
+        return async_query.group_by(*columns)
+
+    @classmethod
     def offset(cls, offset: int):
-        """Creates query with an OFFSET clause.
+        """Applies one OFFSET criteria to the query.
 
         Parameters
         ----------
@@ -918,24 +883,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def skip(cls, skip: int):
-        """A synonym for `offset`.
-
-        Parameters
-        ----------
-        skip : int
-            Offset.
-
-        Example:
-        >>> users = await User.skip(10).all()
-        >>> users
-        # [<User 11>, <User 12>, ...]
-        """
+        """A synonym for `offset`."""
 
         return cls.offset(skip)
 
     @classmethod
     def limit(cls, limit: int):
-        """Creates query with a LIMIT clause.
+        """Applies one LIMIT criteria to the query.
 
         Parameters
         ----------
@@ -958,18 +912,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def take(cls, take: int):
-        """A synonym for `limit`.
-
-        Parameters
-        ----------
-        take : int
-            Limit.
-
-        Example:
-        >>> users = await User.take(2).all()
-        >>> users
-        # [<User 1>, <User 2>]
-        """
+        """A synonym for `limit`."""
 
         return cls.limit(take)
 
@@ -995,6 +938,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ----------
         paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
             Paths to eager load.
+
+        Raises
+        ------
+        ValueError
+            If the second element of tuple is not boolean.
         """
 
         async_query = cls._get_async_query()
@@ -1002,7 +950,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def with_subquery(cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]):
-        """Creates a query with subquery or selectin loading.
+        """Subqueryload or Selectinload eager loading.
 
         Emits a second `SELECT` statement (Subqueryload) for each relationship
         to be loaded, across all result objects at once.
@@ -1086,7 +1034,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def with_schema(
         cls, schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
     ):
-        """Creates a query with complex eager loading schema.
+        """Joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
         nested relationships in separate queries.
@@ -1119,264 +1067,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.with_schema(schema)
 
     @classmethod
-    async def scalars(cls):
-        """Returns an `ScalarResult` object with all rows.
-
-        Example:
-        >>> scalar_result = await User.scalars()
-        >>> scalar_result
-        # <sqlalchemy.engine.result.ScalarResult>
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> scalar_result = await User.filter(name='John Doe').scalars()
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 2>]
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.scalars()
-
-    @classmethod
-    async def first(cls):
-        """Fetches the first row or `None` if no results are found.
-
-        Example:
-        >>> user = await User.first()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').first()
-        >>> user
-        # <User 2>
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.first()
-
-    @classmethod
-    async def one(cls):
-        """Fetches one row or raises an exception
-        if no results are found.
-
-        If multiple results are found, raises `MultipleResultsFound`.
-
-        Example:
-        >>> user = await User.one()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').one()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        NoResultFound
-            If no result is found.
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.one()
-
-    @classmethod
-    async def one_or_none(cls):
-        """Fetches one row or `None` if no results are found.
-
-        If multiple results are found, raises `MultipleResultsFound`.
-
-        Example:
-        >>> user = await User.one_or_none()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').one_or_none()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.one_or_none()
-
-    @classmethod
-    async def fetch_one(cls):
-        """A synonym for `one`.
-
-        Example:
-        >>> user = await User.fetch_one()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').fetch_one()
-        >>> user
-        # <User 2>
-        """
-
-        return await cls.one()
-
-    @classmethod
-    async def fetch_one_or_none(cls):
-        """A synonym for `one_or_none`.
-
-        Example:
-        >>> user = await User.fetch_one_or_none()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').fetch_one_or_none()
-        >>> user
-        # <User 2>
-        """
-
-        return await cls.one_or_none()
-
-    @classmethod
-    async def all(cls):
-        """Fetches all rows.
-
-        Example:
-        >>> users = await User.all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.all()
-
-    @classmethod
-    async def fetch_all(cls):
-        """A synonym for `all`.
-
-        Example:
-        >>> users = await User.fetch_all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        """
-
-        return await cls.all()
-
-    @classmethod
-    async def to_list(cls):
-        """A synonym for `all`.
-
-        Example:
-        >>> users = await User.to_list()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        """
-
-        return await cls.all()
-
-    @classmethod
-    async def unique(cls):
-        """Returns an `ScalarResult` object with all unique rows.
-
-        Example:
-        >>> scalar_result = await User.unique()
-        >>> scalar_result
-        # <sqlalchemy.engine.result.ScalarResult>
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> scalar_result = await User.filter(name='John Doe').unique()
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 2>]
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.unique()
-
-    @classmethod
-    async def unique_all(cls):
-        """Fetches all unique rows.
-
-        Example:
-        >>> users = await User.unique_all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await User.filter(name='John Doe').unique_all()
-        >>> users
-        # [<User 2>]
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.unique_all()
-
-    @classmethod
-    async def unique_first(cls):
-        """Fetches the first unique row or `None`
-        if no results are found.
-
-        Example:
-        >>> user = await User.unique_first()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').unique_first()
-        >>> user
-        # <User 2>
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.unique_first()
-
-    @classmethod
-    async def unique_one(cls):
-        """Fetches one unique row or raises an exception
-        if no results are found.
-
-        If multiple results are found, raises `MultipleResultsFound`.
-
-        Example:
-        >>> user = await User.unique_one()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').unique_one()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        NoResultFound
-            If no result is found.
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.unique_one()
-
-    @classmethod
-    async def unique_one_or_none(cls):
-        """Fetches one unique row or `None`
-        if no results are found.
-
-        If multiple results are found, raises `MultipleResultsFound`.
-
-        Example:
-        >>> user = await User.unique_one_or_none()
-        >>> user
-        # <User 1>
-        >>> user = await User.filter(name='John Doe').unique_one_or_none()
-        >>> user
-        # <User 2>
-
-        Raises
-        ------
-        MultipleResultsFound
-            If multiple results are found.
-        """
-
-        async_query = cls._get_async_query()
-        return await async_query.unique_one_or_none()
-
-    @classmethod
     def smart_query(
         cls,
-        criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
         filters: (
             dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
         ) = None,
@@ -1397,14 +1090,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
         >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
 
-        by passing them as `criterion` argument.
+        by passing them as `criteria` argument.
 
         NOTE: To get more information about the usage, see documentation of
         `filter_expr`, `order_expr` and `eager_expr` methods.
 
         Parameters
         ----------
-        criterion : Sequence[_ColumnExpressionArgument[bool]] | None
+        criteria : Sequence[_ColumnExpressionArgument[bool]] | None
             SQLAlchemy syntax filter expressions, by default None.
         filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
             Filter expressions, by default None.
@@ -1421,9 +1114,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Async query object.
         """
 
-        query = cls._build_smart_query(
+        query = cls.build_smart_query(
             query=cls._query,
-            criterion=criterion,
+            criteria=criteria,
             filters=filters,
             sort_columns=sort_columns,
             sort_attrs=sort_attrs,
@@ -1432,12 +1125,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls._get_async_query(query)
 
     @classmethod
-    def _get_async_query(cls, query: Select[tuple[Self, ...]] | None = None):
+    def _get_async_query(cls, query: Select[tuple[Any, ...]] | None = None):
         """Returns an `AsyncQuery` object.
 
         Parameters
         ----------
-        query : Select[tuple[Self, ...]] | None, optional
+        query : Select[tuple[Any, ...]] | None, optional
             SQLAlchemy query for the model, by default None.
         """
 
@@ -1468,7 +1161,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return primary_keys[0].name
 
     @classproperty
-    def _query(cls) -> Select[tuple[Self, ...]]:
+    def _query(cls) -> Select[tuple[Any, ...]]:
         """Returns a query for the model."""
 
         return select(cls)  # type: ignore

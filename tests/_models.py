@@ -1,9 +1,8 @@
 """Models for testing."""
 
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlactive.base_model import ActiveRecordBaseModel
 
 

@@ -1,10 +1,9 @@
 """This module defines `InspectionMixin` class."""
 
-from typing_extensions import Self
-
-from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
+from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
+from typing_extensions import Self
 
 from .utils import classproperty
 

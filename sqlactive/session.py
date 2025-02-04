@@ -2,8 +2,8 @@
 
 from sqlalchemy.ext.asyncio import async_scoped_session, AsyncSession
 
-from .utils import classproperty
 from .exceptions import NoSessionError
+from .utils import classproperty
 
 
 class SessionMixin:

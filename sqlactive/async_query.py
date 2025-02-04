@@ -1,16 +1,18 @@
 """This module defines `AsyncQuery` class."""
 
 from collections.abc import Sequence
-from typing import Any, Generic, TypeVar
-
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.base import ExecutableOption
-from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
-from sqlalchemy.engine import Result, ScalarResult
-from sqlalchemy.engine.interfaces import _CoreAnyExecuteParams
+from sqlalchemy.sql._typing import (
+    _ColumnExpressionArgument,
+    _ColumnExpressionOrStrLabelArgument,
+    _ColumnsClauseArgument,
+)
+from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.ext.asyncio import async_scoped_session, AsyncSession
 from sqlalchemy.orm import joinedload, subqueryload, selectinload
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.sql.base import ExecutableOption
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from .exceptions import NoSessionError
 from .smart_query import SmartQueryMixin
@@ -42,21 +44,31 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         query = select(User)
         async_query = AsyncQuery(query, User._session)
         async_query.query
-        # <sqlalchemy.sql.Select object at 0x7f7f7f7f7f7f7f7f>
+        # <sqlalchemy.sql.Select>
     ```
+
+    Visit the [API reference](https://daireto.github.io/sqlactive/api/active_record_mixin/async_query/#api-reference)
+    for the complete list of methods.
     """
 
     __abstract__ = True
 
-    _query: Select[tuple[_T, ...]]
-    _session: async_scoped_session[AsyncSession] | None = None
+    _query: Select[tuple[Any, ...]]
+    """The original `sqlalchemy.sql.Select` instance."""
 
-    def __init__(self, query: Select[tuple[_T, ...]], session: async_scoped_session[AsyncSession] | None = None) -> None:
+    _session: async_scoped_session[AsyncSession] | None = None
+    """Async session factory."""
+
+    def __init__(
+        self,
+        query: Select[tuple[Any, ...]],
+        session: async_scoped_session[AsyncSession] | None = None,
+    ) -> None:
         """Builds an async wrapper for SQLAlchemy `Query`.
 
         Parameters
         ----------
-        query : Select[tuple[_T, ...]]
+        query : Select[tuple[Any, ...]]
             The `sqlalchemy.sql.Select` instance.
         session : async_scoped_session[AsyncSession] | None, optional
             Async session factory, by default None.
@@ -88,7 +100,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return self._query
 
     @query.setter
-    def query(self, query: Select[tuple[_T, ...]]):
+    def query(self, query: Select[tuple[Any, ...]]):
         """Sets the original `sqlalchemy.sql.Select` instance."""
 
         self._query = query
@@ -115,7 +127,34 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         else:
             raise NoSessionError('Cannot get session. Please, call self.set_session()')
 
-    def options(self, *args: ExecutableOption) -> 'AsyncQuery[_T]':
+    def select(self, *entities: _ColumnsClauseArgument[Any]):
+        """Replaces the original `sqlalchemy.sql.Select` instance with a new one.
+
+        Example:
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> str(async_query)
+        # SELECT users.id, users.username, ... FROM users
+        >>> async_query.select(User.name, User.age)
+        >>> str(async_query)
+        # SELECT users.name, users.age FROM users
+        >>> async_query.select(User.age, func.max(User.age))
+        >>> str(async_query)
+        # SELECT users.age, max(users.age) AS max_1 FROM users
+
+        Raises
+        ------
+        ValueError
+            If no entities are selected.
+        """
+
+        if len(entities) == 0:
+            raise ValueError('At least one column must be selected.')
+
+        self._query._set_entities(entities)
+        return self
+
+    def options(self, *args: ExecutableOption):
         """Applies the given list of mapper options.
 
         Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
@@ -138,7 +177,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         Example 1:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.options(joinedload(User.posts)).unique_all()
+        >>> users = await async_query.options(joinedload(User.posts)).all_unique()
         >>> users
         # [<User 1>, <User 2>, ...]
         >>> users[0].posts
@@ -174,10 +213,8 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         self._query = self._query.options(*args)
         return self
 
-    def filter(self, *criterion: _ColumnExpressionArgument[bool], **filters: Any) -> 'AsyncQuery[_T]':
-        """Filters the query.
-
-        Creates the WHERE clause of the query.
+    def where(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -206,10 +243,20 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # [<User 2>]
         """
 
-        self._query = self._build_smart_query(query=self._query, criterion=criterion, filters=filters)
+        self._query = self.build_smart_query(query=self._query, criteria=criteria, filters=filters)
         return self
 
-    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> 'AsyncQuery[_T]':
+    def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """A synonym for `where`."""
+
+        return self.where(*criteria, **filters)
+
+    def find(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+        """A synonym for `where`."""
+
+        return self.where(*criteria, **filters)
+
+    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -239,49 +286,55 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # [<Post 1>, <Post 4>, ...]
         """
 
-        sort_columns = []
-        sort_attrs = []
-        for column in columns:
-            if isinstance(column, str):
-                sort_attrs.append(column)
-            else:
-                sort_columns.append(column)
-
-        self._query = self._build_smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
+        sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
+        self._query = self.build_smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
         return self
 
-    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> 'AsyncQuery[_T]':
-        """A synonym for `order_by`.
-
-        Example using Django-like syntax:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.sort('-created_at').all()
-        >>> users
-        # [<User 100>, <User 99>, ...]
-        >>> query = select(Post)
-        >>> async_query = AsyncQuery(query)
-        >>> posts = await async_query.sort('-rating', 'user___name').all()
-        >>> posts
-        # [<Post 1>, <Post 4>, ...]
-
-        Example using SQLAlchemy syntax:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.sort(User.created_at.desc()).all()
-        >>> users
-        # [<User 100>, <User 99>, ...]
-        >>> query = select(Post)
-        >>> async_query = AsyncQuery(query)
-        >>> posts = await async_query.sort(desc(Post.rating)).all()
-        >>> posts
-        # [<Post 1>, <Post 4>, ...]
-        """
+    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+        """A synonym for `order_by`."""
 
         return self.order_by(*columns)
 
-    def offset(self, offset: int) -> 'AsyncQuery[_T]':
-        """Applies an OFFSET clause to the query.
+    def group_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+        """Applies one or more GROUP BY criteria to the query.
+
+        It supports both Django-like syntax and SQLAlchemy syntax.
+
+        NOTE: It is recommended to select specific columns (e.g. `select(User.id, User.name)`)
+        instead of all columns of a model (e.g. `select(User)`). You can call `select()` again
+        if you want to select specific columns.
+
+        Example using Django-like syntax:
+        >>> query = select(User.age, func.count(User.name))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by('age').fetch_rows()
+        >>> rows
+        # [(30, 2), (32, 1), ...]
+        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by('rating', 'user___name').fetch_rows()
+        >>> rows
+        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+
+        Example using SQLAlchemy syntax:
+        >>> query = select(User.age, func.count(User.name))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by(User.age).fetch_rows()
+        >>> rows
+        # [(30, 2), (32, 1), ...]
+        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> async_query = AsyncQuery(query)
+        >>> rows = await async_query.group_by(Post.rating, Post.user.name).fetch_rows()
+        >>> rows
+        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+        """
+
+        group_columns, group_attrs = self._split_columns_and_attrs(columns)
+        self._query = self.build_smart_query(query=self._query, group_columns=group_columns, group_attrs=group_attrs)
+        return self
+
+    def offset(self, offset: int):
+        """Applies one OFFSET criteria to the query.
 
         Parameters
         ----------
@@ -303,29 +356,17 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         if offset < 0:
             raise ValueError('Offset must be positive.')
+
         self._query = self._query.offset(offset)
         return self
 
-    def skip(self, skip: int) -> 'AsyncQuery[_T]':
-        """A synonym for `offset`.
-
-        Parameters
-        ----------
-        skip : int
-            Offset.
-
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.skip(10).all()
-        >>> users
-        # [<User 11>, <User 12>, ...]
-        """
+    def skip(self, skip: int):
+        """A synonym for `offset`."""
 
         return self.offset(skip)
 
-    def limit(self, limit: int) -> 'AsyncQuery[_T]':
-        """Applies a LIMIT clause to the query.
+    def limit(self, limit: int):
+        """Applies one LIMIT criteria to the query.
 
         Parameters
         ----------
@@ -347,30 +388,16 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         if limit < 0:
             raise ValueError('Limit must be positive.')
+
         self._query = self._query.limit(limit)
         return self
 
-    def take(self, take: int) -> 'AsyncQuery[_T]':
-        """A synonym for `limit`.
-
-        Parameters
-        ----------
-        take : int
-            Limit.
-
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.take(2).all()
-        >>> users
-        # [<User 1>, <User 2>]
-        """
+    def take(self, take: int):
+        """A synonym for `limit`."""
 
         return self.limit(take)
 
-    def join(
-        self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None
-    ) -> 'AsyncQuery[_T]':
+    def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None):
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean.
@@ -422,8 +449,10 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return self.options(*options)
 
     def with_subquery(
-        self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None
-    ) -> 'AsyncQuery[_T]':
+        self,
+        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        model: type[_T] | None = None,
+    ):
         """Subqueryload or Selectinload eager loading.
 
         Emits a second `SELECT` statement (Subqueryload) for each relationship
@@ -536,8 +565,9 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return self.options(*options)
 
     def with_schema(
-        self, schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
-    ) -> 'AsyncQuery[_T]':
+        self,
+        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict],
+    ):
         """Joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
@@ -571,34 +601,24 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         return self.options(*self.eager_expr(schema or {}))
 
-    async def execute(self, params: _CoreAnyExecuteParams | None = None, **kwargs) -> Result[Any]:
-        """Executes the query.
-
-        Parameters
-        ----------
-        params : _CoreAnyExecuteParams | None, optional
-            SQLAlchemy statement execution parameters, by default None.
-
-        Returns
-        -------
-        Result[Any]
-            SQLAlchemy `Result` object.
+    async def execute(self) -> Result[Any]:
+        """Executes the query and returns a `sqlalchemy.engine.Result`
+        instance containing the results.
         """
 
         async with self._AsyncSession() as session:
-            return await session.execute(self._query, params, **kwargs)
+            return await session.execute(self._query)
 
     async def scalars(self) -> ScalarResult[_T]:
-        """Returns a `sqlalchemy.engine.ScalarResult` object containing all rows.
-
-        This is same as calling `(await self.execute()).scalars()`.
+        """Returns a `sqlalchemy.engine.ScalarResult` instance
+        containing all results.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
         >>> scalar_result = await async_query.scalars()
         >>> scalar_result
-        # <sqlalchemy.engine.result.ScalarResult>
+        # <sqlalchemy.engine.ScalarResult>
         >>> users = scalar_result.all()
         >>> users
         # [<User 1>, <User 2>, ...]
@@ -610,10 +630,22 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         return (await self.execute()).scalars()
 
-    async def first(self) -> _T | None:
+    @overload
+    async def first(self) -> _T | None: ...
+
+    @overload
+    async def first(self, scalar: Literal[True]) -> _T | None: ...
+
+    @overload
+    async def first(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    async def first(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+
+    async def first(self, scalar: bool = True):
         """Fetches the first row or `None` if no results are found.
 
-        This is same as calling `(await self.scalars()).first()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
@@ -621,31 +653,51 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         >>> user = await async_query.first()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').first()
+        >>> user = await async_query.first(scalar=False)
         >>> user
-        # <User 2>
+        # (<User 1>,)
         """
 
         self.limit(1)
-        return (await self.scalars()).first()
 
-    async def one(self) -> _T:
+        if scalar:
+            return (await self.scalars()).first()
+
+        return (await self.execute()).first()
+
+    @overload
+    async def one(self) -> _T: ...
+
+    @overload
+    async def one(self, scalar: Literal[True]) -> _T: ...
+
+    @overload
+    async def one(self, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+
+    @overload
+    async def one(self, scalar: bool) -> _T | Row[tuple[Any, ...]]: ...
+
+    async def one(self, scalar: bool = True):
         """Fetches one row or raises an exception
         if no results are found.
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.scalars()).one()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.one()
-        >>> user
-        # <User 1>
         >>> user = await async_query.filter(name='John Doe').one()
         >>> user
-        # <User 2>
+        # <User 1>
+        >>> user = await async_query.filter(name='John Doe').one(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await async_query.filter(name='Unknown').one()
+        # Traceback (most recent call last):
+        #     ...
+        # NoResultFound: 'No result found.'
 
         Raises
         ------
@@ -655,24 +707,42 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             If multiple results are found.
         """
 
-        return (await self.scalars()).one()
+        if scalar:
+            return (await self.scalars()).one()
 
-    async def one_or_none(self) -> _T | None:
+        return (await self.execute()).one()
+
+    @overload
+    async def one_or_none(self) -> _T | None: ...
+
+    @overload
+    async def one_or_none(self, scalar: Literal[True]) -> _T | None: ...
+
+    @overload
+    async def one_or_none(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    async def one_or_none(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+
+    async def one_or_none(self, scalar: bool = True):
         """Fetches one row or `None` if no results are found.
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.scalars()).one_or_none()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.one_or_none()
-        >>> user
-        # <User 1>
         >>> user = await async_query.filter(name='John Doe').one_or_none()
         >>> user
-        # <User 2>
+        # <User 1>
+        >>> user = await async_query.filter(name='John Doe').one_or_none(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await async_query.filter(name='Unknown').one_or_none()
+        >>> user
+        # None
 
         Raises
         ------
@@ -680,44 +750,27 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             If multiple results are found.
         """
 
-        return (await self.scalars()).one_or_none()
+        if scalar:
+            return (await self.scalars()).one_or_none()
 
-    async def fetch_one(self) -> _T:
-        """A synonym for `one`.
+        return (await self.execute()).one_or_none()
 
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.fetch_one()
-        >>> user
-        # <User 1>
-        >>> user = await async_query.filter(name='John Doe').fetch_one()
-        >>> user
-        # <User 2>
-        """
+    @overload
+    async def all(self) -> Sequence[_T]: ...
 
-        return await self.one()
+    @overload
+    async def all(self, scalars: Literal[True]) -> Sequence[_T]: ...
 
-    async def fetch_one_or_none(self) -> _T | None:
-        """A synonym for `one_or_none`.
+    @overload
+    async def all(self, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
 
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.fetch_one_or_none()
-        >>> user
-        # <User 1>
-        >>> user = await async_query.filter(name='John Doe').fetch_one_or_none()
-        >>> user
-        # <User 2>
-        """
+    @overload
+    async def all(self, scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
 
-        return await self.one_or_none()
-
-    async def all(self) -> Sequence[_T]:
+    async def all(self, scalars: bool = True):
         """Fetches all rows.
 
-        This is same as calling `(await self.scalars()).all()`.
+        If `scalars` is `True`, returns scalar values.
 
         Example:
         >>> query = select(User)
@@ -725,82 +778,67 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         >>> users = await async_query.all()
         >>> users
         # [<User 1>, <User 2>, ...]
+        >>> users = await async_query.all(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
         """
 
-        return (await self.scalars()).all()
+        if scalars:
+            return (await self.scalars()).all()
 
-    async def fetch_all(self) -> Sequence[_T]:
-        """A synonym for `all`.
+        return (await self.execute()).all()
+
+    @overload
+    async def unique(self) -> ScalarResult[_T]: ...
+
+    @overload
+    async def unique(self, scalars: Literal[True]) -> ScalarResult[_T]: ...
+
+    @overload
+    async def unique(self, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
+
+    @overload
+    async def unique(self, scalars: bool) -> ScalarResult[_T] | Result[tuple[Any, ...]]: ...
+
+    async def unique(self, scalars: bool = True):
+        """Apply unique filtering to the objects returned
+        in the result instance.
+
+        If `scalars` is `True`, returns a `sqlalchemy.engine.ScalarResult`
+        instance. Otherwise, returns a `sqlalchemy.engine.Result` instance.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.fetch_all()
+        >>> users = await User.unique()
         >>> users
         # [<User 1>, <User 2>, ...]
+        >>> users = await User.unique(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
         """
 
-        return await self.all()
+        if scalars:
+            return (await self.scalars()).unique()
 
-    async def to_list(self) -> Sequence[_T]:
-        """A synonym for `all`.
+        return (await self.execute()).unique()
 
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.to_list()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        """
+    @overload
+    async def unique_first(self) -> _T | None: ...
 
-        return await self.all()
+    @overload
+    async def unique_first(self, scalar: Literal[True]) -> _T | None: ...
 
-    async def unique(self) -> ScalarResult[_T]:
-        """Returns a `sqlalchemy.engine.ScalarResult` object
-        containing all unique rows.
+    @overload
+    async def unique_first(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
 
-        This is same as calling `(await self.scalars()).unique()`.
+    @overload
+    async def unique_first(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
 
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> scalar_result = await async_query.unique()
-        >>> scalar_result
-        # <sqlalchemy.engine.result.ScalarResult>
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> scalar_result = await async_query.filter(name='John Doe').unique()
-        >>> users = scalar_result.all()
-        >>> users
-        # [<User 2>]
-        """
+    async def unique_first(self, scalar: bool = True):
+        """Fetches the first unique row or `None` if no results are found.
 
-        return (await self.scalars()).unique()
-
-    async def unique_all(self) -> Sequence[_T]:
-        """Fetches all unique rows.
-
-        This is same as calling `(await self.unique()).all()`.
-
-        Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.unique_all()
-        >>> users
-        # [<User 1>, <User 2>, ...]
-        >>> users = await async_query.filter(name='John Doe').unique_all()
-        >>> users
-        # [<User 2>]
-        """
-
-        return (await self.unique()).all()
-
-    async def unique_first(self) -> _T | None:
-        """Fetches the first unique row or `None`
-        if no results are found.
-
-        This is same as calling `(await self.unique()).first()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
@@ -808,31 +846,47 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         >>> user = await async_query.unique_first()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').unique_first()
+        >>> user = await async_query.unique_first(scalar=False)
         >>> user
-        # <User 2>
+        # (<User 1>,)
         """
 
         self.limit(1)
-        return (await self.unique()).first()
+        return (await self.unique(scalar)).first()
 
-    async def unique_one(self) -> _T:
+    @overload
+    async def unique_one(self) -> _T: ...
+
+    @overload
+    async def unique_one(self, scalar: Literal[True]) -> _T: ...
+
+    @overload
+    async def unique_one(self, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+
+    @overload
+    async def unique_one(self, scalar: bool) -> _T | Row[tuple[Any, ...]]: ...
+
+    async def unique_one(self, scalar: bool = True):
         """Fetches one unique row or raises an exception
         if no results are found.
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.unique()).one()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.unique_one()
-        >>> user
-        # <User 1>
         >>> user = await async_query.filter(name='John Doe').unique_one()
         >>> user
-        # <User 2>
+        # <User 1>
+        >>> user = await async_query.filter(name='John Doe').unique_one(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await async_query.filter(name='Unknown').unique_one()
+        # Traceback (most recent call last):
+        #     ...
+        # NoResultFound: 'No result found.'
 
         Raises
         ------
@@ -842,25 +896,39 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             If multiple results are found.
         """
 
-        return (await self.unique()).one()
+        return (await self.unique(scalar)).one()
 
-    async def unique_one_or_none(self) -> _T | None:
-        """Fetches one unique row or `None`
-        if no results are found.
+    @overload
+    async def unique_one_or_none(self) -> _T | None: ...
+
+    @overload
+    async def unique_one_or_none(self, scalar: Literal[True]) -> _T | None: ...
+
+    @overload
+    async def unique_one_or_none(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+
+    @overload
+    async def unique_one_or_none(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+
+    async def unique_one_or_none(self, scalar: bool = True):
+        """Fetches one unique row or `None` if no results are found.
 
         If multiple results are found, raises `MultipleResultsFound`.
 
-        This is same as calling `(await self.unique()).one_or_none()`.
+        If `scalar` is `True`, returns a scalar value.
 
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.unique_one_or_none()
-        >>> user
-        # <User 1>
         >>> user = await async_query.filter(name='John Doe').unique_one_or_none()
         >>> user
-        # <User 3>
+        # <User 1>
+        >>> user = await async_query.filter(name='John Doe').unique_one_or_none(scalar=False)
+        >>> user
+        # (<User 1>,)
+        >>> user = await async_query.filter(name='Unknown').unique_one_or_none()
+        >>> user
+        # None
 
         Raises
         ------
@@ -868,4 +936,61 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             If multiple results are found.
         """
 
-        return (await self.unique()).one_or_none()
+        return (await self.unique(scalar)).one_or_none()
+
+    @overload
+    async def unique_all(self) -> Sequence[_T]: ...
+
+    @overload
+    async def unique_all(self, scalars: Literal[True]) -> Sequence[_T]: ...
+
+    @overload
+    async def unique_all(self, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+
+    @overload
+    async def unique_all(self, scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
+
+    async def unique_all(self, scalars: bool = True):
+        """Fetches all unique rows.
+
+        If `scalars` is `True`, returns scalar values.
+
+        Example:
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> users = await async_query.unique_all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users = await async_query.unique_all(scalars=False)
+        >>> users
+        # [(<User 1>,), (<User 2>,), ...]
+        """
+
+        return (await self.unique(scalars)).all()
+
+    def __str__(self) -> str:
+        """Returns the raw SQL query."""
+
+        return str(self._query)
+
+    def _split_columns_and_attrs(
+        self,
+        columns_and_attrs: Sequence[_ColumnExpressionOrStrLabelArgument[Any]],
+    ) -> tuple[list[str], list[str]]:
+        """Splits columns and attrs.
+
+        Returns
+        -------
+        tuple[list[str], list[str]]
+            A tuple of columns and attrs.
+        """
+
+        columns = []
+        attrs = []
+        for column in columns_and_attrs:
+            if isinstance(column, str):
+                attrs.append(column)
+            else:
+                columns.append(column)
+
+        return columns, attrs

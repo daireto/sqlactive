@@ -496,10 +496,12 @@ python -m unittest tests.<test_name>
 ```
 
 **Available tests:**
-- `test_active_record`
-- `test_inspection`
-- `test_serialization`
-- `test_smart_query`
+- `test_active_record.py`
+- `test_db_connection.py`
+- `test_execute.py`
+- `test_inspection.py`
+- `test_serialization.py`
+- `test_smart_query.py`
 
 ### Coverage
 
@@ -513,13 +515,17 @@ To check the coverage, run the following command:
 
 ```bash
 python -m coverage run -m unittest discover -s tests -t .
-python -m coverage report -m
 ```
 
 To generate the coverage report, run the following command:
 
 ```bash
-python -m coverage run -m unittest discover -s tests -t .
+python -m coverage report -m
+```
+
+To generate the HTML report, run the following command:
+
+```bash
 python -m coverage html -d htmlcov
 ```
 

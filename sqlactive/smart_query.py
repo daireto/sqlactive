@@ -1,19 +1,18 @@
 """This module defines `SmartQueryMixin` class."""
 
-from typing import Any
-from typing_extensions import Self
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Sequence
-
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.orm.strategy_options import _AbstractLoad
+from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import Select, asc, desc, operators, extract
-from sqlalchemy.sql.operators import OperatorType
 from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.sql.elements import UnaryExpression
-from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
-from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.orm.strategy_options import _AbstractLoad
-from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.operators import OperatorType
+from typing import Any
+from typing_extensions import Self
 
 from .inspection import InspectionMixin
 from .definitions import JOINED, SUBQUERY, SELECT_IN
@@ -236,6 +235,56 @@ class SmartQueryMixin(InspectionMixin):
         return expressions
 
     @classmethod
+    def columns_expr(cls, *columns: str) -> list[UnaryExpression]:
+        """Takes list of columns like
+        ```python
+            ['first_name', 'age']
+        ```
+        and returns list of expressions like
+        ```python
+            [User.first_name, User.age]
+        ```
+
+        Example grouping by 1 column:
+        ```python
+            db.query(User).group_by(*User.columns_expr('first_name'))
+            # will compile to GROUP BY user.first_name
+        ```
+
+        Example grouping by multiple columns:
+        ```python
+            columns = ['first_name', 'age']
+            db.query(User).group_by(*User.columns_expr(*columns))
+            # will compile to GROUP BY user.first_name, user.age
+        ```
+
+        NOTE: To get more information about `cls`, `mapper` and `_class`, see
+        `filter_expr` method documentation.
+
+        Returns
+        -------
+        list[UnaryExpression]
+            List of expressions.
+
+        Raises
+        ------
+        KeyError
+            If attribute is neither a column nor a hybrid property.
+        """
+
+        if isinstance(cls, AliasedClass):
+            mapper, _class = cls, inspect(cls).mapper.class_
+        else:
+            mapper = _class = cls
+
+        expressions: list[UnaryExpression] = []
+        for attr in columns:
+            if attr not in _class.sortable_attributes:
+                raise KeyError(f'Attribute `{attr}` is incorrect.')
+            expressions.append(getattr(mapper, attr))
+        return expressions
+
+    @classmethod
     def eager_expr(
         cls,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict],
@@ -271,13 +320,17 @@ class SmartQueryMixin(InspectionMixin):
         return cls._eager_expr_from_schema(schema)
 
     @classmethod
-    def _build_smart_query(
+    def build_smart_query(
         cls,
         query: Select[tuple[Any, ...]],
-        criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
-        filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
+        criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        filters: (
+            dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
+        ) = None,
         sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
+        group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        group_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ) -> Select[tuple[Any, ...]]:
         """Builds a smart query.
@@ -302,7 +355,7 @@ class SmartQueryMixin(InspectionMixin):
         ----------
         query : Select[tuple[Any, ...]]
             Query for the model.
-        criterion : Sequence[_ColumnExpressionArgument[bool]] | None, optional
+        criteria : Sequence[_ColumnExpressionArgument[bool]] | None, optional
             SQLAlchemy syntax filter expressions, by default None.
         filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None, optional
             Django-like filter expressions, by default None.
@@ -310,6 +363,10 @@ class SmartQueryMixin(InspectionMixin):
             Standalone sort columns, by default None.
         sort_attrs : Sequence[str] | None, optional
             Django-like sort expressions, by default None.
+        group_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None, optional
+            Standalone group columns, by default None.
+        group_attrs : Sequence[str] | None, optional
+            Django-like group expressions, by default None.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None, optional
             Schema for the eager loading, by default None.
 
@@ -328,9 +385,15 @@ class SmartQueryMixin(InspectionMixin):
             filters = {}
         if not sort_attrs:
             sort_attrs = []
+        if not group_attrs:
+            group_attrs = []
 
         root_cls = query.__dict__['_propagate_attrs']['plugin_subject'].class_  # for example, User or Post
-        attrs = list(cls._flatten_filter_keys(filters)) + list(map(lambda s: s.lstrip(cls._DESC_PREFIX), sort_attrs))
+        attrs = (
+            list(cls._flatten_filter_keys(filters))
+            + list(map(lambda s: s.lstrip(cls._DESC_PREFIX), sort_attrs))
+            + list(group_attrs)
+        )
         aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]] = OrderedDict({})
         cls._parse_path_and_make_aliases(root_cls, '', attrs, aliases)
 
@@ -340,8 +403,8 @@ class SmartQueryMixin(InspectionMixin):
             query = query.outerjoin(al[0], al[1])  # type: ignore
             loaded_paths.append(relationship_path)
 
-        if criterion:
-            query = query.filter(*criterion)
+        if criteria:
+            query = query.filter(*criteria)
 
         if filters:
             query = query.filter(*cls._recurse_filters(filters, root_cls, aliases))
@@ -351,6 +414,12 @@ class SmartQueryMixin(InspectionMixin):
 
         if sort_attrs:
             query = cls._sort_query(query, sort_attrs, root_cls, aliases)
+
+        if group_columns:
+            query = query.group_by(*group_columns)
+
+        if group_attrs:
+            query = cls._group_query(query, group_attrs, root_cls, aliases)
 
         if schema:
             query = query.options(*cls._eager_expr_from_schema(schema))
@@ -582,7 +651,7 @@ class SmartQueryMixin(InspectionMixin):
         ```python
             query = query.order_by(
                 desc(Post.created_at),
-                asc(Post.user),
+                asc(Post.user.name),
             )
         ```
 
@@ -620,6 +689,67 @@ class SmartQueryMixin(InspectionMixin):
                 entity, attr_name = root_cls, attr
             try:
                 query = query.order_by(*entity.order_expr(attr_name))
+            except KeyError as e:
+                raise KeyError(f'Incorrect order path `{attr}`: {e}')
+
+        return query
+
+    @classmethod
+    def _group_query(
+        cls,
+        query: Select[tuple[Any, ...]],
+        group_attrs: Sequence[str],
+        root_cls: type[Self],
+        aliases: OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]],
+    ) -> Select[tuple[Any, ...]]:
+        """Groups the query.
+
+        Example:
+        ```python
+            group_attrs = ['rating', 'user___name']
+            aliases = OrderedDict({
+                'user': (aliased(User), Post.user),
+            })
+        ```
+
+        Generates:
+        ```python
+            query = query.group_by(
+                Post.rating,
+                Post.user.name,
+            )
+        ```
+
+        Parameters
+        ----------
+        query : Select[tuple[Any, ...]]
+            Query for the model.
+        group_attrs : Sequence[str]
+            Group columns.
+        root_cls : type[SmartQueryMixin]
+            Model class.
+        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]]
+            Aliases dictionary.
+
+        Returns
+        -------
+        Select[tuple[Any, ...]]
+            Grouped query.
+
+        Raises
+        ------
+        KeyError
+            If order path is incorrect.
+        """
+
+        for attr in group_attrs:
+            if cls._RELATION_SPLITTER in attr:
+                parts = attr.rsplit(cls._RELATION_SPLITTER, 1)
+                entity, attr_name = aliases[parts[0]][0], parts[1]
+            else:
+                entity, attr_name = root_cls, attr
+            try:
+                query = query.group_by(*entity.columns_expr(attr_name))
             except KeyError as e:
                 raise KeyError(f'Incorrect order path `{attr}`: {e}')
 

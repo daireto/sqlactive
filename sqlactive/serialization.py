@@ -2,10 +2,10 @@
 
 import json
 
-from typing import Any, overload
-from typing_extensions import Self
 from collections.abc import Iterable
 from sqlalchemy.orm.exc import DetachedInstanceError
+from typing import Any, overload
+from typing_extensions import Self
 
 from .inspection import InspectionMixin
 

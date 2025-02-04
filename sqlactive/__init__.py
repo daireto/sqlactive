@@ -188,12 +188,12 @@ NOTE: Your base model must have a session in order to use this method.
 Otherwise, it will raise an `NoSessionError` exception.
 """
 
-from .base_model import ActiveRecordBaseModel
 from .active_record import ActiveRecordMixin
+from .base_model import ActiveRecordBaseModel
+from .conn import DBConnection, execute
+from .definitions import JOINED, SUBQUERY, SELECT_IN
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
-from .definitions import JOINED, SUBQUERY, SELECT_IN
-from .conn import DBConnection, execute
 
 
 __all__ = [

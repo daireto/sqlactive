@@ -3,6 +3,7 @@ import unittest
 
 from collections import OrderedDict
 
+from sqlalchemy import func
 from sqlalchemy.sql import asc, desc
 from sqlalchemy.sql.operators import like_op, and_, or_
 from sqlalchemy.inspection import inspect
@@ -80,6 +81,18 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         self.assertCountEqual(expected_users, users)
         self.assertEqual('Bill65', users[0])
         self.assertEqual('John84', users[-1])
+
+    async def test_columns_expr(self):
+        """Test for `columns_expr` function."""
+
+        logger.info('Testing `columns_expr` function...')
+        expressions = Post.columns_expr('rating', 'title')
+        expected_expressions = [Post.rating, Post.title]
+        post_ratings = [(post[0], post[1]) for post in await Post.select(Post.rating, func.count(Post.title)).group_by(*expressions).all(scalars=False)]
+        expected_post_ratings = [(post[0], post[1]) for post in await Post.select(Post.rating, func.count(Post.title)).group_by(*expected_expressions).all(scalars=False)]
+        self.assertCountEqual(expected_post_ratings, post_ratings)
+        self.assertEqual(5, post_ratings[0][1])
+        self.assertEqual(4, post_ratings[-1][1])
 
     async def test_eager_expr(self):
         """Test for `eager_expr` function."""
@@ -178,6 +191,24 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(KeyError) as context:
             SmartQueryMixin._sort_query(
                 query=Post._query, sort_attrs=['-created_at', 'user___fullname'], root_cls=Post, aliases=aliases
+            )
+        self.assertIn('`user___fullname`', str(context.exception))
+
+    def test_group_query(self):
+        """Test for `_group_query` function."""
+
+        logger.info('Testing `_group_query` function...')
+        aliases = OrderedDict(
+            {
+                'user': (aliased(Post.user.property.mapper.class_), Post.user),
+            }
+        )
+        group_attrs = ['rating', 'user___name']
+        query = SmartQueryMixin._group_query(query=Post._query, group_attrs=group_attrs, root_cls=Post, aliases=aliases)
+        self.assertTrue(str(query).endswith('GROUP BY posts.rating, users_1.name'))
+        with self.assertRaises(KeyError) as context:
+            SmartQueryMixin._group_query(
+                query=Post._query, group_attrs=['rating', 'user___fullname'], root_cls=Post, aliases=aliases
             )
         self.assertIn('`user___fullname`', str(context.exception))
 

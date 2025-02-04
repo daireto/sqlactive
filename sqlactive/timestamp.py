@@ -2,9 +2,9 @@
 
 from datetime import datetime
 
+from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.sql import func
 from sqlalchemy.sql.sqltypes import TIMESTAMP
-from sqlalchemy.orm import mapped_column, Mapped
 
 
 class TimestampMixin:

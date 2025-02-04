@@ -1,7 +1,7 @@
 """`Seed` class to seed database with test data."""
 
-from sqlactive.conn import DBConnection
 from sqlactive.base_model import ActiveRecordBaseModel
+from sqlactive.conn import DBConnection
 
 from ._logger import logger
 from ._models import User, Post, Comment, Product, Sell
@@ -43,7 +43,7 @@ class Seed:
     async def seed_users(self):
         """Seeds the database with test users."""
 
-        await User.create_all(
+        await User.insert_all(
             [
                 User(username='Bob28', name='Bob Williams', age=30),
                 User(username='Bill65', name='Bill Smith', age=40),
@@ -85,7 +85,7 @@ class Seed:
     async def seed_posts(self):
         """Seeds the database with test posts."""
 
-        await Post.create_all(
+        await Post.insert_all(
             [
                 Post(
                     title='Lorem ipsum',
@@ -237,7 +237,7 @@ class Seed:
     async def seed_comments(self):
         """Seeds the database with test comments."""
 
-        await Comment.create_all(
+        await Comment.insert_all(
             [
                 Comment(
                     body='Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -330,7 +330,7 @@ class Seed:
     async def seed_products(self):
         """Seeds the database with test products."""
 
-        await Product.create_all(
+        await Product.insert_all(
             [
                 Product(name='Product 1', description='Description 1', price=10.0),
                 Product(name='Product 2', description='Description 2', price=20.0),
@@ -346,7 +346,7 @@ class Seed:
     async def seed_sells(self):
         """Seeds the database with test sells."""
 
-        await Sell.create_all(
+        await Sell.insert_all(
             [
                 Sell(id=1, product_id=1),
                 Sell(id=2, product_id=2),
