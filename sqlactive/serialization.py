@@ -123,17 +123,28 @@ class SerializationMixin(InspectionMixin):
     @overload
     @classmethod
     def from_dict(
-        cls, data: dict, exclude: list[str] | None = None, nested_exclude: list[str] | None = None
+        cls,
+        data: dict,
+        exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
     ) -> Self: ...
 
     @overload
     @classmethod
     def from_dict(
-        cls, data: list, exclude: list[str] | None = None, nested_exclude: list[str] | None = None
+        cls,
+        data: list,
+        exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
     ) -> list[Self]: ...
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any] | list[dict[str, Any]], exclude: list[str] | None = None, nested_exclude: list[str] | None = None):
+    def from_dict(
+        cls,
+        data: dict[str, Any] | list[dict[str, Any]],
+        exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
+    ) -> Self | list[Self]:
         """Deserializes a dictionary to the model.
 
         Sets the attributes of the model with the values of the dictionary.
@@ -179,7 +190,12 @@ class SerializationMixin(InspectionMixin):
         return obj
 
     @classmethod
-    def from_json(cls, json_string: str, exclude: list[str] | None = None, nested_exclude: list[str] | None = None):
+    def from_json(
+        cls,
+        json_string: str,
+        exclude: list[str] | None = None,
+        nested_exclude: list[str] | None = None,
+    ) -> Any:
         """Deserializes a JSON string to the model.
 
         Calls the `json.loads` method and sets the attributes of the model
@@ -196,8 +212,13 @@ class SerializationMixin(InspectionMixin):
 
         Returns
         -------
-        Self | list[Self]
+        Any
             Deserialized model or models.
+
+        Raises
+        ------
+        KeyError
+            If attribute doesn't exist.
         """
 
         data = json.loads(json_string)

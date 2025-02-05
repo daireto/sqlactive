@@ -74,9 +74,9 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
             Async session factory, by default None.
 
         NOTE: If no session is provided, a `NoSessionError` will be raised
-        when attempting to execute the query. Please, provide a session
-        by passing it in this constructor or by calling the `set_session`
-        method.
+        when attempting to execute the query. You must either provide
+        a session by passing it in this constructor or by calling
+        the `set_session` method.
         """
 
         self._query = query
@@ -94,19 +94,19 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         self._session = session
 
     @property
-    def query(self):
+    def query(self) -> Select[tuple[Any, ...]]:
         """Returns the original `sqlalchemy.sql.Select` instance."""
 
         return self._query
 
     @query.setter
-    def query(self, query: Select[tuple[Any, ...]]):
+    def query(self, query: Select[tuple[Any, ...]]) -> None:
         """Sets the original `sqlalchemy.sql.Select` instance."""
 
         self._query = query
 
     @property
-    def _AsyncSession(self) -> async_scoped_session[AsyncSession]:
+    def AsyncSession(self) -> async_scoped_session[AsyncSession]:
         """Async session factory.
 
         Usage:
@@ -243,16 +243,16 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # [<User 2>]
         """
 
-        self._query = self.build_smart_query(query=self._query, criteria=criteria, filters=filters)
+        self._query = self.smart_query(query=self._query, criteria=criteria, filters=filters)
         return self
 
     def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `where`."""
+        """Synonym for `where()`."""
 
         return self.where(*criteria, **filters)
 
     def find(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `where`."""
+        """Synonym for `where()`."""
 
         return self.where(*criteria, **filters)
 
@@ -287,11 +287,11 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """
 
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
-        self._query = self.build_smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
+        self._query = self.smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
         return self
 
     def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
-        """A synonym for `order_by`."""
+        """Synonym for `order_by()`."""
 
         return self.order_by(*columns)
 
@@ -330,7 +330,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """
 
         group_columns, group_attrs = self._split_columns_and_attrs(columns)
-        self._query = self.build_smart_query(query=self._query, group_columns=group_columns, group_attrs=group_attrs)
+        self._query = self.smart_query(query=self._query, group_columns=group_columns, group_attrs=group_attrs)
         return self
 
     def offset(self, offset: int):
@@ -361,7 +361,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return self
 
     def skip(self, skip: int):
-        """A synonym for `offset`."""
+        """Synonym for `offset()`."""
 
         return self.offset(skip)
 
@@ -393,7 +393,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         return self
 
     def take(self, take: int):
-        """A synonym for `limit`."""
+        """Synonym for `limit()`."""
 
         return self.limit(take)
 
@@ -606,7 +606,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         instance containing the results.
         """
 
-        async with self._AsyncSession() as session:
+        async with self.AsyncSession() as session:
             return await session.execute(self._query)
 
     async def scalars(self) -> ScalarResult[_T]:
@@ -810,10 +810,12 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await User.unique()
+        >>> scalar_result = await User.unique()
+        >>> users = scalar_result.all()
         >>> users
         # [<User 1>, <User 2>, ...]
-        >>> users = await User.unique(scalars=False)
+        >>> scalar_result = await User.unique(scalars=False)
+        >>> users = scalar_result.all()
         >>> users
         # [(<User 1>,), (<User 2>,), ...]
         """

@@ -30,7 +30,7 @@ class SessionMixin:
         cls._session = None
 
     @classproperty
-    def _AsyncSession(cls) -> async_scoped_session[AsyncSession]:
+    def AsyncSession(cls) -> async_scoped_session[AsyncSession]:
         """Async session factory.
 
         Usage:

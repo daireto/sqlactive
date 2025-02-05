@@ -289,9 +289,7 @@ class SmartQueryMixin(InspectionMixin):
         cls,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict],
     ) -> list[_AbstractLoad]:
-        """Creates eager loading expressions from schema.
-
-        Example:
+        """Takes schema like
         ```python
             schema = {
                 Post.user: JOINED,  # joinedload user
@@ -300,8 +298,7 @@ class SmartQueryMixin(InspectionMixin):
                 })
             }
         ```
-
-        Generates:
+        and returns eager loading expressions like
         ```python
             [joinedload(Post.user), subqueryload(Post.comments).options(joinedload(Comment.user))]
         ```
@@ -320,7 +317,7 @@ class SmartQueryMixin(InspectionMixin):
         return cls._eager_expr_from_schema(schema)
 
     @classmethod
-    def build_smart_query(
+    def smart_query(
         cls,
         query: Select[tuple[Any, ...]],
         criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
@@ -333,7 +330,8 @@ class SmartQueryMixin(InspectionMixin):
         group_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ) -> Select[tuple[Any, ...]]:
-        """Builds a smart query.
+        """Creates a query combining filtering, sorting,
+        grouping and eager loading.
 
         Does magic Django-like joins like `post___user___name__startswith='Bob'`
         (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
@@ -346,10 +344,8 @@ class SmartQueryMixin(InspectionMixin):
         >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
         >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
 
-        by passing them as `binary_exprs` argument.
-
         NOTE: To get more information about the usage, see documentation of
-        `filter_expr`, `order_expr` and `eager_expr` methods.
+        `filter_expr`, `order_expr`, `columns_expr` and `eager_expr` methods.
 
         Parameters
         ----------
@@ -378,7 +374,7 @@ class SmartQueryMixin(InspectionMixin):
         Raises
         ------
         KeyError
-            If filter or sort path is incorrect.
+            If filter, sort or group path is incorrect.
         """
 
         if not filters:

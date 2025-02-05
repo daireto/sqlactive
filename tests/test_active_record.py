@@ -554,11 +554,11 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob Doe', post.user.name)
         self.assertEqual('Jill Peterson', post.comments[1].user.name)
 
-    async def test_smart_query(self):
-        """Test for `smart_query` function."""
+    async def test_async_smart_query(self):
+        """Test for `async_smart_query` function."""
 
-        logger.info('Testing `smart_query` function...')
-        query = User.smart_query(
+        logger.info('Testing `async_smart_query` function...')
+        query = User.async_smart_query(
             criteria=(or_(User.age == 30, User.age == 32),),
             filters={'username__like': '%8'},
             sort_columns=(User.username,),
@@ -566,4 +566,4 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             schema={User.posts: JOINED, User.comments: (SUBQUERY, {Comment.post: SELECT_IN})},
         )
         users = await query.unique_all()
-        self.assertEqual(['Bob28', 'Ian48'], [user.username for user in users])
+        self.assertEqual(['Bob28', 'Ian48', 'Jessica3248'], [user.username for user in users])

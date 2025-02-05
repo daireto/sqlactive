@@ -81,7 +81,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def save(self):
         """Saves the row."""
 
-        async with self._AsyncSession() as session:
+        async with self.AsyncSession() as session:
             try:
                 session.add(self)
                 await session.commit()
@@ -99,7 +99,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def delete(self):
         """Deletes the row."""
 
-        async with self._AsyncSession() as session:
+        async with self.AsyncSession() as session:
             try:
                 await session.delete(self)
                 await session.commit()
@@ -108,7 +108,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     async def remove(self):
-        """A synonym for `delete`."""
+        """Synonym for `delete()`."""
 
         return await self.delete()
 
@@ -120,7 +120,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def create(cls, **kwargs):
-        """A synonym for `insert`."""
+        """Synonym for `insert()`."""
 
         return await cls.insert(**kwargs)
 
@@ -137,7 +137,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             NOTE: Refreshing may be expensive.
         """
 
-        async with cls._AsyncSession() as session:
+        async with cls.AsyncSession() as session:
             try:
                 session.add_all(rows)
                 await session.commit()
@@ -178,7 +178,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Rows to be deleted.
         """
 
-        async with cls._AsyncSession() as session:
+        async with cls.AsyncSession() as session:
             try:
                 for row in rows:
                     await session.delete(row)
@@ -192,9 +192,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Deletes multiple rows by primary key."""
 
         primary_key_name = cls._get_primary_key_name()
-        async with cls._AsyncSession() as session:
+        async with cls.AsyncSession() as session:
             try:
-                query = cls.build_smart_query(cls._query, filters={f'{primary_key_name}__in': ids})
+                query = cls.smart_query(filters={f'{primary_key_name}__in': ids})
                 rows = (await session.execute(query)).scalars().all()
                 for row in rows:
                     await session.delete(row)
@@ -230,13 +230,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Primary key.
         join : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join` method for details.
+            IMPORTANT: See the documentation of `join()` method for details.
         subquery : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery` method for details.
+            IMPORTANT: See the documentation of `with_subquery()` method for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema` method for details.
+            IMPORTANT: See the documentation of `with_schema()` method for details.
 
         Raises
         ------
@@ -245,7 +245,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
 
         primary_key_name = cls._get_primary_key_name()
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         async_query = async_query.filter(**{primary_key_name: pk})
         if join:
             async_query = async_query.join(*join)
@@ -280,13 +280,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Primary key.
         join : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join` method for details.
+            IMPORTANT: See the documentation of `join()` method for details.
         subquery : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery` method for details.
+            IMPORTANT: See the documentation of `with_subquery()` method for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema` method for details.
+            IMPORTANT: See the documentation of `with_schema()` method for details.
 
         Raises
         ------
@@ -320,7 +320,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [<User 2>]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.scalars()
 
     @overload
@@ -354,7 +354,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # (<User 1>,)
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.first(scalar)
 
     @overload
@@ -402,7 +402,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If multiple results are found.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.one(scalar)
 
     @overload
@@ -446,7 +446,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If multiple results are found.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.one_or_none(scalar)
 
     @overload
@@ -480,7 +480,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [(<User 1>,), (<User 2>,), ...]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.all(scalars)
 
     @overload
@@ -516,7 +516,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [(<User 1>,), (<User 2>,), ...]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.unique(scalars)
 
     @overload
@@ -550,7 +550,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # (<User 1>,)
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.unique_first(scalar)
 
     @overload
@@ -598,7 +598,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If multiple results are found.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.unique_one(scalar)
 
     @overload
@@ -642,7 +642,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If multiple results are found.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.unique_one_or_none(scalar)
 
     @overload
@@ -676,7 +676,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [(<User 1>,), (<User 2>,), ...]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return await async_query.unique_all(scalars)
 
     @classmethod
@@ -695,7 +695,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If no entities are selected.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.select(*entities)
 
     @classmethod
@@ -747,7 +747,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # InvalidRequestError: 'The unique() method must be invoked...'
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.options(*args)
 
     @classmethod
@@ -775,18 +775,18 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [<User 2>]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.where(*criteria, **filters)
 
     @classmethod
     def filter(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `where`."""
+        """Synonym for `where()`."""
 
         return cls.where(*criteria, **filters)
 
     @classmethod
     def find(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
-        """A synonym for `where`."""
+        """Synonym for `where()`."""
 
         return cls.where(*criteria, **filters)
 
@@ -813,12 +813,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [<Post 1>, <Post 4>, ...]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.order_by(*columns)
 
     @classmethod
     def sort(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
-        """A synonym for `order_by`."""
+        """Synonym for `order_by()`."""
 
         return cls.order_by(*columns)
 
@@ -855,7 +855,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.group_by(*columns)
 
     @classmethod
@@ -878,12 +878,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If offset is negative.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.offset(offset)
 
     @classmethod
     def skip(cls, skip: int):
-        """A synonym for `offset`."""
+        """Synonym for `offset()`."""
 
         return cls.offset(skip)
 
@@ -907,12 +907,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If limit is negative.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.limit(limit)
 
     @classmethod
     def take(cls, take: int):
-        """A synonym for `limit`."""
+        """Synonym for `limit()`."""
 
         return cls.limit(take)
 
@@ -945,7 +945,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If the second element of tuple is not boolean.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.join(*paths, model=cls)
 
     @classmethod
@@ -1027,7 +1027,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Paths to eager load.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.with_subquery(*paths, model=cls)
 
     @classmethod
@@ -1063,7 +1063,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Schema for the eager loading.
         """
 
-        async_query = cls._get_async_query()
+        async_query = cls.get_async_query()
         return async_query.with_schema(schema)
 
     @classmethod
@@ -1075,57 +1075,53 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ) = None,
         sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
         sort_attrs: Sequence[str] | None = None,
+        group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        group_attrs: Sequence[str] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ):
-        """Creates a query combining filtering, sorting, and eager loading.
-
-        Does magic Django-like joins like `post___user___name__startswith='Bob'`
-        (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
-
-        Does filtering, sorting and eager loading at the same time.
-        And if, say, filters and sorting need the same join,
-        it will be done only once.
-
-        It also supports SQLAlchemy syntax filter expressions like
-        >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
-        >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
-
-        by passing them as `criteria` argument.
-
-        NOTE: To get more information about the usage, see documentation of
-        `filter_expr`, `order_expr` and `eager_expr` methods.
-
-        Parameters
-        ----------
-        criteria : Sequence[_ColumnExpressionArgument[bool]] | None
-            SQLAlchemy syntax filter expressions, by default None.
-        filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
-            Filter expressions, by default None.
-        sort_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
-            Standalone sort columns, by default None.
-        sort_attrs : Sequence[str] | None
-            Django-like sort expressions, by default None.
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None
-            Schema for the eager loading, by default None.
-
-        Returns
-        -------
-        AsyncQuery
-            Async query object.
-        """
-
-        query = cls.build_smart_query(
+        return super().smart_query(
             query=cls._query,
             criteria=criteria,
             filters=filters,
             sort_columns=sort_columns,
             sort_attrs=sort_attrs,
+            group_columns=group_columns,
+            group_attrs=group_attrs,
             schema=schema,
         )
-        return cls._get_async_query(query)
 
     @classmethod
-    def _get_async_query(cls, query: Select[tuple[Any, ...]] | None = None):
+    def async_smart_query(
+        cls,
+        criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        filters: (
+            dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
+        ) = None,
+        sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        sort_attrs: Sequence[str] | None = None,
+        group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        group_attrs: Sequence[str] | None = None,
+        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+    ):
+        """Returns an `AsyncQuery` object with a smart query.
+
+        See `smart_query()` method for more information.
+        """
+
+        smart_query = super().smart_query(
+            query=cls._query,
+            criteria=criteria,
+            filters=filters,
+            sort_columns=sort_columns,
+            sort_attrs=sort_attrs,
+            group_columns=group_columns,
+            group_attrs=group_attrs,
+            schema=schema,
+        )
+        return cls.get_async_query(smart_query)
+
+    @classmethod
+    def get_async_query(cls, query: Select[tuple[Any, ...]] | None = None):
         """Returns an `AsyncQuery` object.
 
         Parameters

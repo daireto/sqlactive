@@ -82,31 +82,33 @@ class InspectionMixin(DeclarativeBase):
         """Gets primary key properties for a SQLAlchemy cls.
 
         Taken from marshmallow_sqlalchemy.
+
+        Returns a list of `sqlalchemy.orm.interfaces.MapperProperty` objects.
         """
 
         mapper = cls.__mapper__
         return [mapper.get_property_by_column(column) for column in mapper.primary_key]
 
     @classproperty
-    def primary_keys(cls):
+    def primary_keys(cls) -> list[str]:
         """Returns a `list` of primary key names."""
 
         return [pk.key for pk in cls.primary_keys_full]
 
     @classproperty
-    def relations(cls):
+    def relations(cls) -> list[str]:
         """Returns a `list` of relationship names."""
 
         return [c.key for c in cls.__mapper__.attrs if isinstance(c, RelationshipProperty)]
 
     @classproperty
-    def settable_relations(cls):
+    def settable_relations(cls) -> list[str]:
         """Returns a `list` of settable relationship names."""
 
         return [r for r in cls.relations if getattr(cls, r).property.viewonly is False]
 
     @classproperty
-    def hybrid_properties(cls):
+    def hybrid_properties(cls) -> list[str]:
         """Returns a `list` of hybrid property names."""
 
         items = cls.__mapper__.all_orm_descriptors
@@ -120,13 +122,13 @@ class InspectionMixin(DeclarativeBase):
         return {item.func.__name__: item for item in items if type(item) is hybrid_method}
 
     @classproperty
-    def hybrid_methods(cls):
+    def hybrid_methods(cls) -> list[str]:
         """Returns a `list` of hybrid method names."""
 
         return list(cls.hybrid_methods_full.keys())
 
     @classproperty
-    def filterable_attributes(cls):
+    def filterable_attributes(cls) -> list[str]:
         """Returns a `list` of filterable attributes.
 
         These are all columns, relations and hybrid properties.
@@ -135,7 +137,7 @@ class InspectionMixin(DeclarativeBase):
         return cls.relations + cls.columns + cls.hybrid_properties + cls.hybrid_methods
 
     @classproperty
-    def sortable_attributes(cls):
+    def sortable_attributes(cls) -> list[str]:
         """Returns a `list` of sortable attributes.
 
         These are all columns and hybrid properties.
@@ -144,7 +146,7 @@ class InspectionMixin(DeclarativeBase):
         return cls.columns + cls.hybrid_properties
 
     @classproperty
-    def settable_attributes(cls):
+    def settable_attributes(cls) -> list[str]:
         """Returns a `list` of settable attributes.
 
         These are all columns, settable relations and hybrid properties.

@@ -213,5 +213,5 @@ async def execute(
 
     if not base_model:
         base_model = ActiveRecordBaseModel
-    async with base_model._AsyncSession() as session:
+    async with base_model.AsyncSession() as session:
         return await session.execute(statement, params, **kwargs)
