@@ -83,7 +83,7 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin/): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
 * [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
 * [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization_mixin/): Provides serialization and deserialization methods.
