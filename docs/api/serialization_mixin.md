@@ -5,32 +5,32 @@ SQLAlchemy models.
 
 It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
 
-## Serialization
+## API Reference
 
-### to_dict
+### Serialization
+
+#### to_dict
 ```python
+@classmethod
 def to_dict(
     nested: bool = False,
     hybrid_attributes: bool = False,
     exclude: list[str] | None = None,
     nested_exclude: list[str] | None = None,
-)
+) -> dict[str, Any]
 ```
 
 > Serializes the model to a dictionary.
 
 > **Parameters:**
-
 > - `nested`: Set to `True` to include nested relationships' data, by default False.
 > - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
 > - `exclude`: Exclude specific attributes from the result, by default None.
 
 > **Returns:**
-
 > - `dict[str, Any]`: Serialized model.
 
 > **Example:**
-
 > ```python
 > user = await User.get(id=1)
 > user.to_dict()
@@ -43,8 +43,9 @@ def to_dict(
 > # {'name': 'John', 'age': 30, ...}
 > ```
 
-### to_json
+#### to_json
 ```python
+@classmethod
 def to_json(
     nested: bool = False,
     hybrid_attributes: bool = False,
@@ -53,7 +54,7 @@ def to_json(
     ensure_ascii: bool = False,
     indent: int | str | None = None,
     sort_keys: bool = False
-)
+) -> str
 ```
 
 > Serializes the model to JSON.
@@ -61,7 +62,6 @@ def to_json(
 > Calls the `Self.to_dict` method and dumps it with `json.dumps`.
 
 > **Parameters:**
-
 > - `nested`: Set to `True` to include nested relationships' data, by default False.
 > - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
 > - `exclude`: Exclude specific attributes from the result, by default None.
@@ -70,11 +70,9 @@ def to_json(
 > - `sort_keys`: Sort dictionary keys, by default False.
 
 > **Returns:**
-
 > - `str`: Serialized model.
 
 > **Example:**
-
 > ```python
 > user = await User.get(id=1)
 > user.to_json()
@@ -87,15 +85,16 @@ def to_json(
 > # {"name": "John", "age": 30, ...}
 > ```
 
-## Deserialization
+### Deserialization
 
-### from_dict
+#### from_dict
 ```python
+@classmethod
 def from_dict(
     data: dict[str, Any] | list[dict[str, Any]],
     exclude: list[str] | None = None,
     nested_exclude: list[str] | None = None
-)
+) -> Self | list[Self]
 ```
 
 > Deserializes a dictionary to the model.
@@ -103,21 +102,16 @@ def from_dict(
 > Sets the attributes of the model with the values of the dictionary.
 
 > **Parameters:**
-
 > - `data`: Data to deserialize.
 > - `exclude`: Exclude specific keys from the dictionary, by default None.
 
 > **Returns:**
-
 > - `Self | list[Self]`: Deserialized model or models.
 
 > **Raises:**
-
-> - `TypeError`: If the data is not a dictionary or list of dictionaries.
 > - `KeyError`: If attribute doesn't exist.
 
 > **Example:**
-
 > ```python
 > user = await User.from_dict({'name': 'John', 'age': 30})
 > user.to_dict()
@@ -129,13 +123,14 @@ def from_dict(
 > # {'name': 'Jane', 'age': 25, ...}
 > ```
 
-### from_json
+#### from_json
 ```python
+@classmethod
 def from_json(
     json_string: str,
     exclude: list[str] | None = None,
     nested_exclude: list[str] | None = None
-)
+) -> Self | list[Self]
 ```
 
 > Deserializes a JSON string to the model.
@@ -144,16 +139,16 @@ def from_json(
 > with the values of the JSON object using the `from_dict` method.
 
 > **Parameters:**
-
 > - `json_string`: JSON string.
 > - `exclude`: Exclude specific keys from the dictionary, by default None.
 
 > **Returns:**
-
 > - `Self | list[Self]`: Deserialized model or models.
 
-> **Example:**
+> **Raises:**
+> - `KeyError`: If attribute doesn't exist.
 
+> **Example:**
 > ```python
 > user = await User.from_json('{"name": "John", "age": 30}')
 > user.to_dict()

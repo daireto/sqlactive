@@ -8,11 +8,13 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     [`SmartQueryMixin`](smart_query_mixin.md) and [`SerializationMixin`](serialization_mixin.md).
     It is not intended to be used on its own.
 
-## Instance Methods
+## API Reference
 
-### __repr__
+### Instance Methods
+
+#### __repr__
 ```python
-def __repr__(self)
+def __repr__(self) -> str
 ```
 
 > Print the model in a readable format including the primary key.
@@ -23,7 +25,6 @@ def __repr__(self)
 > ```
 
 > **Example:**
-
 > ```python
 > user = await User.get(id=1)
 > print(user)
@@ -33,34 +34,37 @@ def __repr__(self)
 > # [<User #1>, <User #2>]
 > ```
 
-## Class Methods
+### Class Methods
 
-### get_class_of_relation
+#### get_class_of_relation
 ```python
-def get_class_of_relation(relation_name: str)
+@classmethod
+def get_class_of_relation(relation_name: str) -> type[Self]
 ```
 
 > Gets the class of a relationship by its name.
 
 > **Parameters:**
-
 > - `relation_name`: The name of the relationship.
 
 > **Returns:**
-
 > - `type`: The class of the relationship.
 
 > **Example:**
-
 > ```python
 > user = await User.get(id=1)
 > user.get_class_of_relation('posts')
 > # <class 'Post'>
 > ```
 
-## Properties
+### Properties
 
-### id_str
+#### id_str
+```python
+@property
+def id_str() -> str
+```
+
 > Returns primary key as string.
 
 > If there is a composite primary key, returns a hyphenated string,
@@ -68,103 +72,172 @@ def get_class_of_relation(relation_name: str)
 
 > If there is no primary key, returns `'None'`.
 
+> **Example:**
 > ```python
 > bob = User.create(name='Bob')
 > print(bob.id_str)
 > # 1
 > ```
 
-### columns
+### Class Properties
+
+#### columns
+```python
+@classproperty
+def columns() -> list[str]
+```
+
 > Sequence of string key names for all columns in this collection.
 
+> **Example:**
 > ```python
 > print(User.columns)
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
 > ```
 
-### primary_keys_full
+#### primary_keys_full
+```python
+@classproperty
+def primary_keys_full() -> list[InstrumentedAttribute]
+```
+
 > Gets primary key properties for a SQLAlchemy cls.
 
 > Taken from marshmallow_sqlalchemy.
 
+> **Example:**
 > ```python
 > print(User.primary_keys_full)
 > # [<sqlalchemy.orm.attributes.InstrumentedAttribute 'id'>]
 > ```
 
-### primary_keys
+#### primary_keys
+```python
+@classproperty
+def primary_keys() -> list[str]
+```
+
 > Returns a `list` of primary key names.
 
+> **Example:**
 > ```python
 > print(User.primary_keys)
 > # ['id']
 > ```
 
-### relations
+#### relations
+```python
+@classproperty
+def relations() -> list[str]
+```
+
 > Returns a `list` of relationship names.
 
+> **Example:**
 > ```python
 > print(User.relations)
 > # ['posts', 'comments']
 > ```
 
-### settable_relations
+#### settable_relations
+```python
+@classproperty
+def settable_relations() -> list[str]
+```
+
 > Returns a `list` of settable relationship names.
 
+> **Example:**
 > ```python
 > print(User.settable_relations)
 > # ['posts', 'comments']
 > ```
 
-### hybrid_properties
+#### hybrid_properties
+```python
+@classproperty
+def hybrid_properties() -> list[str]
+```
+
 > Returns a `list` of hybrid property names.
 
+> **Example:**
 > ```python
 > print(User.hybrid_properties)
 > # ['is_adult']
 > ```
 
-### hybrid_methods_full
+#### hybrid_methods_full
+```python
+@classproperty
+def hybrid_methods_full() -> dict[str, InstrumentedAttribute]
+```
+
 > Returns a `dict` of hybrid methods.
 
+> **Example:**
 > ```python
 > print(User.hybrid_methods_full)
 > # {'is_adult': <sqlalchemy.orm.attributes.InstrumentedAttribute 'is_adult'>}
 > ```
 
-### hybrid_methods
+#### hybrid_methods
+```python
+@classproperty
+def hybrid_methods() -> list[str]
+```
+
 > Returns a `list` of hybrid method names.
 
+> **Example:**
 > ```python
 > print(User.hybrid_methods)
 > # ['is_adult']
 > ```
 
-### filterable_attributes
+#### filterable_attributes
+```python
+@classproperty
+def filterable_attributes() -> list[str]
+```
+
 > Returns a `list` of filterable attributes.
 
 > These are all columns, relations and hybrid properties.
 
+> **Example:**
 > ```python
 > print(User.filterable_attributes)
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
 > ```
 
-### sortable_attributes
+#### sortable_attributes
+```python
+@classproperty
+def sortable_attributes() -> list[str]
+```
+
 > Returns a `list` of sortable attributes.
 
 > These are all columns and hybrid properties.
 
+> **Example:**
 > ```python
 > print(User.sortable_attributes)
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
 > ```
 
-### settable_attributes
+#### settable_attributes
+```python
+@classproperty
+def settable_attributes() -> list[str]
+```
+
 > Returns a `list` of settable attributes.
 
 > These are all columns, settable relations and hybrid properties.
 
+> **Example:**
 > ```python
 > print(User.settable_attributes)
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']

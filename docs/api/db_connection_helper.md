@@ -25,14 +25,16 @@ async_scoped_session = async_scoped_session(async_sessionmaker, scopefunc=curren
 Note that the keyword arguments of the `DBConnection` class are passed to
 the `sqlalchemy.ext.asyncio.create_async_engine` function.
 
-## Methods
+## API Reference
+
+### Methods
 
 The `DBConnection` class has the following methods:
 
 - `init_db()`: Initialize the database tables.
 - `close()`: Close the database connection.
 
-### init_db
+#### init_db
 
 Initialize the database tables.
 It also sets the `session` attribute of the base model to
@@ -63,7 +65,7 @@ conn = DBConnection(DATABASE_URL, echo=True)
 asyncio.run(conn.init_db(BaseModel)) # Pass your base model
 ```
 
-### close
+#### close
 
 Close the database connection.
 It also sets the `session` attribute of the base model to `None`:
