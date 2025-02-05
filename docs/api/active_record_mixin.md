@@ -1,10 +1,228 @@
-# API Reference
+# ActiveRecord Mixin
 
-This is the API reference for the `ActiveRecordMixin` class.
+The `ActiveRecordMixin` class provides ActiveRecord-style functionality
+for SQLAlchemy models, allowing for more intuitive and chainable database
+operations with async/await support.
 
-## Instance Methods
+It uses the [`SmartQueryMixin`](../smart_query_mixin.md) class functionality.
 
-### fill
+Check the [API Reference](api_reference.md) for the full list of
+available methods.
+
+## Usage
+
+To use the `ActiveRecordMixin`, create a base model class that inherits from it
+and set the `__abstract__` attribute to `True`:
+
+```python
+from sqlalchemy import Mapped, mapped_column
+from sqlactive import ActiveRecordMixin
+
+class BaseModel(ActiveRecordMixin):
+    __abstract__ = True
+
+class User(BaseModel):
+    __tablename__ = 'users'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+```
+
+## Core Features
+
+### Creation, Updating, and Deletion
+
+#### Creating Records
+
+```python
+# Create a single record
+bob = await User.create(name='Bob')
+
+# Alternative creation methods
+bob = await User.insert(name='Bob')  # Synonym for create
+bob = await User.add(name='Bob')     # Synonym for create
+
+# Create multiple records
+users = [User(name='Alice'), User(name='Bob')]
+await User.create_all(users)
+```
+
+#### Updating Records
+
+```python
+# Update a single record
+await user.update(name='Bob2')
+await user.edit(name='Bob2')  # Synonym for update
+
+# Update multiple records
+users = await User.where(age=25).all()
+for user in users:
+    user.name = f"{user.name} Jr."
+await User.update_all(users)
+```
+
+#### Deleting Records
+
+```python
+# Delete a single record
+await user.delete()
+await user.remove()  # Synonym for delete
+
+# Delete multiple records
+users = await User.where(age=25).all()
+await User.delete_all(users)
+
+# Delete by primary keys
+await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
+```
+
+### Querying
+
+#### Basic Queries
+
+```python
+# Get all records
+users = await User.all()
+users = await User.fetch_all()  # Synonym for all
+users = await User.to_list()    # Synonym for all
+
+# Get first record
+user = await User.first()
+
+# Get one record
+user = await User.one()                # Raises if no result found
+user = await User.one_or_none()        # Returns None if no result found
+user = await User.fetch_one()          # Synonym for one
+user = await User.fetch_one_or_none()  # Synonym for one_or_none
+```
+
+#### Filtering
+
+The mixin supports both Django-like syntax and SQLAlchemy syntax for filtering:
+
+```python
+# Django-like syntax
+users = await User.filter(name__like='%John%').all()
+users = await User.filter(name__like='%John%', age=30).all()
+
+# SQLAlchemy syntax
+users = await User.filter(User.name == 'John Doe').all()
+
+# Mixed syntax
+users = await User.filter(User.age == 30, name__like='%John%').all()
+
+# Alternative filter methods
+users = await User.where(name__like='%John%').all()  # Synonym for filter
+users = await User.find(name__like='%John%').all()   # Synonym for filter
+
+# Find one record
+user = await User.find_one(name__like='%John%', age=30)  # Raises if not found
+user = await User.find_one_or_none(name__like='%John%')  # Returns None if not found
+```
+
+#### Sorting and Pagination
+
+```python
+from sqlalchemy.sql import desc
+
+# Sorting (Django-like syntax)
+users = await User.order_by('-created_at').all()  # Descending order
+users = await User.sort('-created_at').all()      # Synonym for order_by
+
+# Sorting (SQLAlchemy syntax)
+users = await User.order_by(User.created_at.desc()).all()
+users = await User.sort(desc(User.created_at)).all()
+
+# Sorting (mixed syntax)
+users = await User.order_by('-created_at', User.name.asc()).all()
+users = await User.sort('-age', desc(User.name)).all()
+
+# Pagination
+users = await User.offset(10).limit(5).all()  # Skip 10, take 5
+users = await User.skip(10).take(5).all()     # Same as above
+```
+
+#### Grouping
+
+```python
+# Grouping (Django-like syntax)
+users = await User.group_by(User.age).all()
+users = await User.group_by(User.age, User.name).all()
+
+# Grouping (SQLAlchemy syntax)
+users = await User.group_by('age').all()
+users = await User.group_by('age', 'name').all()
+```
+
+### Eager Loading
+
+#### Join Loading
+
+```python
+# Left outer join
+comment = await Comment.join(Comment.user, Comment.post).first()
+
+comment = await Comment.join(
+    Comment.user,
+    (Comment.post, True)  # True means inner join
+).first()
+
+comments = await Comment.join(Comment.user, Comment.post).unique_all()
+```
+
+#### Subquery Loading
+
+```python
+# Using subquery loading
+users = await User.with_subquery(
+    User.posts,
+    (User.comments, True)  # True means selectinload
+).all()
+
+# With limiting and sorting (important for correct results)
+users = await User.with_subquery(User.posts)
+    .limit(1)
+    .sort('id')  # important!
+    .all()
+```
+
+#### Complex Schema Loading
+
+```python
+from sqlactive import JOINED, SUBQUERY
+
+schema = {
+    User.posts: JOINED,  # joinedload user
+    User.comments: (SUBQUERY, {  # load comments in separate query
+        Comment.user: JOINED  # but join user in this separate query
+    })
+}
+
+user = await User.with_schema(schema).first()
+```
+
+### Smart Queries
+
+The `SmartQueryMixin` mixin provides a powerful smart query builder that combines
+filtering, sorting, grouping and eager loading:
+
+```python
+# Complex query with multiple features
+users = await User.smart_query(
+    criterion=(User.age > 18,),
+    filters={'name__like': '%John%'},
+    sort_columns=(User.username,),
+    sort_attrs=['-created_at'],
+    group_columns=(User.username,),
+    group_attrs=['age'],
+    schema={User.posts: JOINED}
+).all()
+```
+
+## API Reference
+
+### Instance Methods
+
+#### fill
 ```python
 def fill(**kwargs)
 ```
@@ -29,7 +247,7 @@ def fill(**kwargs)
 > user.fill(name='Bob', age=30)
 > ```
 
-### save
+#### save
 ```python
 async def save()
 ```
@@ -49,7 +267,7 @@ async def save()
 > await user.save()
 > ```
 
-### update
+#### update
 ```python
 async def update(**kwargs)
 ```
@@ -72,14 +290,14 @@ async def update(**kwargs)
 > await user.update(name='Bob2', age=31)
 > ```
 
-### edit
+#### edit
 ```python
 async def edit(**kwargs)
 ```
 
 > Synonym for `update()`.
 
-### delete
+#### delete
 ```python
 async def delete()
 ```
@@ -94,16 +312,16 @@ async def delete()
 > await user.delete()
 > ```
 
-### remove
+#### remove
 ```python
 async def remove()
 ```
 
 > Synonym for `delete()`.
 
-## Class Methods
+### Class Methods
 
-### create
+#### create
 ```python
 async def create(**kwargs)
 ```
@@ -126,21 +344,21 @@ async def create(**kwargs)
 > user = await User.create(name='Bob', age=30)
 > ```
 
-### insert
+#### insert
 ```python
 async def insert(**kwargs)
 ```
 
 > Synonym for `create()`.
 
-### add
+#### add
 ```python
 async def add(**kwargs)
 ```
 
 > Synonym for `create()`.
 
-### save_all
+#### save_all
 ```python
 async def save_all(rows: Sequence[Self], refresh: bool = False)
 ```
@@ -161,21 +379,21 @@ async def save_all(rows: Sequence[Self], refresh: bool = False)
 > await User.save_all(users)
 > ```
 
-### create_all
+#### create_all
 ```python
 async def create_all(rows: Sequence[Self], refresh: bool = False)
 ```
 
 > Synonym for `save_all()` when creating new rows.
 
-### update_all
+#### update_all
 ```python
 async def update_all(rows: Sequence[Self], refresh: bool = False)
 ```
 
 > Synonym for `save_all()` when updating existing rows.
 
-### delete_all
+#### delete_all
 ```python
 async def delete_all(rows: Sequence[Self])
 ```
@@ -195,7 +413,7 @@ async def delete_all(rows: Sequence[Self])
 > await User.delete_all(users)
 > ```
 
-### destroy
+#### destroy
 ```python
 async def destroy(*ids: object)
 ```
@@ -214,7 +432,7 @@ async def destroy(*ids: object)
 > await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
 > ```
 
-### get
+#### get
 ```python
 async def get(
     pk: object,
@@ -247,7 +465,7 @@ async def get(
 > user = await User.get(1)
 > ```
 
-### get_or_fail
+#### get_or_fail
 ```python
 async def get_or_fail(
     pk: object,
@@ -281,7 +499,7 @@ async def get_or_fail(
 > user = await User.get_or_fail(1)  # Raises if not found
 > ```
 
-### options
+#### options
 ```python
 def options(*args: ExecutableOption)
 ```
@@ -325,7 +543,7 @@ def options(*args: ExecutableOption)
 > users = await User.options(subqueryload(User.posts)).all()
 > ```
 
-### filter
+#### filter
 ```python
 def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -354,21 +572,21 @@ def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 > users = await User.filter(User.age >= 18, name__like='%Bob%').all()
 > ```
 
-### where
+#### where
 ```python
 def where(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
-### find
+#### find
 ```python
 def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
 
 > Synonym for `filter()`.
 
-### find_one
+#### find_one
 ```python
 async def find_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -392,7 +610,7 @@ async def find_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 > user = await User.find_one(name='Bob')  # Raises if not found
 > ```
 
-### find_one_or_none
+#### find_one_or_none
 ```python
 async def find_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -415,7 +633,7 @@ async def find_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filter
 > user = await User.find_one_or_none(name='Bob')  # Returns None if not found
 > ```
 
-### find_all
+#### find_all
 ```python
 async def find_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -434,7 +652,7 @@ async def find_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 > users = await User.find_all(age__gte=18)
 > ```
 
-### find_first
+#### find_first
 ```python
 async def find_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -453,7 +671,7 @@ async def find_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any
 > user = await User.find_first(name='Bob')
 > ```
 
-### find_unique
+#### find_unique
 ```python
 async def find_unique(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -474,7 +692,7 @@ async def find_unique(*criterion: _ColumnExpressionArgument[bool], **filters: An
 > users = users_scalars.all()
 > ```
 
-### find_unique_all
+#### find_unique_all
 ```python
 async def find_unique_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -493,7 +711,7 @@ async def find_unique_all(*criterion: _ColumnExpressionArgument[bool], **filters
 > users = await User.find_unique_all(name__like='%John%')
 > ```
 
-### find_unique_first
+#### find_unique_first
 ```python
 async def find_unique_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -512,7 +730,7 @@ async def find_unique_first(*criterion: _ColumnExpressionArgument[bool], **filte
 > user = await User.find_unique_first(name__like='%John%', age=30)
 > ```
 
-### find_unique_one
+#### find_unique_one
 ```python
 async def find_unique_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -536,7 +754,7 @@ async def find_unique_one(*criterion: _ColumnExpressionArgument[bool], **filters
 > user = await User.find_unique_one(name__like='%John%', age=30)
 > ```
 
-### find_unique_one_or_none
+#### find_unique_one_or_none
 ```python
 async def find_unique_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 ```
@@ -559,7 +777,7 @@ async def find_unique_one_or_none(*criterion: _ColumnExpressionArgument[bool], *
 > user = await User.find_unique_one_or_none(name__like='%John%', age=30)
 > ```
 
-### order_by
+#### order_by
 ```python
 def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
@@ -584,14 +802,14 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 > users = await User.order_by(User.created_at.desc(), User.name).all()
 > ```
 
-### sort
+#### sort
 ```python
 def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 ```
 
 > Synonym for `order_by()`.
 
-### offset
+#### offset
 ```python
 def offset(offset: int)
 ```
@@ -616,14 +834,14 @@ def offset(offset: int)
 > users = await User.offset(10).all()
 > ```
 
-### skip
+#### skip
 ```python
 def skip(skip: int)
 ```
 
 > Synonym for `offset()`.
 
-### limit
+#### limit
 ```python
 def limit(limit: int)
 ```
@@ -648,14 +866,14 @@ def limit(limit: int)
 > users = await User.limit(5).all()
 > ```
 
-### take
+#### take
 ```python
 def take(take: int)
 ```
 
 > Synonym for `limit()`.
 
-### join
+#### join
 ```python
 def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 ```
@@ -682,7 +900,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 > ).all()
 > ```
 
-### with_subquery
+#### with_subquery
 ```python
 def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 ```
@@ -734,7 +952,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 > ).all()
 > ```
 
-### with_schema
+#### with_schema
 ```python
 def with_schema(
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
@@ -765,7 +983,7 @@ def with_schema(
 > users = await User.with_schema(schema).all()
 > ```
 
-### scalars
+#### scalars
 ```python
 async def scalars()
 ```
@@ -783,7 +1001,7 @@ async def scalars()
 > users = result.all()
 > ```
 
-### first
+#### first
 ```python
 async def first()
 ```
@@ -800,7 +1018,7 @@ async def first()
 > user = await User.first()
 > ```
 
-### one
+#### one
 ```python
 async def one()
 ```
@@ -822,7 +1040,7 @@ async def one()
 > user = await User.one()  # Raises if not exactly one match
 > ```
 
-### one_or_none
+#### one_or_none
 ```python
 async def one_or_none()
 ```
@@ -843,21 +1061,21 @@ async def one_or_none()
 > user = await User.one_or_none()
 > ```
 
-### fetch_one
+#### fetch_one
 ```python
 async def fetch_one()
 ```
 
 > Synonym for `one()`.
 
-### fetch_one_or_none
+#### fetch_one_or_none
 ```python
 async def fetch_one_or_none()
 ```
 
 > Synonym for `one_or_none()`.
 
-### all
+#### all
 ```python
 async def all()
 ```
@@ -874,21 +1092,21 @@ async def all()
 > users = await User.all()
 > ```
 
-### fetch_all
+#### fetch_all
 ```python
 async def fetch_all()
 ```
 
 > Synonym for `all()`.
 
-### to_list
+#### to_list
 ```python
 async def to_list()
 ```
 
 > Synonym for `all()`.
 
-### unique
+#### unique
 ```python
 async def unique()
 ```
@@ -906,7 +1124,7 @@ async def unique()
 > users = result.all()
 > ```
 
-### unique_all
+#### unique_all
 ```python
 async def unique_all()
 ```
@@ -923,7 +1141,7 @@ async def unique_all()
 > users = await User.unique_all()
 > ```
 
-### unique_first
+#### unique_first
 ```python
 async def unique_first()
 ```
@@ -940,7 +1158,7 @@ async def unique_first()
 > user = await User.unique_first()
 > ```
 
-### unique_one
+#### unique_one
 ```python
 async def unique_one()
 ```
@@ -962,7 +1180,7 @@ async def unique_one()
 > user = await User.unique_one()
 > ```
 
-### unique_one_or_none
+#### unique_one_or_none
 ```python
 async def unique_one_or_none()
 ```
@@ -983,7 +1201,7 @@ async def unique_one_or_none()
 > user = await User.unique_one_or_none()
 > ```
 
-### smart_query
+#### smart_query
 ```python
 def smart_query(
     criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
@@ -1019,3 +1237,16 @@ def smart_query(
 >     schema={User.posts: 'joined'}
 > ).all()
 > ```
+
+## Important Notes
+
+1. When using `subqueryload()` with limiting modifiers (`limit()`, `offset()`),
+   always include `order_by()` with unique columns (like primary key) to ensure
+   correct results.
+
+2. For joined eager loading with one-to-many or many-to-many relationships,
+   use the `unique()` method or unique-related methods (i.e. `unique_all()`) to
+   prevent duplicate rows:
+   ```python
+   users = await User.options(joinedload(User.posts)).unique_all()
+   ```

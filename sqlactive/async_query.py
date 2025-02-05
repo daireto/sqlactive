@@ -47,7 +47,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         # <sqlalchemy.sql.Select>
     ```
 
-    Visit the [API reference](https://daireto.github.io/sqlactive/api/active_record_mixin/async_query/#api-reference)
+    Visit the [API reference](https://daireto.github.io/sqlactive/api/async_query/#api-reference)
     for the complete list of methods.
     """
 

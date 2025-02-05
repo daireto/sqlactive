@@ -188,7 +188,8 @@ await user.delete()
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin/api_reference.md) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    class to see all the available methods.
 
 ### 4. Perform Bulk Operations
 
@@ -261,7 +262,8 @@ print(users)
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin/api_reference.md) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    class to see all the available methods.
 
 ### 5. Perform Queries
 
@@ -340,7 +342,8 @@ See the [low-level SmartQueryMixin methods](api/smart_query_mixin.md#api-referen
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin/api_reference.md) class to see all the available methods.
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    class to see all the available methods.
 
 ### 6. Perform Native Queries
 

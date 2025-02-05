@@ -83,7 +83,7 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin/overview/): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
 * [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
 * [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization_mixin/): Provides serialization and deserialization methods.
@@ -246,7 +246,7 @@ await user.delete()
 > a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
 > class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -313,7 +313,7 @@ print(users)
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
 > class to see all the available methods.
 
 ### 5. Perform Queries
@@ -391,7 +391,7 @@ for more details.
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/api_reference/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
 > class to see all the available methods.
 
 ### 6. Perform Native Queries
