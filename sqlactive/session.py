@@ -13,7 +13,7 @@ class SessionMixin:
 
     @classmethod
     def set_session(cls, session: async_scoped_session[AsyncSession]) -> None:
-        """Sets the async session factory to the model.
+        """Sets the async session factory.
 
         Parameters
         ----------
