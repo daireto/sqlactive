@@ -63,7 +63,7 @@ as shown in the following example:
 with default values and onupdate behavior. To know how to customize the
 timestamps behavior, check the `TimestampMixin` class documentation in
 `sqlactive.timestamp.TimestampMixin` or in the following link:
-https://daireto.github.io/sqlactive/latest/pages/timestamp_mixin/
+https://daireto.github.io/sqlactive/latest/pages/timestamp-mixin/
 
 Your `BaseModel` class can also inherit directly from the mixins. For
 example, if you don't want to implement automatic timestamps don't inherit

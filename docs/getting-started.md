@@ -16,10 +16,10 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](api/active_record_mixin.md): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](api/active-record-mixin.md): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
-* [`TimestampMixin`](api/timestamp_mixin.md): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](api/serialization_mixin.md): Provides serialization and deserialization methods.
+* [`TimestampMixin`](api/timestamp-mixin.md): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](api/serialization-mixin.md): Provides serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -153,7 +153,7 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
     await conn.init_db(BaseModel)
     ```
 
-    See the [DB Connection Helper](api/db_connection_helper.md) section for more information.
+    See the [DB Connection Helper](api/db-connection-helper.md) section for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -188,7 +188,7 @@ await user.delete()
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active-record-mixin.md)
     class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -262,7 +262,7 @@ print(users)
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active-record-mixin.md)
     class to see all the available methods.
 
 ### 5. Perform Queries
@@ -316,7 +316,7 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](api/smart_query_mixin.md#api-reference) for more details.
+See the [low-level SmartQueryMixin methods](api/smart-query-mixin.md#api-reference) for more details.
 
 !!! note
 
@@ -342,7 +342,7 @@ See the [low-level SmartQueryMixin methods](api/smart_query_mixin.md#api-referen
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active-record-mixin.md)
     class to see all the available methods.
 
 ### 6. Perform Native Queries
@@ -400,7 +400,7 @@ print(user.updated_at)
 
 !!! tip
 
-    Check the [`TimestampMixin`](api/timestamp_mixin.md) class to know how to customize the timestamps behavior.
+    Check the [`TimestampMixin`](api/timestamp-mixin.md) class to know how to customize the timestamps behavior.
 
 ### 8. Serialization and Deserialization
 

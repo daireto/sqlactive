@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.exc import InvalidRequestError, NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 from sqlalchemy.sql import FromClause, Select, select
 from sqlalchemy.sql._typing import (
     _ColumnExpressionArgument,
@@ -22,7 +23,7 @@ from .utils import classproperty
 
 
 class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
-    """Mixin for ActiveRecord style models.
+    """Mixin for Active Record style models.
 
     Example:
     ```python
@@ -55,11 +56,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     >>> User.all()
     # []
 
-    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
+    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
     for the full list of available methods.
     """
 
     __abstract__ = True
+
+    @classmethod
+    def set_session(cls, session: async_scoped_session[AsyncSession]) -> None:
+        super().set_session(session)
+        AsyncQuery.set_session(session)
 
     def fill(self, **kwargs):
         """Fills the object with values from `kwargs`
@@ -681,13 +687,26 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def select(cls, *entities: _ColumnsClauseArgument[Any]):
-        """Replaces the original `sqlalchemy.sql.Select` instance with a new one.
+        """Creates a brand new `AsyncQuery` instance
+        with the specified entities selected.
+
+        This is mostly a shortcut for `AsyncQuery.select()`.
+
+        This method is intended to be used at the beginning of the query build process.
+        You should not call it more than once on the same `AsyncQuery` instance.
+
+        See the documentation of `AsyncQuery.select()` for more details.
 
         Example:
-        >>> User.select(User.name, User.age)
+        >>> async_query = User.select(User)  # This is the default behavior
+        >>> async_query
+        # SELECT users.id, users.username, ... FROM users
+        >>> async_query = User.select(User.name, User.age)
+        >>> async_query
         # SELECT users.name, users.age FROM users
-        >>> User.select(User.age, func.max(User.age))
-        # SELECT users.age, max(users.age) AS max_1 FROM users
+        >>> async_query = User.select(User.name, func.max(User.age))
+        >>> async_query
+        # SELECT users.name, max(users.age) AS max_1 FROM users
 
         Raises
         ------
@@ -695,8 +714,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If no entities are selected.
         """
 
-        async_query = cls.get_async_query()
-        return async_query.select(*entities)
+        return AsyncQuery.select(*entities)
 
     @classmethod
     def options(cls, *args: ExecutableOption):
@@ -833,24 +851,24 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         if you want to select specific columns.
 
         Example using Django-like syntax:
-        >>> rows = await User.group_by('age').select(User.age, func.count(User.name)).fetch_rows()
+        >>> rows = await User.group_by('age').select(User.age, func.count(User.name)).all(scalars=False)
         >>> rows
         # [(30, 2), (32, 1), ...]
         >>> query = await Post.group_by('rating', 'user___name')
-        >>> query = query.select(Post.rating, Post.user.name, func.count(Post.title))
-        >>> rows = query.fetch_rows()
+        >>> query = query.select(Post.rating, Post.user, func.count(Post.title))
+        >>> rows = query.all(scalars=False)
         >>> rows
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
 
         Example using SQLAlchemy syntax:
         >>> query = select(User.age, func.count(User.name))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(User.age).fetch_rows()
+        >>> rows = await async_query.group_by(User.age).all(scalars=False)
         >>> rows
         # [(30, 2), (32, 1), ...]
-        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> query = select(Post.rating, Post.user, func.count(Post.title))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(Post.rating, Post.user.name).fetch_rows()
+        >>> rows = await async_query.group_by(Post.rating, Post.user).all(scalars=False)
         >>> rows
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
@@ -1131,8 +1149,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
 
         if query is None:
-            return AsyncQuery[cls](cls._query, cls._session)
-        return AsyncQuery[cls](query, cls._session)
+            return AsyncQuery[cls](cls._query)
+        return AsyncQuery[cls](query)
 
     @classmethod
     def _get_primary_key_name(cls) -> str:

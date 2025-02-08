@@ -1,10 +1,10 @@
-# ActiveRecord Mixin
+# Active Record Mixin
 
-The `ActiveRecordMixin` class provides ActiveRecord-style functionality
+The `ActiveRecordMixin` class provides a set of ActiveRecord-like helper methods
 for SQLAlchemy models, allowing for more intuitive and chainable database
 operations with async/await support.
 
-It uses the [`SmartQueryMixin`](smart_query_mixin.md) class functionality.
+It implements the functionality of both [`Session`](session_mixin.md) and [`Smart Queries`](smart-query-mixin.md) mixins.
 
 ## Usage
 
@@ -24,6 +24,12 @@ class User(BaseModel):
     name: Mapped[str] = mapped_column(String(100))
 ```
 
+!!! tip
+
+    You can also make your base inherit from the `ActiveRecordBaseModel` class
+    which is a combination of `ActiveRecordMixin`, `SerializationMixin` and
+    `TimestampMixin`.
+
 ## Core Features
 
 ### Creation, Updating, and Deletion
@@ -32,15 +38,12 @@ class User(BaseModel):
 
 ```python
 # Create a single record
-bob = await User.create(name='Bob')
-
-# Alternative creation methods
-bob = await User.insert(name='Bob')  # Synonym for create
-bob = await User.add(name='Bob')     # Synonym for create
+bob = await User.insert(name='Bob')
+joe = await User.create(name='Joe')  # Synonym for insert()
 
 # Create multiple records
 users = [User(name='Alice'), User(name='Bob')]
-await User.create_all(users)
+await User.insert_all(users)  # Shortcut for save_all()
 ```
 
 #### Updating Records
@@ -48,13 +51,12 @@ await User.create_all(users)
 ```python
 # Update a single record
 await user.update(name='Bob2')
-await user.edit(name='Bob2')  # Synonym for update
 
 # Update multiple records
 users = await User.where(age=25).all()
 for user in users:
     user.name = f"{user.name} Jr."
-await User.update_all(users)
+await User.update_all(users)  # Shortcut for save_all()
 ```
 
 #### Deleting Records
@@ -62,7 +64,7 @@ await User.update_all(users)
 ```python
 # Delete a single record
 await user.delete()
-await user.remove()  # Synonym for delete
+await user.remove()  # Synonym for delete()
 
 # Delete multiple records
 users = await User.where(age=25).all()
@@ -79,17 +81,13 @@ await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
 ```python
 # Get all records
 users = await User.all()
-users = await User.fetch_all()  # Synonym for all
-users = await User.to_list()    # Synonym for all
 
 # Get first record
-user = await User.first()
+user = await User.first()        # None if no results found
 
 # Get one record
-user = await User.one()                # Raises if no result found
-user = await User.one_or_none()        # Returns None if no result found
-user = await User.fetch_one()          # Synonym for one
-user = await User.fetch_one_or_none()  # Synonym for one_or_none
+user = await User.one()          # Raises if no results found
+user = await User.one_or_none()  # Returns None if no results found
 ```
 
 #### Filtering
@@ -98,40 +96,37 @@ The mixin supports both Django-like syntax and SQLAlchemy syntax for filtering:
 
 ```python
 # Django-like syntax
-users = await User.filter(name__like='%John%').all()
-users = await User.filter(name__like='%John%', age=30).all()
+users = await User.where(name__like='%John%').all()
+users = await User.where(name__like='%John%', age=30).all()
 
 # SQLAlchemy syntax
-users = await User.filter(User.name == 'John Doe').all()
+users = await User.where(User.name == 'John Doe').all()
 
 # Mixed syntax
-users = await User.filter(User.age == 30, name__like='%John%').all()
+users = await User.where(User.age == 30, name__like='%John%').all()
 
-# Alternative filter methods
-users = await User.where(name__like='%John%').all()  # Synonym for filter
-users = await User.find(name__like='%John%').all()   # Synonym for filter
-
-# Find one record
-user = await User.find_one(name__like='%John%', age=30)  # Raises if not found
-user = await User.find_one_or_none(name__like='%John%')  # Returns None if not found
+# Synonyms
+users = await User.filter(name__like='%John%').all()
+user = await User.find(name__like='%John%', age=30).one()
 ```
 
 #### Sorting and Pagination
 
 ```python
-from sqlalchemy.sql import desc
+from sqlalchemy.sql import asc, desc
 
 # Sorting (Django-like syntax)
-users = await User.order_by('-created_at').all()  # Descending order
-users = await User.sort('-created_at').all()      # Synonym for order_by
+users = await User.order_by('-created_at').all()          # Descending order
+users = await User.order_by('name').all()                 # Ascending order
+users = await User.order_by('-created_at', 'name').all()  # Multiple columns
 
 # Sorting (SQLAlchemy syntax)
-users = await User.order_by(User.created_at.desc()).all()
-users = await User.sort(desc(User.created_at)).all()
+users = await User.sort(User.created_at.desc()).all()     # Synonym for order_by()
+users = await User.sort(asc(User.name)).all()
 
 # Sorting (mixed syntax)
 users = await User.order_by('-created_at', User.name.asc()).all()
-users = await User.sort('-age', desc(User.name)).all()
+users = await User.sort('-age', asc(User.name)).all()
 
 # Pagination
 users = await User.offset(10).limit(5).all()  # Skip 10, take 5
@@ -148,6 +143,9 @@ users = await User.group_by(User.age, User.name).all()
 # Grouping (SQLAlchemy syntax)
 users = await User.group_by('age').all()
 users = await User.group_by('age', 'name').all()
+
+# Grouping (mixed syntax)
+users = await User.group_by(User.age, 'name').all()
 ```
 
 ### Eager Loading
@@ -163,7 +161,8 @@ comment = await Comment.join(
     (Comment.post, True)  # True means inner join
 ).first()
 
-comments = await Comment.join(Comment.user, Comment.post).unique_all()
+comments = await Comment.join(Comment.user, Comment.post)
+    .unique_all()  # important!
 ```
 
 #### Subquery Loading
@@ -173,13 +172,13 @@ comments = await Comment.join(Comment.user, Comment.post).unique_all()
 users = await User.with_subquery(
     User.posts,
     (User.comments, True)  # True means selectinload
-).all()
+).unique_all()  # important!
 
 # With limiting and sorting (important for correct results)
 users = await User.with_subquery(User.posts)
     .limit(1)
     .sort('id')  # important!
-    .all()
+    .unique_all()  # important!
 ```
 
 #### Complex Schema Loading
@@ -199,8 +198,8 @@ user = await User.with_schema(schema).first()
 
 ### Smart Queries
 
-The `SmartQueryMixin` mixin provides a powerful smart query builder that combines
-filtering, sorting, grouping and eager loading:
+The [`Smart Queries Mixin`](smart-query-mixin.md) provides a powerful smart query
+builder that combines filtering, sorting, grouping and eager loading:
 
 ```python
 # Complex query with multiple features
@@ -528,7 +527,7 @@ def options(*args: ExecutableOption)
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -554,7 +553,7 @@ def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -787,7 +786,7 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -819,7 +818,7 @@ def offset(offset: int)
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -851,7 +850,7 @@ def limit(limit: int)
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Raises:**
 
@@ -886,7 +885,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -938,7 +937,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 
@@ -967,7 +966,7 @@ def with_schema(
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > ```python
 > from sqlactive import JOINED, SUBQUERY
@@ -1221,7 +1220,7 @@ def smart_query(
 
 > **Returns:**
 
-> - [`AsyncQuery`](async_query.md): Async query instance for chaining.
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
 

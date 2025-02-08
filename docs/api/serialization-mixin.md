@@ -1,9 +1,9 @@
-# SerializationMixin
+# Serialization Mixin
 
 The `SerializationMixin` class provides methods for serializing and deserializing
 SQLAlchemy models.
 
-It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
+It uses the [`InspectionMixin`](inspection-mixin.md) class functionality.
 
 ## API Reference
 

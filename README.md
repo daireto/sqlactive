@@ -83,10 +83,10 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active_record_mixin/): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active-record-mixin/): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
-* [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization_mixin/): Provides serialization and deserialization methods.
+* [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp-mixin/): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization-mixin/): Provides serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -213,7 +213,7 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 > conn = DBConnection(DATABASE_URL, echo=False)
 > await conn.init_db(BaseModel)
 > ```
-> See the [DB Connection Helper](https://daireto.github.io/sqlactive/api/db_connection_helper/) section for more information.
+> See the [DB Connection Helper](https://daireto.github.io/sqlactive/api/db-connection-helper/) section for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -246,7 +246,7 @@ await user.delete()
 > a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
 > class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -313,7 +313,7 @@ print(users)
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
 > class to see all the available methods.
 
 ### 5. Perform Queries
@@ -367,7 +367,7 @@ session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 but also allows magic operators like `rating__gt`.
 
-See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/api/smart_query_mixin/#api-reference)
+See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference)
 for more details.
 
 > [!IMPORTANT]
@@ -391,7 +391,7 @@ for more details.
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active_record_mixin/)
+> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
 > class to see all the available methods.
 
 ### 6. Perform Native Queries
@@ -448,7 +448,7 @@ print(user.updated_at)
 ```
 
 > [!TIP]
-> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp_mixin/)
+> Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp-mixin/)
 > class to know how to customize the timestamps behavior.
 
 ### 8. Serialization and Deserialization

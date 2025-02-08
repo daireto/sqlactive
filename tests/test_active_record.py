@@ -2,9 +2,9 @@ import asyncio
 import unittest
 
 from datetime import datetime, timezone
-from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError, InvalidRequestError
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.operators import or_
 from sqlactive import JOINED, SUBQUERY, SELECT_IN
 from sqlactive.conn import DBConnection
@@ -65,9 +65,12 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
         self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
         with self.assertRaises(IntegrityError) as context:
-            user = User(username='Test28', name='Test User', age=20)
-            await user.save()
+            test_user = User(username='Test28', name='Test User', age=20)
+            await test_user.save()
         self.assertIn('UNIQUE constraint failed: users.username', str(context.exception))
+
+        # Undo changes
+        await user.delete()
 
     async def test_update(self):
         """Test for `update` function."""
@@ -79,6 +82,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await user.update(name='Bob Doe')
         self.assertGreater(user.updated_at, user.created_at)
         self.assertEqual('Bob Doe', user.name)
+
+        # Undo changes
+        await user.update(name='Bob Williams')
 
     async def test_delete(self):
         """Test for `delete` and `remove` functions."""
@@ -97,6 +103,14 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await user3.delete()
         self.assertIn('is not persisted', str(context.exception))
 
+        # Undo changes
+        await User.insert_all(
+            [
+                User(username='Jessica3248', name='Jessica Alba', age=30),
+                User(username='Lily9845', name='Lily Collins', age=29),
+            ]
+        )
+
     async def test_insert(self):
         """Test for `insert` and `create` functions."""
 
@@ -109,6 +123,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(user.id)
             self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
             self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
+
+        # Undo changes
+        await User.delete_all([user1, user2, user3])
 
     async def test_save_all(self):
         """Test for `save_all`function."""
@@ -132,12 +149,15 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
             self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
         with self.assertRaises(IntegrityError) as context:
-            users = [
+            test_users = [
                 User(username='Test100', name='Test User 1', age=20),
                 User(username='Test200', name='Test User 2', age=30),
             ]
-            await User.save_all(users)
+            await User.save_all(test_users)
         self.assertIn('UNIQUE constraint failed: users.username', str(context.exception))
+
+        # Undo changes
+        await User.delete_all(users)
 
     async def test_insert_all(self):
         """Test for `insert_all`function."""
@@ -167,6 +187,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(now, user.created_at.strftime('%Y-%m-%d %H:%M'))
             self.assertEqual(now, user.updated_at.strftime('%Y-%m-%d %H:%M'))
 
+        # Undo changes
+        await User.delete_all(users)
+
     async def test_update_all(self):
         """Test for `update_all` function."""
 
@@ -189,6 +212,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         for user in users:
             self.assertIn('Updated', user.name)
             self.assertGreater(user.updated_at, user.created_at)
+
+        # Undo changes
+        await User.delete_all(users)
 
     async def test_delete_all(self):
         """Test for `delete_all` function."""
@@ -230,11 +256,26 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(user1)
         self.assertIsNone(user2)
         self.assertIsNone(user3)
+        user = None
+        post = None
         with self.assertRaises(IntegrityError) as context:
             user = await User.create(username='Pablo123546', name='Test User 1', age=20)
-            await Post.create(title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id)
+            post = await Post.create(title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id)
             await User.destroy(user.id)
         self.assertIn('NOT NULL constraint failed', str(context.exception))
+
+        # Undo changes
+        if post is not None:
+            await post.delete()
+        if user is not None:
+            await user.delete()
+        await User.insert_all(
+            [
+                User(username='Emily894', name='Emily Watson', age=27),
+                User(username='Kate6485', name='Kate Middleton', age=28),
+                User(username='Jennifer5215', name='Jennifer Lawrence', age=31),
+            ]
+        )
 
     async def test_get(self):
         """Test for `get` function."""
@@ -430,11 +471,19 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `select` function."""
 
         logger.info('Testing `select` function...')
-        with self.assertRaises(ValueError) as context:
-            users = await User.select().all(scalars=False)
-        self.assertEqual('At least one column must be selected.', str(context.exception))
-        users = await User.select(User.id, User.name).all(scalars=False)
-        self.assertEqual('Mike Turner', users[10].name)
+        async_query = User.select(User)
+        users = await async_query.all()
+        self.assertIn('SELECT users.id, users.username, users.name, users.age', str(async_query))
+        self.assertEqual(34, len(users))
+        async_query = User.select(User.name, User.age)
+        users = await async_query.all(scalars=False)
+        self.assertEqual(34, len(users))
+        self.assertEqual(('Bob Williams', 30), users[0])
+        self.assertIn('SELECT users.name, users.age', str(async_query))
+        async_query = User.select(User.name, func.max(User.age))
+        older_user = await async_query.one(scalar=False)
+        self.assertEqual(('Bill Smith', 40), older_user)
+        self.assertIn('SELECT users.name, max(users.age) AS max_1', str(async_query))
 
     async def test_options(self):
         """Test for `options` function."""
@@ -467,17 +516,24 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         users = await User.sort(User.age).filter(username__like='Ji%').all()
         self.assertEqual('Jimmy156', users[0].username)
         posts = await Post.sort('-rating', 'user___name').all()
-        self.assertEqual(25, len(posts))
+        self.assertEqual(24, len(posts))
 
     async def test_group_by(self):
         """Test for `group_by` function."""
 
         logger.info('Testing `group_by` function...')
-        users = await User.group_by(User.age).select(User.age, func.count(User.id)).all(scalars=False)
-        self.assertEqual(16, len(users))
-        self.assertEqual((25, 2), users[3])
-        users = await User.group_by('age').select(User.age, func.count(User.id)).all(scalars=False)
-        self.assertEqual(16, len(users))
+        users = await User.select(User.age, func.count(User.id)).group_by(User.age).all(scalars=False)
+        self.assertEqual((26, 2), users[3])
+        users = await User.select(User.age, func.count(User.id)).group_by('age').all(scalars=False)
+        self.assertEqual((26, 2), users[3])
+        users = (
+            await User.select(User.age, User.name, func.count(User.id)).group_by(User.age, 'name').all(scalars=False)
+        )
+        self.assertEqual((25, 'Jane Doe', 1), users[3])
+        posts = (
+            await Post.select(Post.rating, func.count(Post.title)).group_by('rating', 'user___name').all(scalars=False)
+        )
+        self.assertEqual(24, (len(posts)))
 
     async def test_offset(self):
         """Test for `offset` and `skip` functions."""
@@ -551,7 +607,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Lorem ipsum', user.comments[0].post.title)
         schema = {Post.user: JOINED, Post.comments: (SUBQUERY, {Comment.user: JOINED})}
         post = await Post.with_schema(schema).limit(1).unique_one()
-        self.assertEqual('Bob Doe', post.user.name)
+        self.assertEqual('Bob Williams', post.user.name)
         self.assertEqual('Jill Peterson', post.comments[1].user.name)
 
     async def test_async_smart_query(self):

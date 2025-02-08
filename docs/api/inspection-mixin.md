@@ -1,11 +1,11 @@
-# InspectionMixin
+# Inspection Mixin
 
 The `InspectionMixin` class provides attributes and properties inspection functionality for SQLAlchemy models.
 
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`SmartQueryMixin`](smart_query_mixin.md) and [`SerializationMixin`](serialization_mixin.md).
+    [`SmartQueryMixin`](smart-query-mixin.md) and [`SerializationMixin`](serialization-mixin.md).
     It is not intended to be used on its own.
 
 ## API Reference

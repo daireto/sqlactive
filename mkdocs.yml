@@ -35,16 +35,16 @@ nav:
   - Overview: index.md
   - Getting started: getting-started.md
   - API Documentation:
-    - DB Connection Helper: api/db_connection_helper.md
+    - DB Connection Helper: api/db-connection-helper.md
     - Native SQLAlchemy Queries: api/execute.md
     - Mixins:
-      - Active-Record Mixin: api/active_record_mixin.md
-      - Inspection Mixin: api/inspection_mixin.md
-      - Serialization Mixin: api/serialization_mixin.md
-      - Smart Queries Mixin: api/smart_query_mixin.md
-      - Timestamp Mixin: api/timestamp_mixin.md
+      - Active Record Mixin: api/active-record-mixin.md
+      - Inspection Mixin: api/inspection-mixin.md
+      - Serialization Mixin: api/serialization-mixin.md
+      - Smart Queries Mixin: api/smart-query-mixin.md
+      - Timestamp Mixin: api/timestamp-mixin.md
     - Wrappers:
-      - Async Query: api/async_query.md
+      - Async Query: api/async-query.md
   - About:
     - Contributing: about/contributing.md
     - License: about/license.md

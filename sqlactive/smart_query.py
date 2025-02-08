@@ -344,7 +344,7 @@ class SmartQueryMixin(InspectionMixin):
         >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
         >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
 
-        NOTE: To get more information about the usage, see documentation of
+        NOTE: To get more information about the usage, see the documentation of
         `filter_expr`, `order_expr`, `columns_expr` and `eager_expr` methods.
 
         Parameters
@@ -647,7 +647,7 @@ class SmartQueryMixin(InspectionMixin):
         ```python
             query = query.order_by(
                 desc(Post.created_at),
-                asc(Post.user.name),
+                asc(Post.user),
             )
         ```
 
@@ -712,7 +712,7 @@ class SmartQueryMixin(InspectionMixin):
         ```python
             query = query.group_by(
                 Post.rating,
-                Post.user.name,
+                Post.user,
             )
         ```
 

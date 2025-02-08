@@ -2,6 +2,8 @@
 
 The `AsyncQuery` class is an Async wrapper for `sqlalchemy.sql.Select`.
 
+It implements the functionality of both [`Session`](session_mixin.md) and [`Smart Queries`](smart-query-mixin.md) mixins.
+
 ## Usage
 
 The `AsyncQuery` class provides a set of helper methods for asynchronously executing the query.
@@ -10,9 +12,9 @@ Example of usage:
 
 ```python
     query = select(User)
-    async_query = AsyncQuery(query, User._session)
-    async_query = async_query.filter(name__like='%John%').sort('-created_at').limit(2)
-    users = await async_query.all()
+    async-query = AsyncQuery(query)
+    async-query = async-query.filter(name__like='%John%').sort('-created_at').limit(2)
+    users = await async-query.all()
     >>> users
     # [<User 1>, <User 2>]
 ```
@@ -22,31 +24,35 @@ use the `query` property:
 
 ```python
     query = select(User)
-    async_query = AsyncQuery(query, User._session)
-    async_query.query
+    async-query = AsyncQuery(query)
+    async-query.query
     # <sqlalchemy.sql.Select>
 ```
 
 !!! warning
 
-    If no session is provided, a `NoSessionError` will be raised
-    when attempting to execute the query. You must either provide
-    a session by passing it in this constructor or by calling
-    the `set_session` method.
+    If a `NoSessionError` is raised, it means that there is no session
+    associated with the `AsyncQuery` instance. This can happen
+    if the `set_session` method of the base model has not been called
+    or if the model has not been initialized with a session.
 
-    In the constructor:
+    In this case, you must provide a session by calling the `set_session`
+    either from the model or the `AsyncQuery` instance.
+
+    Calling `set_session` from the model:
 
     ```python
+    User.set_session(session)
     query = select(User)
-    async_query = AsyncQuery(query, User._session)
+    async-query = AsyncQuery(query)
     ```
 
-    Calling the `set_session` method:
+    Calling `set_session` from the `AsyncQuery` instance:
 
     ```python
     query = select(User)
-    async_query = AsyncQuery(query)
-    async_query.set_session(User._session)
+    async-query = AsyncQuery(query)
+    async-query.set_session(User._session)
     ```
 
 ## API Reference
@@ -64,54 +70,54 @@ def query(query: Select[tuple[Any, ...]]) -> Select[tuple[Any, ...]]
 > **Example:**
 ```python
 query = select(User)
-async_query = AsyncQuery(query)
-async_query.query
+async-query = AsyncQuery(query)
+async-query.query
 # <sqlalchemy.sql.Select>
 
-async_query.query = async_query.query.limit(10).order_by(User.age.desc())
-users = await async_query.all()
+async-query.query = async-query.query.limit(10).order_by(User.age.desc())
+users = await async-query.all()
 ```
 
-#### AsyncSession
-```python
-@property
-def AsyncSession() -> async_scoped_session[AsyncSession]
-```
-
-> Async session factory.
-
-> **Example:**
-```python
-query = select(User)
-async_query = AsyncQuery(query)
-async_query.AsyncSession
-# <sqlalchemy.ext.asyncio.session.async_scoped_session>
-```
-
-### Methods
-
-#### set_session
-```python
-def set_session(session: async_scoped_session[AsyncSession]) -> None
-```
-
-> Sets the async session factory.
-
-> **Parameters**
-> - `session`: Async session factory.
+### class Methods
 
 #### select
 ```python
-def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
+@classmethod
+def select(cls, *entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
 ```
 
-> Replaces the original `sqlalchemy.sql.Select` instance with a new one.
+> Creates a brand new `AsyncQuery` instance with the specified entities selected.
+
+> This method is intended to be used at the beginning of the query build process.
+> You should not call it more than once on the same `AsyncQuery` instance.
+
+> If you call this method on an already existing `AsyncQuery` instance,
+> it will return a new instance with a new query. This is different from
+> calling `select()` on a `sqlalchemy.sql.Select` instance. Every filter,
+> group_by, order_by, limit, offset, etc. will be reset in the new instance.
 
 > **Parameters:**
 > - `entities`: Column names or SQLAlchemy column expressions.
 
 > **Returns:**
-> - `AsyncQuery`: Async query instance for chaining.
+> - `AsyncQuery`: Async query instance.
+
+> **Example:**
+> ```python
+> async-query = AsyncQuery.select(User)
+> async-query
+> # SELECT users.id, users.username, ... FROM users
+>
+> async-query = AsyncQuery.select(User.name, User.age)
+> async-query
+> # SELECT users.name, users.age FROM users
+>
+> async-query = AsyncQuery.select(User.name, func.max(User.age))
+> async-query
+> # SELECT users.name, max(users.age) AS max_1 FROM users
+> ```
+
+### Instance Methods
 
 #### options
 ```python
@@ -148,13 +154,13 @@ def options(*args: ExecutableOption) -> AsyncQuery
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.options(joinedload(User.posts)).unique_all()
+> users = await async-query.options(joinedload(User.posts)).unique_all()
 >
-> user = await async_query.options(joinedload(User.posts)).first()
+> user = await async-query.options(joinedload(User.posts)).first()
 >
-> users = await async_query.options(subqueryload(User.posts)).all()
+> users = await async-query.options(subqueryload(User.posts)).all()
 > ```
 
 #### where
@@ -176,16 +182,16 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
 > # SQLAlchemy style
-> users = await async_query.filter(User.age >= 18).all()
+> users = await async-query.filter(User.age >= 18).all()
 >
 > # Django style
-> users = await async_query.filter(age__gte=18).all()
+> users = await async-query.filter(age__gte=18).all()
 >
 > # Mixed
-> users = await async_query.filter(User.age >= 18, name__like='%Bob%').all()
+> users = await async-query.filter(User.age >= 18, name__like='%Bob%').all()
 > ```
 
 #### filter
@@ -220,13 +226,13 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
 > # String column names (Django style)
-> users = await async_query.order_by('-created_at', 'name').all()
+> users = await async-query.order_by('-created_at', 'name').all()
 >
 > # SQLAlchemy expressions
-> users = await async_query.order_by(User.created_at.desc(), User.name).all()
+> users = await async-query.order_by(User.created_at.desc(), User.name).all()
 > ```
 
 #### sort
@@ -254,13 +260,13 @@ def group_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
 > # String column names (Django style)
-> users = await async_query.group_by('name').all()
+> users = await async-query.group_by('name').all(scalars=False)
 >
 > # SQLAlchemy expressions
-> users = await async_query.group_by(User.name).all()
+> users = await async-query.group_by(User.name).all(scalars=False)
 > ```
 
 #### offset
@@ -282,9 +288,9 @@ def offset(offset: int) -> AsyncQuery
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.offset(10).all()
+> users = await async-query.offset(10).all()
 > ```
 
 #### skip
@@ -313,9 +319,9 @@ def limit(limit: int) -> AsyncQuery
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.limit(5).all()
+> users = await async-query.limit(5).all()
 > ```
 
 #### take
@@ -348,9 +354,9 @@ def join(
 > **Example:**
 > ```python
 > query = select(Comment)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> comments = await async_query.join(
+> comments = await async-query.join(
 >     Comment.user,
 >     (Comment.post, True),  # True means INNER JOIN
 >     model=Comment   # Checks that Comment.user and Comment.post belongs to Comment
@@ -358,7 +364,7 @@ def join(
 > ```
 
 > ```python
-> comments = await async_query.join(
+> comments = await async-query.join(
 >     Post.user,
 >     model=Comment   # Post.user does not belong to Comment, so it will raise an error
 > ).all()
@@ -412,9 +418,9 @@ def with_subquery(
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.with_subquery(
+> users = await async-query.with_subquery(
 >     User.posts,
 >     (User.comments, True)  # True means selectin loading
 >     model=User   # Checks that User.posts and User.comments belongs to User
@@ -422,7 +428,7 @@ def with_subquery(
 > ```
 
 > ```python
-> users = await async_query.with_subquery(
+> users = await async-query.with_subquery(
 >     Comment.posts,
 >     model=User   # Comment.posts does not belong to User, so it will raise an error
 > ).all()
@@ -449,7 +455,7 @@ def with_schema(
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
 > from sqlactive import JOINED, SUBQUERY
 > schema = {
@@ -458,7 +464,7 @@ def with_schema(
 >         Comment.user: JOINED
 >     })
 > }
-> users = await async_query.with_schema(schema).all()
+> users = await async-query.with_schema(schema).all()
 > ```
 
 #### execute
@@ -489,9 +495,9 @@ async def scalars() -> ScalarResult[_T]
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> scalar_result = await async_query.scalars()
+> scalar_result = await async-query.scalars()
 > ```
 
 #### first
@@ -511,11 +517,11 @@ async def first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.first()
+> user = await async-query.first()
 >
-> row = await async_query.first(scalar=False)
+> row = await async-query.first(scalar=False)
 > ```
 
 #### one
@@ -541,11 +547,11 @@ async def one(scalar: bool = True) -> _T | Row[tuple[Any, ...]]
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.one()  # Raises if not exactly one match
+> user = await async-query.one()  # Raises if not exactly one match
 >
-> row = await async_query.one(scalar=False)
+> row = await async-query.one(scalar=False)
 > ```
 
 #### one_or_none
@@ -570,11 +576,11 @@ async def one_or_none(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.one_or_none()
+> user = await async-query.one_or_none()
 >
-> row = await async_query.one_or_none(scalar=False)
+> row = await async-query.one_or_none(scalar=False)
 > ```
 
 #### all
@@ -594,11 +600,11 @@ async def all(scalars: bool = True) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.all()
+> users = await async-query.all()
 >
-> rows = await async_query.all(scalars=False)
+> rows = await async-query.all(scalars=False)
 > ```
 
 #### unique
@@ -619,12 +625,12 @@ async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, .
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> result = await async_query.unique()
+> result = await async-query.unique()
 > users = result.all()
 >
-> result = await async_query.unique(scalars=False)
+> result = await async-query.unique(scalars=False)
 > rows = result.all()
 > ```
 
@@ -645,11 +651,11 @@ async def unique_first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.unique_first()
+> user = await async-query.unique_first()
 >
-> row = await async_query.unique_first(scalar=False)
+> row = await async-query.unique_first(scalar=False)
 > ```
 
 #### unique_one
@@ -675,11 +681,11 @@ async def unique_one(scalar: bool) -> _T | Row[tuple[Any, ...]]
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.unique_one()
+> user = await async-query.unique_one()
 >
-> row = await async_query.unique_one(scalar=False)
+> row = await async-query.unique_one(scalar=False)
 > ```
 
 #### unique_one_or_none
@@ -704,11 +710,11 @@ async def unique_one_or_none(scalar: bool) -> _T | Row[tuple[Any, ...]] | None
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> user = await async_query.unique_one_or_none()
+> user = await async-query.unique_one_or_none()
 >
-> row = await async_query.unique_one_or_none(scalar=False)
+> row = await async-query.unique_one_or_none(scalar=False)
 > ```
 
 #### unique_all
@@ -728,9 +734,9 @@ async def unique_all(scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > **Example:**
 > ```python
 > query = select(User)
-> async_query = AsyncQuery(query)
+> async-query = AsyncQuery(query)
 >
-> users = await async_query.unique_all()
+> users = await async-query.unique_all()
 >
-> rows = await async_query.unique_all(scalars=False)
+> rows = await async-query.unique_all(scalars=False)
 > ```

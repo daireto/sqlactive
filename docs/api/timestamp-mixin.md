@@ -1,4 +1,4 @@
-# TimestampMixin
+# Timestamp Mixin
 
 The `TimestampMixin` class provides automatic timestamp functionality for SQLAlchemy models.
 

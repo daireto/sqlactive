@@ -1,27 +1,26 @@
 """This module defines `AsyncQuery` class."""
 
 from collections.abc import Sequence
-from sqlalchemy.sql import Select
+from sqlalchemy.sql import Select, select
 from sqlalchemy.sql._typing import (
     _ColumnExpressionArgument,
     _ColumnExpressionOrStrLabelArgument,
     _ColumnsClauseArgument,
 )
 from sqlalchemy.engine import Result, Row, ScalarResult
-from sqlalchemy.ext.asyncio import async_scoped_session, AsyncSession
 from sqlalchemy.orm import joinedload, subqueryload, selectinload
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.base import ExecutableOption
 from typing import Any, Generic, Literal, TypeVar, overload
 
-from .exceptions import NoSessionError
+from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 
 
 _T = TypeVar('_T')
 
 
-class AsyncQuery(SmartQueryMixin, Generic[_T]):
+class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
     """Async wrapper for `sqlalchemy.sql.Select`.
 
     Provides a set of helper methods for asynchronously executing the query.
@@ -56,42 +55,18 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
     _query: Select[tuple[Any, ...]]
     """The original `sqlalchemy.sql.Select` instance."""
 
-    _session: async_scoped_session[AsyncSession] | None = None
-    """Async session factory."""
-
-    def __init__(
-        self,
-        query: Select[tuple[Any, ...]],
-        session: async_scoped_session[AsyncSession] | None = None,
-    ) -> None:
+    def __init__(self, query: Select[tuple[Any, ...]]) -> None:
         """Builds an async wrapper for SQLAlchemy `Query`.
 
         Parameters
         ----------
         query : Select[tuple[Any, ...]]
             The `sqlalchemy.sql.Select` instance.
-        session : async_scoped_session[AsyncSession] | None, optional
-            Async session factory, by default None.
 
-        NOTE: If no session is provided, a `NoSessionError` will be raised
-        when attempting to execute the query. You must either provide
-        a session by passing it in this constructor or by calling
-        the `set_session` method.
+        NOTE: You must provide a session by calling the `set_session` method.
         """
 
         self._query = query
-        self._session = session
-
-    def set_session(self, session: async_scoped_session[AsyncSession]) -> None:
-        """Sets the async session factory.
-
-        Parameters
-        ----------
-        session : async_scoped_session[AsyncSession]
-            Async session factory.
-        """
-
-        self._session = session
 
     @property
     def query(self) -> Select[tuple[Any, ...]]:
@@ -105,42 +80,29 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
 
         self._query = query
 
-    @property
-    def AsyncSession(self) -> async_scoped_session[AsyncSession]:
-        """Async session factory.
+    @classmethod
+    def select(cls, *entities: _ColumnsClauseArgument[Any]):
+        """Creates a brand new `AsyncQuery` instance
+        with the specified entities selected.
 
-        Usage:
+        This method is intended to be used at the beginning of the query build process.
+        You should not call it more than once on the same `AsyncQuery` instance.
 
-        ```python
-            async with self.AsyncSession() as session:
-                await session.execute(query)
-        ```
-
-        Raises
-        ------
-        NoSessionError
-            If no session is available.
-        """
-
-        if self._session is not None:
-            return self._session
-        else:
-            raise NoSessionError('Cannot get session. Please, call self.set_session()')
-
-    def select(self, *entities: _ColumnsClauseArgument[Any]):
-        """Replaces the original `sqlalchemy.sql.Select` instance with a new one.
+        If you call this method on an already existing `AsyncQuery` instance,
+        it will return a new instance with a new query. This is different from
+        calling `select()` on a `sqlalchemy.sql.Select` instance. Every filter,
+        group_by, order_by, limit, offset, etc. will be reset in the new instance.
 
         Example:
-        >>> query = select(User)
-        >>> async_query = AsyncQuery(query)
-        >>> str(async_query)
+        >>> async_query = AsyncQuery.select(User)
+        >>> async_query
         # SELECT users.id, users.username, ... FROM users
-        >>> async_query.select(User.name, User.age)
-        >>> str(async_query)
+        >>> async_query = AsyncQuery.select(User.name, User.age)
+        >>> async_query
         # SELECT users.name, users.age FROM users
-        >>> async_query.select(User.age, func.max(User.age))
-        >>> str(async_query)
-        # SELECT users.age, max(users.age) AS max_1 FROM users
+        >>> async_query = AsyncQuery.select(User.name, func.max(User.age))
+        >>> async_query
+        # SELECT users.name, max(users.age) AS max_1 FROM users
 
         Raises
         ------
@@ -151,8 +113,7 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         if len(entities) == 0:
             raise ValueError('At least one column must be selected.')
 
-        self._query._set_entities(entities)
-        return self
+        return cls(select(*entities))
 
     def options(self, *args: ExecutableOption):
         """Applies the given list of mapper options.
@@ -307,24 +268,24 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         Example using Django-like syntax:
         >>> query = select(User.age, func.count(User.name))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by('age').fetch_rows()
+        >>> rows = await async_query.group_by('age').all(scalars=False)
         >>> rows
         # [(30, 2), (32, 1), ...]
-        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> query = select(Post.rating, Post.user, func.count(Post.title))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by('rating', 'user___name').fetch_rows()
+        >>> rows = await async_query.group_by('rating', 'user___name').all(scalars=False)
         >>> rows
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
 
         Example using SQLAlchemy syntax:
         >>> query = select(User.age, func.count(User.name))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(User.age).fetch_rows()
+        >>> rows = await async_query.group_by(User.age).all(scalars=False)
         >>> rows
         # [(30, 2), (32, 1), ...]
-        >>> query = select(Post.rating, Post.user.name, func.count(Post.title))
+        >>> query = select(Post.rating, Post.user, func.count(Post.title))
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(Post.rating, Post.user.name).fetch_rows()
+        >>> rows = await async_query.group_by(Post.rating, Post.user).all(scalars=False)
         >>> rows
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
@@ -974,6 +935,11 @@ class AsyncQuery(SmartQueryMixin, Generic[_T]):
         """Returns the raw SQL query."""
 
         return str(self._query)
+
+    def __repr__(self) -> str:
+        """Returns the raw SQL query."""
+
+        return str(self)
 
     def _split_columns_and_attrs(
         self,

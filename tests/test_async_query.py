@@ -3,7 +3,6 @@ import unittest
 
 from sqlactive.async_query import AsyncQuery
 from sqlactive.conn import DBConnection
-from sqlactive.exceptions import NoSessionError
 
 from ._logger import logger
 from ._models import BaseModel, User, Post
@@ -34,10 +33,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing constructor...')
         async_query = AsyncQuery(User._query)
-        with self.assertRaises(NoSessionError) as context:
-            await async_query.execute()
-        self.assertEqual('Cannot get session. Please, call self.set_session()', str(context.exception))
-        async_query.set_session(User.AsyncSession)
         users = await async_query.all()
         self.assertEqual(34, len(users))
 
@@ -51,11 +46,12 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(users))
         self.assertEqual('Bob Williams', users[0].name)
 
-    async def test_str(self):
-        """Test for `__str__` function."""
+    async def test_str_and_repr(self):
+        """Test for `__str__` and `__repr__` functions."""
 
-        logger.info('Testing `__str__` function...')
+        logger.info('Testing `__str__` and `__repr__` function...')
         async_query = User.get_async_query()
+        self.assertEqual(repr(async_query), str(async_query.query))
         self.assertEqual(str(async_query), str(async_query.query))
 
     async def test_filter(self):
