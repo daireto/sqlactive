@@ -9,7 +9,7 @@ It uses the [`InspectionMixin`](inspection_mixin.md) class functionality.
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`ActiveRecordMixin`](active_record_mixin/overview.md)
+    [`ActiveRecordMixin`](active_record_mixin.md)
     on which the examples below are based. It is not intended to be used on its own.
 
 ## Core Features

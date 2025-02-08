@@ -187,8 +187,3 @@ Before submitting a pull request:
 
 Pull requests titles should be short and descriptive, and should not exceed
 72 characters. Also, must follow the specified commit message format.
-
-## Thank You!
-
-Your contributions help make SQLActive better for everyone.
-Thank you for taking the time to improve the project!

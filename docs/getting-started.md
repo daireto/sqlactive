@@ -16,10 +16,10 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](api//active_record_mixin/overview.md): Provides a set of ActiveRecord-like
+* [`ActiveRecordMixin`](api/active_record_mixin.md): Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
-* [`TimestampMixin`](api//timestamp_mixin.md): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](api//serialization_mixin.md): Provides serialization and deserialization methods.
+* [`TimestampMixin`](api/timestamp_mixin.md): Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](api/serialization_mixin.md): Provides serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -188,7 +188,7 @@ await user.delete()
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
     class to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -262,7 +262,7 @@ print(users)
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
     class to see all the available methods.
 
 ### 5. Perform Queries
@@ -342,7 +342,7 @@ See the [low-level SmartQueryMixin methods](api/smart_query_mixin.md#api-referen
 
 !!! tip
 
-    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md.md)
+    Check the [`ActiveRecordMixin` API Reference](api/active_record_mixin.md)
     class to see all the available methods.
 
 ### 6. Perform Native Queries

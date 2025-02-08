@@ -45,7 +45,9 @@ nav:
       - Timestamp Mixin: api/timestamp_mixin.md
     - Wrappers:
       - Async Query: api/async_query.md
-  - Contributing: contributing.md
+  - About:
+    - Contributing: about/contributing.md
+    - License: about/license.md
 extra:
   social:
     - icon: fontawesome/brands/github

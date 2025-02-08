@@ -1,4 +1,6 @@
-MIT License
+# License
+
+**MIT License**
 
 Copyright (c) 2025 Dairo Mosquera
 

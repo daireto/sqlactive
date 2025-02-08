@@ -549,7 +549,7 @@ Find the complete documentation [here](https://daireto.github.io/sqlactive/).
 
 ## Contributing
 
-Please read the [contribution guidelines](/docs/contributing.md).
+Please read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 

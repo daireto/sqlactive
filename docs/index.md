@@ -131,8 +131,8 @@ if __name__ == '__main__':
 
 ## Contributing
 
-Please read the [contribution guidelines](contributing.md).
+Please read the [contribution guidelines](about/contributing.md).
 
 ## License
 
-This project is licensed under the terms of the [MIT License](https://github.com/daireto/sqlactive/blob/main/LICENSE).
+This project is licensed under the terms of the [MIT License](about/license.md).
