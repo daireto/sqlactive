@@ -402,7 +402,7 @@ and `eager_expr` methods can be used.
 > ```
 
 > [!TIP]
-> Check the [Smart Query Mixin API Reference](api/smart-query-mixin.md#api-reference)
+> Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin.md#api-reference)
 > for more details about the `smart_query` method and the low-level methods.
 
 ### 6. Perform Native Queries
