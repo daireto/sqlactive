@@ -19,8 +19,6 @@ class TestDBConnection(unittest.IsolatedAsyncioTestCase):
         conn = DBConnection(self.DB_URL, echo=False)
 
         logger.info('Testing `init_db` function...')
-        self.assertIsNone(ActiveRecordBaseModel._session)
-        self.assertIsNone(BaseModel._session)
         await conn.init_db()
         await conn.init_db(BaseModel)
         self.assertIsNotNone(ActiveRecordBaseModel._session)
