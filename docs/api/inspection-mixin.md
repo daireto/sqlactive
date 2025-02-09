@@ -5,7 +5,7 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`SmartQueryMixin`](smart-query-mixin.md) and [`SerializationMixin`](serialization-mixin.md).
+    [`Smart Queries`](smart-query-mixin.md) and [`Serialization`](serialization-mixin.md) mixins.
     It is not intended to be used on its own.
 
 ## API Reference
@@ -21,10 +21,11 @@ def __repr__(self) -> str
 
 > Format:
 > ```
->    <ClassName #PrimaryKey>
+> <ClassName #PrimaryKey>
 > ```
 
 > **Example:**
+
 > ```python
 > user = await User.get(id=1)
 > user
@@ -46,12 +47,15 @@ def get_class_of_relation(relation_name: str) -> type[Self]
 > Gets the class of a relationship by its name.
 
 > **Parameters:**
+
 > - `relation_name`: The name of the relationship.
 
 > **Returns:**
+
 > - `type`: The class of the relationship.
 
 > **Example:**
+
 > ```python
 > user = await User.get(id=1)
 > user.get_class_of_relation('posts')
@@ -74,6 +78,7 @@ def id_str() -> str
 > If there is no primary key, returns `'None'`.
 
 > **Example:**
+
 > ```python
 > bob = User.insert(name='Bob')
 > bob.id_str  # 1
@@ -90,6 +95,7 @@ def columns() -> list[str]
 > Sequence of string key names for all columns in this collection.
 
 > **Example:**
+
 > ```python
 > User.columns
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
@@ -106,6 +112,7 @@ def primary_keys_full() -> list[InstrumentedAttribute]
 > Taken from marshmallow_sqlalchemy.
 
 > **Example:**
+
 > ```python
 > User.primary_keys_full
 > # [<sqlalchemy.orm.attributes.InstrumentedAttribute 'id'>]
@@ -120,6 +127,7 @@ def primary_keys() -> list[str]
 > Returns a `list` of primary key names.
 
 > **Example:**
+
 > ```python
 > User.primary_keys
 > # ['id']
@@ -134,6 +142,7 @@ def relations() -> list[str]
 > Returns a `list` of relationship names.
 
 > **Example:**
+
 > ```python
 > User.relations
 > # ['posts', 'comments']
@@ -148,6 +157,7 @@ def settable_relations() -> list[str]
 > Returns a `list` of settable relationship names.
 
 > **Example:**
+
 > ```python
 > User.settable_relations
 > # ['posts', 'comments']
@@ -162,6 +172,7 @@ def hybrid_properties() -> list[str]
 > Returns a `list` of hybrid property names.
 
 > **Example:**
+
 > ```python
 > User.hybrid_properties
 > # ['is_adult']
@@ -176,6 +187,7 @@ def hybrid_methods_full() -> dict[str, InstrumentedAttribute]
 > Returns a `dict` of hybrid methods.
 
 > **Example:**
+
 > ```python
 > User.hybrid_methods_full
 > # {'is_adult': <sqlalchemy.orm.attributes.InstrumentedAttribute 'is_adult'>}
@@ -190,6 +202,7 @@ def hybrid_methods() -> list[str]
 > Returns a `list` of hybrid method names.
 
 > **Example:**
+
 > ```python
 > User.hybrid_methods
 > # ['is_adult']
@@ -206,6 +219,7 @@ def filterable_attributes() -> list[str]
 > These are all columns, relations and hybrid properties.
 
 > **Example:**
+
 > ```python
 > User.filterable_attributes
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', ...]
@@ -222,6 +236,7 @@ def sortable_attributes() -> list[str]
 > These are all columns and hybrid properties.
 
 > **Example:**
+
 > ```python
 > User.sortable_attributes
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
@@ -238,6 +253,7 @@ def settable_attributes() -> list[str]
 > These are all columns, settable relations and hybrid properties.
 
 > **Example:**
+
 > ```python
 > User.settable_attributes
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', ...]

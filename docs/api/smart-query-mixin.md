@@ -1,16 +1,38 @@
-# Smart Queries Mixin
+# Smart Query Mixin
 
 The `SmartQueryMixin` class provides advanced query functionality for SQLAlchemy
 models, allowing you to filter, sort, group and eager load data in a single query,
 making it easier to retrieve specific data from the database.
 
-It uses the [`InspectionMixin`](inspection-mixin.md) class functionality.
+It uses the functionality of the [`Inspection Mixin`](inspection-mixin.md).
 
 !!! info
 
     This mixin is intended to extend the functionality of the
-    [`ActiveRecordMixin`](active-record-mixin.md)
-    on which the examples below are based. It is not intended to be used on its own.
+    [`Active Record Mixin`](active-record-mixin.md)
+    which the examples below are based on. It is not intended to be used on its own.
+
+!!! warning
+
+    All relations used in filtering/sorting/grouping should be explicitly set,
+    not just being a `backref`.
+    This is because `sqlactive` does not know the relation direction and cannot
+    infer it.
+    So, when defining a relationship like:
+
+    ```python
+    class User(BaseModel):
+        # ...
+        posts: Mapped[list['Post']] = relationship(back_populates='user')
+    ```
+
+    It is required to define the reverse relationship:
+
+    ```python
+    class Post(BaseModel):
+        # ...
+        user: Mapped['User'] = relationship(back_populates='posts')
+    ```
 
 ## Core Features
 
@@ -109,28 +131,6 @@ filter, sort, group and eager load expressions:
 * `columns_expr`: Builds column expressions.
 * `eager_expr`: Builds eager load expressions.
 
-!!! warning
-
-    All relations used in filtering/sorting should be explicitly set,
-    not just being a `backref`.
-    This is because `sqlactive` does not know the relation direction and cannot
-    infer it.
-    So, when defining a relationship like:
-
-    ```python
-    class User(BaseModel):
-        # ...
-        posts: Mapped[list['Post']] = relationship(back_populates='user')
-    ```
-
-    It is required to define the reverse relationship:
-
-    ```python
-    class Post(BaseModel):
-        # ...
-        user: Mapped['User'] = relationship(back_populates='posts')
-    ```
-
 ### Methods
 
 #### filter_expr
@@ -184,17 +184,21 @@ def filter_expr(**filters: object) -> list
 >     ```
 
 > **Parameters:**
+
 > - `filters`: Django-style filters.
 
 > **Returns:**
+
 > - `list[sqlalchemy.sql.elements.BinaryExpression]`: List of filter expressions.
 
 > **Raises:**
+
 > - `KeyError`:
 >     - If operator is not found in `_operators`.
 >     - If attribute is not found in `filterable_attributes` property.
 
 > **Example:**
+
 > ```python
 > db.query(Product).filter(
 >     *Product.filter_expr(age_from=5, subject_ids__in=[1, 2]))
@@ -221,15 +225,19 @@ def order_expr(*columns: str) -> list[UnaryExpression]
 > ```
 
 > **Parameters:**
+
 > - `columns`: Django-style columns.
 
 > **Returns:**
+
 > - `list[sqlalchemy.sql.elements.UnaryExpression]`: List of sort expressions.
 
 > **Raises:**
+
 > - `KeyError`: If attribute is not sortable.
 
 > **Example:**
+
 > ```python
 > db.query(User).order_by(*User.order_expr('-first_name'))
 > # will compile to ORDER BY user.first_name DESC
@@ -255,15 +263,19 @@ def columns_expr(*columns: str) -> list[UnaryExpression]
 > ```
 
 > **Parameters:**
+
 > - `columns`: Django-style columns.
 
 > **Returns:**
+
 > - `list[sqlalchemy.sql.elements.UnaryExpression]`: List of column expressions.
 
 > **Raises:**
+
 > - `KeyError`: If attribute is not found.
 
 > **Example:**
+
 > ```python
 > db.query(User).group_by(*User.columns_expr('first_name'))
 > # will compile to GROUP BY user.first_name
@@ -296,12 +308,15 @@ def eager_expr(
 > ```
 
 > **Parameters:**
+
 > - `schema`: Eager loading schema.
 
 > **Returns:**
+
 > - `list[sqlalchemy.orm.strategy_options._AbstractLoad]`: List of eager loading expressions.
 
 > **Example:**
+
 > ```python
 > schema = {
 >     User.posts: JOINED,
@@ -338,10 +353,13 @@ def smart_query(
 > it will be done only once.
 
 > It also supports SQLAlchemy syntax filter expressions like
-> >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
-> >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
+> ```python
+> db.query(User).filter(User.id == 1, User.name == 'Bob')
+> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
+> ```
 
 > **Parameters:**
+
 > - `query`: Query for the model.
 > - `criteria`: SQLAlchemy syntax filter expressions.
 > - `filters`: Django-like filter expressions.
@@ -352,12 +370,15 @@ def smart_query(
 > - `schema`: Schema for the eager loading.
 
 > **Returns:**
+
 > - `Select[tuple[Any, ...]]`: Smart query.
 
 > **Raises:**
+
 > - `KeyError`: If filter, sort or group path is incorrect.
 
 > **Example:**
+
 > ```python
 > users = await User.smart_query(
 >     criteria=[User.id == 1, User.name == 'Bob'],

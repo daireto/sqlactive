@@ -3,7 +3,7 @@
 The `SerializationMixin` class provides methods for serializing and deserializing
 SQLAlchemy models.
 
-It uses the [`InspectionMixin`](inspection-mixin.md) class functionality.
+It uses the functionality of the [`Inspection Mixin`](inspection-mixin.md).
 
 ## API Reference
 
@@ -23,14 +23,17 @@ def to_dict(
 > Serializes the model to a dictionary.
 
 > **Parameters:**
+
 > - `nested`: Set to `True` to include nested relationships' data, by default False.
 > - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
 > - `exclude`: Exclude specific attributes from the result, by default None.
 
 > **Returns:**
+
 > - `dict[str, Any]`: Serialized model.
 
 > **Example:**
+
 > ```python
 > user = await User.get(id=1)
 > user.to_dict()
@@ -62,6 +65,7 @@ def to_json(
 > Calls the `Self.to_dict` method and dumps it with `json.dumps`.
 
 > **Parameters:**
+
 > - `nested`: Set to `True` to include nested relationships' data, by default False.
 > - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
 > - `exclude`: Exclude specific attributes from the result, by default None.
@@ -70,9 +74,11 @@ def to_json(
 > - `sort_keys`: Sort dictionary keys, by default False.
 
 > **Returns:**
+
 > - `str`: Serialized model.
 
 > **Example:**
+
 > ```python
 > user = await User.get(id=1)
 > user.to_json()
@@ -102,16 +108,20 @@ def from_dict(
 > Sets the attributes of the model with the values of the dictionary.
 
 > **Parameters:**
+
 > - `data`: Data to deserialize.
 > - `exclude`: Exclude specific keys from the dictionary, by default None.
 
 > **Returns:**
+
 > - `Self | list[Self]`: Deserialized model or models.
 
 > **Raises:**
+
 > - `KeyError`: If attribute doesn't exist.
 
 > **Example:**
+
 > ```python
 > user = await User.from_dict({'name': 'John', 'age': 30})
 > user.to_dict()
@@ -139,16 +149,20 @@ def from_json(
 > with the values of the JSON object using the `from_dict` method.
 
 > **Parameters:**
+
 > - `json_string`: JSON string.
 > - `exclude`: Exclude specific keys from the dictionary, by default None.
 
 > **Returns:**
+
 > - `Self | list[Self]`: Deserialized model or models.
 
 > **Raises:**
+
 > - `KeyError`: If attribute doesn't exist.
 
 > **Example:**
+
 > ```python
 > user = await User.from_json('{"name": "John", "age": 30}')
 > user.to_dict()

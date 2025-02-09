@@ -42,7 +42,7 @@ nav:
       - Inspection Mixin: api/inspection-mixin.md
       - Serialization Mixin: api/serialization-mixin.md
       - Session Mixin: api/session-mixin.md
-      - Smart Queries Mixin: api/smart-query-mixin.md
+      - Smart Query Mixin: api/smart-query-mixin.md
       - Timestamp Mixin: api/timestamp-mixin.md
     - Wrappers:
       - Async Query: api/async-query.md

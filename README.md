@@ -145,7 +145,7 @@ class Comment(BaseModel):
 > When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
 > in the base class to avoid creating tables for the base class.
 
-> [!NOTE]
+> [!TIP]
 > The models can directly inherit from the `ActiveRecordBaseModel` class:
 > ```python
 > from sqlactive import ActiveRecordBaseModel
@@ -154,11 +154,10 @@ class Comment(BaseModel):
 >     __tablename__ = 'users'
 >     # ...
 > ```
-> However, it is recommended to create a base class for your models and
+> However, it is recommended to define a base model class for your models and
 > inherit from it.
-
-> [!TIP]
-> Your `BaseModel` class can also inherit directly from the mixins.
+>
+> Your base model class can also inherit directly from the mixins.
 > For example, if you don't want to implement automatic timestamps don't inherit
 > from `ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
 > and/or `SerializationMixin`:
@@ -244,8 +243,8 @@ await user.delete()
 > (i.e. a boolean `is_deleted` column).
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin#api-reference)
-> class to see all the available methods.
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin#api-reference)
+> to see all the available methods.
 
 ### 4. Perform Bulk Operations
 
@@ -309,8 +308,8 @@ users  # []
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
-> class to see all the available methods.
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
+> to see all the available methods.
 
 ### 5. Perform Queries
 
@@ -345,28 +344,54 @@ user = await User.with_schema(schema).unique_first()
 user.comments[0].post.title  # Lorem ipsum
 ```
 
-For more flexibility, the low-level `filter_expr` method can be used:
+> [!WARNING]
+> All relations used in filtering/sorting/grouping should be explicitly set,
+> not just being a `backref`.
+> This is because `sqlactive` does not know the relation direction and cannot
+> infer it.
+> So, when defining a relationship like:
+> ```python
+> class User(BaseModel):
+>     # ...
+>     posts: Mapped[list['Post']] = relationship(back_populates='user')
+> ```
+> It is required to define the reverse relationship:
+> ```python
+> class Post(BaseModel):
+>     # ...
+>     user: Mapped['User'] = relationship(back_populates='posts')
+> ```
 
-```python
-Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
-# or
-session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
-```
+> [!TIP]
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
+> to see all the available methods.
 
-It's like [filter_by in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
-but also allows magic operators like `rating__gt`.
+For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
+and `eager_expr` methods can be used.
 
-See the [low-level SmartQueryMixin methods](https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference)
-for more details.
+> **Example of `filter_expr` method usage:**
+>
+> ```python
+> Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
+> # or
+> session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
+> ```
+>
+> It's like [filter in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
+> but also allows magic operators like `rating__gt`.
 
 > [!IMPORTANT]
-> `filter_expr` method is very low-level and does NOT do magic Django-like joins. Use `smart_query` for that:
+> Low-level `filter_expr`, `order_expr`, `column_expr` and `eager_expr` methods
+> are very low-level and does NOT do magic Django-like joins. Use `smart_query`
+> for that:
 > ```python
 > query = User.smart_query(
 >     criterion=(or_(User.age == 30, User.age == 32),),
 >     filters={'username__like': '%8'},
 >     sort_columns=(User.username,),
->     sort_attrs=('age',),
+>     sort_attrs=('-created_at',),
+>     group_columns=(User.username,),
+>     group_attrs=['age'],
 >     schema={
 >         User.posts: JOINED,
 >         User.comments: (SUBQUERY, {
@@ -374,13 +399,11 @@ for more details.
 >         }),
 >     },
 > )
-> users = await query.unique_all()
-> users  # [<User #1>, <User #3>]
 > ```
 
 > [!TIP]
-> Check the [`ActiveRecordMixin` API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
-> class to see all the available methods.
+> Check the [Smart Query Mixin API Reference](api/smart-query-mixin.md#api-reference)
+> for more details about the `smart_query` method and the low-level methods.
 
 ### 6. Perform Native Queries
 

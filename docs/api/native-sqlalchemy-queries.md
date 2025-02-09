@@ -36,4 +36,7 @@ model class to the `base_model` argument of the `execute` method:
 !!! warning
 
     Your base model must have a session in order to use this method.
-    Otherwise, it will raise an `NoSessionError` exception.
+    Otherwise, it will raise an `NoSessionError` exception. Session
+    is set when calling the `init_db` method of the `DBConnection` class.
+    You can also call the `set_session` method of the base model
+    to manually set the session.
