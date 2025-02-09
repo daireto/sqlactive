@@ -56,7 +56,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     >>> User.all()
     # []
 
-    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin#api-reference)
+    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
     for the full list of available methods.
     """
 

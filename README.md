@@ -243,7 +243,7 @@ await user.delete()
 > (i.e. a boolean `is_deleted` column).
 
 > [!TIP]
-> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin#api-reference)
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -308,7 +308,7 @@ users  # []
 > ```
 
 > [!TIP]
-> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 ### 5. Perform Queries
@@ -363,7 +363,7 @@ user.comments[0].post.title  # Lorem ipsum
 > ```
 
 > [!TIP]
-> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/)
+> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
@@ -402,7 +402,7 @@ and `eager_expr` methods can be used.
 > ```
 
 > [!TIP]
-> Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin#api-reference)
+> Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference)
 > for more details about the `smart_query` method and the low-level methods.
 
 ### 6. Perform Native Queries
