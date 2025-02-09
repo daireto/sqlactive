@@ -36,11 +36,12 @@ nav:
   - Getting started: getting-started.md
   - API Documentation:
     - DB Connection Helper: api/db-connection-helper.md
-    - Native SQLAlchemy Queries: api/execute.md
+    - Native SQLAlchemy Queries: api/native-sqlalchemy-queries.md
     - Mixins:
       - Active Record Mixin: api/active-record-mixin.md
       - Inspection Mixin: api/inspection-mixin.md
       - Serialization Mixin: api/serialization-mixin.md
+      - Session Mixin: api/session-mixin.md
       - Smart Queries Mixin: api/smart-query-mixin.md
       - Timestamp Mixin: api/timestamp-mixin.md
     - Wrappers:

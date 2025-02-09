@@ -4,7 +4,7 @@ The `ActiveRecordMixin` class provides a set of ActiveRecord-like helper methods
 for SQLAlchemy models, allowing for more intuitive and chainable database
 operations with async/await support.
 
-It implements the functionality of both [`Session`](session_mixin.md) and [`Smart Queries`](smart-query-mixin.md) mixins.
+It implements the functionality of both [`Session`](session-mixin.md) and [`Smart Queries`](smart-query-mixin.md) mixins.
 
 ## Usage
 
