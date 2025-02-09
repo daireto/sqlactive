@@ -212,7 +212,7 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 > conn = DBConnection(DATABASE_URL, echo=False)
 > await conn.init_db(BaseModel)
 > ```
-> See the [DB Connection Helper](https://daireto.github.io/sqlactive/api/db-connection-helper/) section for more information.
+> Check the documentation of [DB Connection Helper](https://daireto.github.io/sqlactive/api/db-connection-helper/) for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -369,14 +369,14 @@ user.comments[0].post.title  # Lorem ipsum
 For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
 and `eager_expr` methods can be used.
 
-> **Example of `filter_expr` method usage:**
->
+**Example of `filter_expr` method usage:**
+
 > ```python
 > Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
 > # or
 > session.query(Post).filter(*Post.filter_expr(rating__gt=2, body='text'))
 > ```
->
+
 > It's like [filter in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 > but also allows magic operators like `rating__gt`.
 
@@ -402,7 +402,7 @@ and `eager_expr` methods can be used.
 > ```
 
 > [!TIP]
-> Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin.md#api-reference)
+> Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin#api-reference)
 > for more details about the `smart_query` method and the low-level methods.
 
 ### 6. Perform Native Queries
