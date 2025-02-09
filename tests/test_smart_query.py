@@ -186,11 +186,11 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             }
         )
         sort_attrs = ['-created_at', 'user___name', '-user___age']
-        query = SmartQueryMixin._sort_query(query=Post._query, sort_attrs=sort_attrs, root_cls=Post, aliases=aliases)
+        query = SmartQueryMixin._sort_query(query=Post.query, sort_attrs=sort_attrs, root_cls=Post, aliases=aliases)
         self.assertTrue(str(query).endswith('posts.created_at DESC, users_1.name ASC, users_1.age DESC'))
         with self.assertRaises(KeyError) as context:
             SmartQueryMixin._sort_query(
-                query=Post._query, sort_attrs=['-created_at', 'user___fullname'], root_cls=Post, aliases=aliases
+                query=Post.query, sort_attrs=['-created_at', 'user___fullname'], root_cls=Post, aliases=aliases
             )
         self.assertIn('`user___fullname`', str(context.exception))
 
@@ -204,11 +204,11 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             }
         )
         group_attrs = ['rating', 'user___name']
-        query = SmartQueryMixin._group_query(query=Post._query, group_attrs=group_attrs, root_cls=Post, aliases=aliases)
+        query = SmartQueryMixin._group_query(query=Post.query, group_attrs=group_attrs, root_cls=Post, aliases=aliases)
         self.assertTrue(str(query).endswith('GROUP BY posts.rating, users_1.name'))
         with self.assertRaises(KeyError) as context:
             SmartQueryMixin._group_query(
-                query=Post._query, group_attrs=['rating', 'user___fullname'], root_cls=Post, aliases=aliases
+                query=Post.query, group_attrs=['rating', 'user___fullname'], root_cls=Post, aliases=aliases
             )
         self.assertIn('`user___fullname`', str(context.exception))
 

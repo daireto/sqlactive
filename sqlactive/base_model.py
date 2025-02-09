@@ -36,7 +36,7 @@ class ActiveRecordBaseModel(ActiveRecordMixin, SerializationMixin, TimestampMixi
     ```
 
     Example:
-    >>> bob = User.create(name='Bob')
+    >>> bob = User.insert(name='Bob')
     >>> bob
     # <User #1>
     >>> bob.name

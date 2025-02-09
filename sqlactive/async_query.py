@@ -30,7 +30,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
     ```python
         query = select(User)
         async_query = AsyncQuery(query, User._session)
-        async_query = async_query.filter(name__like='%John%').sort('-created_at').limit(2)
+        async_query = async_query.where(name__like='%John%').sort('-created_at').limit(2)
         users = await async_query.all()
         >>> users
         # [<User 1>, <User 2>]
@@ -85,13 +85,12 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         """Creates a brand new `AsyncQuery` instance
         with the specified entities selected.
 
-        This method is intended to be used at the beginning of the query build process.
-        You should not call it more than once on the same `AsyncQuery` instance.
+        **WARNING:**
 
-        If you call this method on an already existing `AsyncQuery` instance,
-        it will return a new instance with a new query. This is different from
-        calling `select()` on a `sqlalchemy.sql.Select` instance. Every filter,
-        group_by, order_by, limit, offset, etc. will be reset in the new instance.
+            When calling this method, the query will be completely reset and
+            overwritten with a new query. Every WHERE, ORDER BY, GROUP BY, LIMIT,
+            OFFSET, etc. will be cancelled. So, make sure to call this method before
+            calling any other method in the query build process.
 
         Example:
         >>> async_query = AsyncQuery.select(User)
@@ -121,10 +120,11 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
 
             When including `joinedload()` in reference to a one-to-many or
-            many-to-many collection, the `Result.unique()` method must be
-            applied to the returned result, which will make the incoming rows
-            unique by primary key that otherwise are multiplied out by the join.
-            The ORM will raise an error if this is not present.
+            many-to-many collection, the `Result.unique()` method or related
+            (i.e. `unique_all()`) must be applied to the returned result, which
+            will make the incoming rows unique by primary key that otherwise are
+            multiplied out by the join.
+            SQLAlchemy will raise an error if this is not present.
 
             This is not automatic in modern SQLAlchemy, as it changes the behavior
             of the result set to return fewer ORM objects than the statement would
@@ -182,24 +182,24 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Example using Django-like syntax:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.filter(name__like='%John%').all()
+        >>> users = await async_query.where(name__like='%John%').all()
         >>> users
         # [<User 1>, <User 2>, ...]
-        >>> users = await async_query.filter(name__like='%John%', age=30).all()
+        >>> users = await async_query.where(name__like='%John%', age=30).all()
         >>> users
         # [<User 2>]
 
         Example using SQLAlchemy syntax:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.filter(User.name == 'John Doe').all()
+        >>> users = await async_query.where(User.name == 'John Doe').all()
         >>> users
         # [<User 2>]
 
         Example using both:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> users = await async_query.filter(User.age == 30, name__like='%John%').all()
+        >>> users = await async_query.where(User.age == 30, name__like='%John%').all()
         >>> users
         # [<User 2>]
         """
@@ -256,39 +256,47 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
         return self.order_by(*columns)
 
-    def group_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+    def group_by(
+        self,
+        *columns: _ColumnExpressionOrStrLabelArgument[Any],
+        select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
+    ):
         """Applies one or more GROUP BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
-        NOTE: It is recommended to select specific columns (e.g. `select(User.id, User.name)`)
-        instead of all columns of a model (e.g. `select(User)`). You can call `select()` again
-        if you want to select specific columns.
+        It is recommended to select specific columns. You can use
+        the `select_columns` parameter to select specific columns.
 
-        Example using Django-like syntax:
-        >>> query = select(User.age, func.count(User.name))
-        >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by('age').all(scalars=False)
-        >>> rows
-        # [(30, 2), (32, 1), ...]
-        >>> query = select(Post.rating, Post.user, func.count(Post.title))
-        >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by('rating', 'user___name').all(scalars=False)
-        >>> rows
-        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+        **WARNING:**
 
-        Example using SQLAlchemy syntax:
-        >>> query = select(User.age, func.count(User.name))
+            When selecting specific columns with the `select_columns` parameter,
+            the query will be completely reset and overwritten with a new query.
+            Every WHERE, ORDER BY, GROUP BY, LIMIT, OFFSET, etc. will be cancelled.
+            So, make sure to call this method before calling any other method when
+            using `select_columns` parameter to select specific columns.
+
+        Example:
+        >>> from sqlalchemy.sql.functions import func
+        >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(User.age).all(scalars=False)
-        >>> rows
+        >>> columns = (User.age, func.count(User.name))
+        >>> async_query = async_query.group_by(User.age, select_columns=columns)
+        >>> rows = await async_query.all(scalars=False)
         # [(30, 2), (32, 1), ...]
-        >>> query = select(Post.rating, Post.user, func.count(Post.title))
+
+        Example with relations:
+        >>> from sqlalchemy.sql import text
+        >>> query = select(Post)
         >>> async_query = AsyncQuery(query)
-        >>> rows = await async_query.group_by(Post.rating, Post.user).all(scalars=False)
-        >>> rows
+        >>> columns = (Post.rating, text('users_1.name'), func.count(Post.title))
+        >>> async_query = async_query.group_by('rating', 'user___name', select_columns=columns)
+        >>> rows = await async_query.all(scalars=False)
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
+
+        if select_columns:
+            self.query = select(*select_columns)
 
         group_columns, group_attrs = self._split_columns_and_attrs(columns)
         self._query = self.smart_query(query=self._query, group_columns=group_columns, group_attrs=group_attrs)
@@ -361,8 +369,8 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
     def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None):
         """Joined eager loading using LEFT OUTER JOIN.
 
-        When a tuple is passed, the second element must be boolean.
-        If it is `True`, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
+        When a tuple is passed, the second element must be boolean, and
+        if `True`, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
 
         Example:
         >>> query = select(Comment)
@@ -433,6 +441,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering
 
         ```python
+            query = select(User)
             async_query = AsyncQuery(query)
 
             # incorrect, no ORDER BY
@@ -583,7 +592,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users = scalar_result.all()
         >>> users
         # [<User 1>, <User 2>, ...]
-        >>> scalar_result = await async_query.filter(name='John Doe').scalars()
+        >>> scalar_result = await async_query.where(name='John Doe').scalars()
         >>> users = scalar_result.all()
         >>> users
         # [<User 2>]
@@ -649,13 +658,13 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.filter(name='John Doe').one()
+        >>> user = await async_query.where(name='John Doe').one()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').one(scalar=False)
+        >>> user = await async_query.where(name='John Doe').one(scalar=False)
         >>> user
         # (<User 1>,)
-        >>> user = await async_query.filter(name='Unknown').one()
+        >>> user = await async_query.where(name='Unknown').one()
         # Traceback (most recent call last):
         #     ...
         # NoResultFound: 'No result found.'
@@ -695,13 +704,13 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.filter(name='John Doe').one_or_none()
+        >>> user = await async_query.where(name='John Doe').one_or_none()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').one_or_none(scalar=False)
+        >>> user = await async_query.where(name='John Doe').one_or_none(scalar=False)
         >>> user
         # (<User 1>,)
-        >>> user = await async_query.filter(name='Unknown').one_or_none()
+        >>> user = await async_query.where(name='Unknown').one_or_none()
         >>> user
         # None
 
@@ -840,13 +849,13 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.filter(name='John Doe').unique_one()
+        >>> user = await async_query.where(name='John Doe').unique_one()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').unique_one(scalar=False)
+        >>> user = await async_query.where(name='John Doe').unique_one(scalar=False)
         >>> user
         # (<User 1>,)
-        >>> user = await async_query.filter(name='Unknown').unique_one()
+        >>> user = await async_query.where(name='Unknown').unique_one()
         # Traceback (most recent call last):
         #     ...
         # NoResultFound: 'No result found.'
@@ -883,13 +892,13 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         Example:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
-        >>> user = await async_query.filter(name='John Doe').unique_one_or_none()
+        >>> user = await async_query.where(name='John Doe').unique_one_or_none()
         >>> user
         # <User 1>
-        >>> user = await async_query.filter(name='John Doe').unique_one_or_none(scalar=False)
+        >>> user = await async_query.where(name='John Doe').unique_one_or_none(scalar=False)
         >>> user
         # (<User 1>,)
-        >>> user = await async_query.filter(name='Unknown').unique_one_or_none()
+        >>> user = await async_query.where(name='Unknown').unique_one_or_none()
         >>> user
         # None
 

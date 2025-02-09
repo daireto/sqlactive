@@ -1,7 +1,7 @@
 """
 # SQLActive
 
-A sleek, powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
+SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 Bring Django-like queries, automatic timestamps, nested eager loading,
 and dictionary serialization for SQLAlchemy models.
 
@@ -63,7 +63,7 @@ as shown in the following example:
 with default values and onupdate behavior. To know how to customize the
 timestamps behavior, check the `TimestampMixin` class documentation in
 `sqlactive.timestamp.TimestampMixin` or in the following link:
-https://daireto.github.io/sqlactive/latest/pages/timestamp-mixin/
+https://daireto.github.io/sqlactive/api/timestamp-mixin/
 
 Your `BaseModel` class can also inherit directly from the mixins. For
 example, if you don't want to implement automatic timestamps don't inherit
@@ -87,7 +87,7 @@ NOTE: When defining a `BaseModel` class, don't forget to set `__abstract__` to `
 in the base class to avoid creating tables for the base class.
 
 ### ActiveRecord-like methods
->>> bob = User.create(name='Bob')
+>>> bob = User.insert(name='Bob')
 >>> bob
 # <User #1>
 >>> bob.name

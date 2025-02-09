@@ -25,8 +25,8 @@
 
 # Overview
 
-[SQLActive](https://github.com/daireto/sqlactive) is a sleek,
-powerful and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
+[SQLActive](https://github.com/daireto/sqlactive) is a lightweight
+and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 Bring Django-like queries, automatic timestamps, nested eager loading,
 and dictionary serialization for SQLAlchemy models.
 
@@ -97,7 +97,7 @@ async def example():
     await conn.init_db(BaseModel)
 
     # Create a record
-    user = await User.create(username='John1234', name='John Doe', age=25)
+    user = await User.insert(username='John1234', name='John Doe', age=25)
     post = Post(title='My post', body='Lorem ipsum...', rating=2, user=user)
     await post.save()
 
@@ -113,8 +113,8 @@ async def example():
     await user.delete()
 
     # Find records
-    users = await User.filter(User.name == 'John Doe').all()  # SQLAlchemy-like query
-    posts = await Post.filter(title__contains='post').all()   # Django-like query
+    users = await User.where(User.name == 'John Doe').all()  # SQLAlchemy-like query
+    posts = await Post.where(title__contains='post').all()   # Django-like query
 
     # Serialize a record
     user_dict = user.to_dict()

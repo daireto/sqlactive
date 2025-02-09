@@ -32,7 +32,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `to_dict` function."""
 
         logger.info('Testing `to_dict` function...')
-        user = await User.with_subquery(User.posts).filter(id=1).one()
+        user = await User.with_subquery(User.posts).where(id=1).one()
         self.assertDictEqual(
             {
                 'id': user.id,
@@ -77,7 +77,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             },
             user.to_dict(nested=True, hybrid_attributes=True, exclude=['created_at', 'updated_at']),
         )
-        post = await Post.with_subquery(Post.user).filter(id=1).one()
+        post = await Post.with_subquery(Post.user).where(id=1).one()
         self.assertDictEqual(
             {
                 'id': 1,
@@ -105,7 +105,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `to_json` function."""
 
         logger.info('Testing `to_json` function...')
-        user = await User.with_subquery(User.posts).filter(id=1).one()
+        user = await User.with_subquery(User.posts).where(id=1).one()
         self.assertEqual(json.dumps(user.to_dict(), ensure_ascii=False, default=str), user.to_json())
         self.assertEqual(
             json.dumps(user.to_dict(hybrid_attributes=True), ensure_ascii=False, default=str),

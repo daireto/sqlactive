@@ -337,7 +337,7 @@ class SmartQueryMixin(InspectionMixin):
         (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
 
         Does filtering, sorting and eager loading at the same time.
-        And if, say, filters and sorting need the same join,
+        And if, say, filters, sorting and grouping need the same join,
         it will be done only once.
 
         It also supports SQLAlchemy syntax filter expressions like
@@ -365,11 +365,6 @@ class SmartQueryMixin(InspectionMixin):
             Django-like group expressions, by default None.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None, optional
             Schema for the eager loading, by default None.
-
-        Returns
-        -------
-        Select[tuple[Any, ...]]
-            Smart query.
 
         Raises
         ------

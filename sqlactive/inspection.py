@@ -22,7 +22,7 @@ class InspectionMixin(DeclarativeBase):
             <ClassName #PrimaryKey>
 
         Example:
-        >>> bob = User.create(name='Bob')
+        >>> bob = User.insert(name='Bob')
         >>> bob
         # <User #1>
         >>> users = await User.find(name__like='%John%')
@@ -43,7 +43,7 @@ class InspectionMixin(DeclarativeBase):
             The name of the relationship
 
         Example:
-        >>> bob = User.create(name='Bob')
+        >>> bob = User.insert(name='Bob')
         >>> bob.get_class_of_relation('posts')
         # <class 'Post'>
         """
@@ -58,7 +58,7 @@ class InspectionMixin(DeclarativeBase):
         as follows: '1-2-3'.
 
         Example:
-        >>> bob = User.create(name='Bob')
+        >>> bob = User.insert(name='Bob')
         >>> bob.id_str
         # 1
 

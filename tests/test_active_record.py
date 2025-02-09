@@ -4,6 +4,7 @@ import unittest
 from datetime import datetime, timezone
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError, InvalidRequestError
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import text
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.operators import or_
 from sqlactive import JOINED, SUBQUERY, SELECT_IN
@@ -38,7 +39,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `_get_primary_key_name` function...')
         with self.assertRaises(InvalidRequestError) as context:
-            Sell._get_primary_key_name()
+            Sell.get_primary_key_name()
         self.assertIn('has a composite primary key', str(context.exception))
 
     def test_fill(self):
@@ -259,8 +260,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         user = None
         post = None
         with self.assertRaises(IntegrityError) as context:
-            user = await User.create(username='Pablo123546', name='Test User 1', age=20)
-            post = await Post.create(title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id)
+            user = await User.insert(username='Pablo123546', name='Test User 1', age=20)
+            post = await Post.insert(title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id)
             await User.destroy(user.id)
         self.assertIn('NOT NULL constraint failed', str(context.exception))
 
@@ -471,7 +472,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `select` function."""
 
         logger.info('Testing `select` function...')
-        async_query = User.select(User)
+        async_query = User.select()
         users = await async_query.all()
         self.assertIn('SELECT users.id, users.username, users.name, users.age', str(async_query))
         self.assertEqual(34, len(users))
@@ -511,9 +512,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `order_by` and `sort` functions...')
         users = await User.find(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
-        users = await User.order_by(User.username).filter(username__like='Ji%').all()
+        users = await User.order_by(User.username).where(username__like='Ji%').all()
         self.assertEqual('Jill874', users[0].username)
-        users = await User.sort(User.age).filter(username__like='Ji%').all()
+        users = await User.sort(User.age).where(username__like='Ji%').all()
         self.assertEqual('Jimmy156', users[0].username)
         posts = await Post.sort('-rating', 'user___name').all()
         self.assertEqual(24, len(posts))
@@ -522,41 +523,42 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `group_by` function."""
 
         logger.info('Testing `group_by` function...')
-        users = await User.select(User.age, func.count(User.id)).group_by(User.age).all(scalars=False)
+        users = await User.group_by(User.age, select_columns=(User.age, func.count(User.id))).all(scalars=False)
         self.assertEqual((26, 2), users[3])
-        users = await User.select(User.age, func.count(User.id)).group_by('age').all(scalars=False)
+        users = await User.group_by('age', select_columns=(User.age, func.count(User.id))).all(scalars=False)
         self.assertEqual((26, 2), users[3])
-        users = (
-            await User.select(User.age, User.name, func.count(User.id)).group_by(User.age, 'name').all(scalars=False)
+        users = await User.group_by(User.age, 'name', select_columns=(User.age, User.name, func.count(User.id))).all(
+            scalars=False
         )
         self.assertEqual((25, 'Jane Doe', 1), users[3])
-        posts = (
-            await Post.select(Post.rating, func.count(Post.title)).group_by('rating', 'user___name').all(scalars=False)
-        )
+        posts = await Post.group_by(
+            'rating', 'user___name', select_columns=(Post.rating, text('users_1.name'), func.count(Post.id))
+        ).all(scalars=False)
         self.assertEqual(24, (len(posts)))
+        self.assertEqual((1, 'Jane Doe', 1), posts[2])
 
     async def test_offset(self):
         """Test for `offset` and `skip` functions."""
 
         logger.info('Testing `offset` and `skip` functions...')
-        users = await User.offset(1).filter(username__like='Ji%').all()
+        users = await User.offset(1).where(username__like='Ji%').all()
         self.assertEqual(2, len(users))
-        users = await User.skip(2).filter(username__like='Ji%').all()
+        users = await User.skip(2).where(username__like='Ji%').all()
         self.assertEqual(1, len(users))
         with self.assertRaises(ValueError) as context:
-            await User.offset(-1).filter(username__like='Ji%').all()
+            await User.offset(-1).where(username__like='Ji%').all()
         self.assertEqual('Offset must be positive.', str(context.exception))
 
     async def test_limit(self):
         """Test for `limit` and `take` functions."""
 
         logger.info('Testing `limit` and `take` functions...')
-        users = await User.limit(2).filter(username__like='Ji%').all()
+        users = await User.limit(2).where(username__like='Ji%').all()
         self.assertEqual(2, len(users))
-        users = await User.take(1).filter(username__like='Ji%').all()
+        users = await User.take(1).where(username__like='Ji%').all()
         self.assertEqual(1, len(users))
         with self.assertRaises(ValueError) as context:
-            await User.limit(-1).filter(username__like='Ji%').all()
+            await User.limit(-1).where(username__like='Ji%').all()
         self.assertEqual('Limit must be positive.', str(context.exception))
 
     async def test_join(self):
@@ -610,11 +612,11 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob Williams', post.user.name)
         self.assertEqual('Jill Peterson', post.comments[1].user.name)
 
-    async def test_async_smart_query(self):
-        """Test for `async_smart_query` function."""
+    async def test_smart_query(self):
+        """Test for `smart_query` function."""
 
-        logger.info('Testing `async_smart_query` function...')
-        query = User.async_smart_query(
+        logger.info('Testing `smart_query` function...')
+        query = User.smart_query(
             criteria=(or_(User.age == 30, User.age == 32),),
             filters={'username__like': '%8'},
             sort_columns=(User.username,),

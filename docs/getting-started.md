@@ -158,33 +158,31 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 ### 3. Perform CRUD Operations
 
 ```python
-user = await User.create(username='John1234', name='John Doe', age=25)
-print(user)
-# <User #1>
+user = await User.insert(username='John1234', name='John Doe', age=25)
+user  # <User #1>
 
 user.name = 'Johnny Doe'
 user.age = 30
 await user.save()
-print(user.name)
-# Johnny Doe
+user.name  # Johnny Doe
 
 user = await User.get(1)
-print(user)
-# <User #1>
+user  # <User #1>
 
 await user.update(name='John Doe', age=20)
-print(user.age)
-# 20
+user.age  # 20
 
 await user.delete()
 ```
 
 !!! danger
 
-    The `delete` and `remove` methods are not soft deletes.
-    Both of them permanently delete the row from the database.
-    So, if you want to keep the row in the database, implement
-    a custom delete method and use `save` method instead (i.e. a `is_deleted` column).
+    The `delete()` and `remove()` methods are not soft deletes methods.
+    Both of them will permanently delete the row from the database.
+    So, if you want to keep the row in the database, you can implement
+    a custom soft delete method, i.e. using `save()` method to update
+    the row with a flag indicating if the row is deleted or not
+    (i.e. a boolean `is_deleted` column).
 
 !!! tip
 
@@ -200,23 +198,21 @@ users = [
     User(username='Bob1234', name='Bob Doe', age=22),
 ]
 
-await User.create_all(users, refresh=True)
+await User.insert_all(users, refresh=True)
 users = await User.find(username__endswith='Doe').all()
-print(users)
-# [<User #1>, <User #2>]
+users  # [<User #1>, <User #2>]
 
 await User.delete_all(users)
 
 users = await User.find(username__endswith='Doe').all()
-print(users)
-# []
+users  # []
 ```
 
 !!! warning
 
-    When calling bulk operation methods, i.e. `save_all`, `create_all`, `update_all`
-    and `delete_all`, the `refresh` flag must be set to `True` in order to access
-    the updated attributes of the affected rows.
+    When calling bulk operation methods, i.e. `save_all`, `insert_all`
+    and `update_all`, the `refresh` flag must be set to `True` in order
+    to access the saved/updated attributes of the affected rows.
     <br>**NOTE**: This may lead to a higher latency due to additional database queries.
 
     ```python
@@ -226,7 +222,7 @@ print(users)
         # ...,
     ]
     await User.save_all(users, refresh=True)
-    print(users[0].updated_at)
+    users[0].updated_at
     # 2024-12-28 23:00:51
     ```
 
@@ -241,7 +237,7 @@ print(users)
         # ...,
     ]
     await User.save_all(users)
-    print(users[0].updated_at)
+    users[0].updated_at
     # Traceback (most recent call last):
     #     ...
     # sqlalchemy.orm.exc.DetachedInstanceError: Instance <User ...> is not bound
@@ -272,27 +268,21 @@ Perform simple and complex queries, eager loading, and dictionary serialization:
 ```python
 from sqlactive import JOINED, SUBQUERY
 
-user = await User.filter(name='John Doe').first()
-print(user)
-# <User #1>
+user = await User.where(name='John Doe').first()
+user  # <User #1>
 
-posts = await Post.filter(rating__in=[2, 3, 4], user___name__like='%Bi%').all()
-print(posts)
-# [<Post #1>, <Post #2>, <Post #3>]
+posts = await Post.where(rating__in=[2, 3, 4], user___name__like='%Bi%').all()
+posts  # [<Post #1>, <Post #2>, <Post #3>]
 
 posts = await Post.sort('-rating', 'user___name').all()
-print(posts)
-# [<Post #3>, <Post #1>, <Post #2>, <Post #4>, ...]
+posts  # [<Post #3>, <Post #1>, <Post #2>, <Post #4>, ...]
 
 comments = await Comment.join(Comment.user, Comment.post).unique_all()
-print(comments)
-# [<Comment 1>, <Comment 2>, <Comment 3>, <Comment 4>, <Comment 5>, ...]
+comments  # [<Comment 1>, <Comment 2>, <Comment 3>, <Comment 4>, ...]
 
 user = await User.with_subquery(User.posts).first()
-print(user)
-# <User #1>
-print(user.posts)
-# [<Post #1>, <Post #2>, <Post #3>]
+user  # <User #1>
+user.posts  # [<Post #1>, <Post #2>, <Post #3>]
 
 schema = {
     User.posts: JOINED,
@@ -301,8 +291,7 @@ schema = {
     }),
 }
 user = await User.with_schema(schema).unique_first()
-print(user.comments[0].post.title)
-# Lorem ipsum
+user.comments[0].post.title  # Lorem ipsum
 ```
 
 For more flexibility, the low-level `filter_expr` method can be used:
@@ -336,8 +325,7 @@ See the [low-level SmartQueryMixin methods](api/smart-query-mixin.md#api-referen
         },
     )
     users = await query.unique_all()
-    print(users)
-    # [<User #1>, <User #3>]
+    users  # [<User #1>, <User #3>]
     ```
 
 !!! tip
@@ -385,17 +373,14 @@ model class to the `base_model` argument of the `execute` method:
 Timestamps (`created_at` and `updated_at`) are automatically managed:
 
 ```python
-user = await User.create(username='John1234', name='John Doe', age=25)
-print(user.created_at)
-# 2024-12-28 23:00:51
-print(user.updated_at)
-# 2024-12-28 23:00:51
+user = await User.insert(username='John1234', name='John Doe', age=25)
+user.created_at  # 2024-12-28 23:00:51
+user.updated_at  # 2024-12-28 23:00:51
 
 await asyncio.sleep(1)
 
 await user.update(name='Johnny Doe')
-print(user.updated_at)
-# 2024-12-28 23:00:52
+user.updated_at  # 2024-12-28 23:00:52
 ```
 
 !!! tip
@@ -407,25 +392,21 @@ print(user.updated_at)
 Models can be serialized and deserialized using the `to_dict` and `from_dict` methods:
 
 ```python
-user = await User.create(username='John1234', name='John Doe', age=25)
+user = await User.insert(username='John1234', name='John Doe', age=25)
 user_dict = user.to_dict()
-print(user_dict)
-# {'id': 1, 'username': 'John1234', 'name': 'John Doe', ...}
+user_dict  # {'id': 1, 'username': 'John1234', 'name': 'John Doe', ...}
 
 user = User.from_dict(user_dict)
-print(user.name)
-# John Doe
+user.name  # John Doe
 ```
 
 Also, models can be serialized and deserialized using the `to_json` and `from_json` methods:
 
 ```python
-user = await User.create(username='John1234', name='John Doe', age=25)
+user = await User.insert(username='John1234', name='John Doe', age=25)
 user_json = user.to_json()
-print(user_json)
-# {"id": 1, "username": "John1234", "name": "John Doe", ...}
+user_json  # {"id": 1, "username": "John1234", "name": "John Doe", ...}
 
 user = User.from_json(user_json)
-print(user.name)
-# John Doe
+user.name  # John Doe
 ```

@@ -32,7 +32,7 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         """Test for `fill` function."""
 
         logger.info('Testing constructor...')
-        async_query = AsyncQuery(User._query)
+        async_query = AsyncQuery(User.query)
         users = await async_query.all()
         self.assertEqual(34, len(users))
 
@@ -46,6 +46,16 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(users))
         self.assertEqual('Bob Williams', users[0].name)
 
+    async def test_select(self):
+        """Test for `select` function."""
+
+        logger.info('Testing `select` function...')
+        async_query = AsyncQuery.select(User.name, User.age)
+        self.assertIn('SELECT users.name, users.age', str(async_query))
+        with self.assertRaises(ValueError) as context:
+            AsyncQuery.select()
+        self.assertEqual('At least one column must be selected.', str(context.exception))
+
     async def test_str_and_repr(self):
         """Test for `__str__` and `__repr__` functions."""
 
@@ -54,7 +64,7 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(repr(async_query), str(async_query.query))
         self.assertEqual(str(async_query), str(async_query.query))
 
-    async def test_filter(self):
+    async def test_filter_and_find(self):
         """Test for `filter` and `find` functions."""
 
         logger.info('Testing `filter` and `find` functions...')

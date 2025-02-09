@@ -153,8 +153,7 @@ users = await User.group_by(User.age, 'name').all()
 #### Join Loading
 
 ```python
-# Left outer join
-comment = await Comment.join(Comment.user, Comment.post).first()
+comment = await Comment.join(Comment.user, Comment.post).first()  # Left outer join
 
 comment = await Comment.join(
     Comment.user,
@@ -168,16 +167,15 @@ comments = await Comment.join(Comment.user, Comment.post)
 #### Subquery Loading
 
 ```python
-# Using subquery loading
 users = await User.with_subquery(
-    User.posts,
+    User.posts,            # subquery loading
     (User.comments, True)  # True means selectinload
-).unique_all()  # important!
+).unique_all()     # important!
 
 # With limiting and sorting (important for correct results)
 users = await User.with_subquery(User.posts)
     .limit(1)
-    .sort('id')  # important!
+    .sort('id')    # important!
     .unique_all()  # important!
 ```
 
@@ -187,9 +185,9 @@ users = await User.with_subquery(User.posts)
 from sqlactive import JOINED, SUBQUERY
 
 schema = {
-    User.posts: JOINED,  # joinedload user
+    User.posts: JOINED,          # joinedload user
     User.comments: (SUBQUERY, {  # load comments in separate query
-        Comment.user: JOINED  # but join user in this separate query
+        Comment.user: JOINED     # but join user in this separate query
     })
 }
 
@@ -202,9 +200,11 @@ The [`Smart Queries Mixin`](smart-query-mixin.md) provides a powerful smart quer
 builder that combines filtering, sorting, grouping and eager loading:
 
 ```python
+from sqlactive import JOINED
+
 # Complex query with multiple features
 users = await User.smart_query(
-    criterion=(User.age > 18,),
+    criterion=(User.age >= 18,),
     filters={'name__like': '%John%'},
     sort_columns=(User.username,),
     sort_attrs=['-created_at'],
@@ -216,48 +216,65 @@ users = await User.smart_query(
 
 ## API Reference
 
+### Class Properties
+
+Most of class properties are inherited from [`InspectionMixin`](inspection-mixin.md).
+
+#### query
+```python
+@classproperty
+def query() -> Select[tuple[Self]]
+```
+
+> Returns a new `sqlalchemy.sql.Select` instance for the model.
+
+> This is a shortcut for `select(cls)`.
+
+> **Example:**
+> ```python
+> from sqlalchemy import select
+>
+> User.query    # SELECT * FROM users
+> select(User)  # SELECT * FROM users
+> ```
+
 ### Instance Methods
 
 #### fill
 ```python
-def fill(**kwargs)
+def fill(**kwargs) -> Self
 ```
 
 > Fills the object with values from `kwargs` without saving to the database.
 
 > **Parameters:**
-
 > - `kwargs`: Key-value pairs of attributes to set.
 
 > **Returns:**
-
 > - `Self`: The instance itself for method chaining.
 
 > **Raises:**
-
 > - `KeyError`: If attribute doesn't exist.
 
 > **Example:**
-
 > ```python
-> user.fill(name='Bob', age=30)
+> user = User()
+> user.fill(name='Bob Williams', age=30)
 > ```
 
 #### save
 ```python
-async def save()
+async def save() -> Self
 ```
 
-> Saves the current row to the database.
+> Saves the current row.
 
 > **Returns:**
-
-> - `Self`: The saved instance for method chaining.
+> - `Self`: The instance itself for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
 > user = User(name='Bob')
 > await user.save()
@@ -265,45 +282,44 @@ async def save()
 
 #### update
 ```python
-async def update(**kwargs)
+async def update(**kwargs) -> Self
 ```
 
 > Updates the current row with the provided values.
 
-> **Parameters:**
+> This is the same as calling `self.fill(**kwargs).save()`.
 
+> **Parameters:**
 > - `kwargs`: Key-value pairs of attributes to update.
 
 > **Returns:**
-
-> - `Self`: The updated instance for method chaining.
+> - `Self`: The instance itself for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
-> await user.update(name='Bob2', age=31)
+> user = User(name='Bob', age=30)
+> await user.update(name='Bob Williams', age=31)
 > ```
-
-#### edit
-```python
-async def edit(**kwargs)
-```
-
-> Synonym for `update()`.
 
 #### delete
 ```python
 async def delete()
 ```
 
-> Deletes the current row from the database.
+> Deletes the current row.
+
+> !!! danger
+>
+>     This is not a soft delete method. It will permanently delete the row from
+>     the database. So, if you want to keep the row in the database, you can implement
+>     a custom soft delete method, i.e. using `save()` method to update the row with a
+>     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
 > await user.delete()
 > ```
@@ -317,93 +333,89 @@ async def remove()
 
 ### Class Methods
 
-#### create
+#### insert
 ```python
-async def create(**kwargs)
+@classmethod
+async def insert(**kwargs) -> Self
 ```
 
-> Creates a new row with the provided values.
+> Inserts a new row.
 
 > **Parameters:**
-
 > - `kwargs`: Key-value pairs for the new instance.
 
 > **Returns:**
-
 > - `Self`: The created instance for method chaining.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
-> user = await User.create(name='Bob', age=30)
+> user = await User.insert(name='Bob Williams', age=30)
 > ```
 
-#### insert
+#### create
 ```python
-async def insert(**kwargs)
+@classmethod
+async def create(**kwargs)
 ```
 
-> Synonym for `create()`.
-
-#### add
-```python
-async def add(**kwargs)
-```
-
-> Synonym for `create()`.
+> Synonym for `insert()`.
 
 #### save_all
 ```python
+@classmethod
 async def save_all(rows: Sequence[Self], refresh: bool = False)
 ```
 
 > Saves multiple rows in a single transaction.
 
 > **Parameters:**
-
-> - `rows`: Sequence of model instances to save.
-> - `refresh`: Whether to refresh the instances after saving (default: `False`).
+> - `rows`: Sequence of rows to be saved.
+> - `refresh`: Whether to refresh the rows after saving (default: `False`).
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
 > users = [User(name='Bob'), User(name='Alice')]
-> await User.save_all(users)
+> await User.save_all(users, refresh=True)
 > ```
 
-#### create_all
+#### insert_all
 ```python
-async def create_all(rows: Sequence[Self], refresh: bool = False)
+@classmethod
+async def insert_all(rows: Sequence[Self], refresh: bool = False)
 ```
 
-> Synonym for `save_all()` when creating new rows.
+> Inserts multiple rows in a single transaction.
+
+> This is mostly a shortcut for `save_all()` when inserting new rows.
 
 #### update_all
 ```python
+@classmethod
 async def update_all(rows: Sequence[Self], refresh: bool = False)
 ```
 
-> Synonym for `save_all()` when updating existing rows.
+> Updates multiple rows in a single transaction.
+
+> This is mostly a shortcut for `save_all()` when updating existing rows.
 
 #### delete_all
 ```python
+@classmethod
 async def delete_all(rows: Sequence[Self])
 ```
 
 > Deletes multiple rows in a single transaction.
 
 > **Parameters:**
-
-> - `rows`: Sequence of model instances to delete.
+> - `rows`: Sequence of rows to be deleted.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
 > users = await User.where(age__lt=18).all()
 > await User.delete_all(users)
@@ -411,106 +423,366 @@ async def delete_all(rows: Sequence[Self])
 
 #### destroy
 ```python
+@classmethod
 async def destroy(*ids: object)
 ```
 
-> Deletes multiple rows by their primary keys.
+> Deletes multiple rows by their primary key.
+
+> If rows have a composite primary key, this method will raise `InvalidRequestError`.
 
 > **Parameters:**
-
 > - `ids`: Primary key values of rows to delete.
 
 > **Raises:** Any database errors are caught and will trigger a rollback.
 
 > **Example:**
-
 > ```python
 > await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
 > ```
 
 #### get
 ```python
+@classmethod
 async def get(
     pk: object,
     join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
     subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
-)
+) -> Self | None
 ```
 
-> Fetches a row by primary key.
+> Fetches a row by primary key or `None` if no result is found.
 
 > **Parameters:**
-
 > - `pk`: Primary key value.
-> - `join`: Paths to join eager load. See the docs of [`join`](#join) method for details.
-> - `subquery`: Paths to subquery eager load. See the docs of [`with_subquery`](#with_subquery) method for details.
-> - `schema`: Schema for the eager loading. See the docs of [`with_schema`](#with_schema) method for details.
+> - `join`: Paths to join eager load.
+> **IMPORTANT:** See the docs of [`join`](#join) method for details.
+> - `subquery`: Paths to subquery eager load.
+> **IMPORTANT:** See the docs of [`with_subquery`](#with_subquery) method for details.
+> - `schema`: Schema for the eager loading.
+> **IMPORTANT:** See the docs of [`with_schema`](#with_schema) method for details.
 
 > **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None` if not found.
+> - `Self`: Instance for method chaining.
 
 > **Raises:**
-
 > - `MultipleResultsFound`: If multiple rows match.
 
 > **Example:**
-
 > ```python
 > user = await User.get(1)
 > ```
 
 #### get_or_fail
 ```python
+@classmethod
 async def get_or_fail(
     pk: object,
     join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
     subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
-)
+) -> Self
 ```
 
-> Fetches a row by primary key or raises an exception if not found.
+> Fetches a row by primary key or raises an exception if no result is found.
 
 > **Parameters:**
-
 > - `pk`: Primary key value.
-> - `join`: Paths to join eager load. See the docs of [`join`](#join) method for details.
-> - `subquery`: Paths to subquery eager load. See the docs of [`with_subquery`](#with_subquery) method for details.
-> - `schema`: Schema for the eager loading. See the docs of [`with_schema`](#with_schema) method for details.
+> - `join`: Paths to join eager load.
+> **IMPORTANT:** See the docs of [`join`](#join) method for details.
+> - `subquery`: Paths to subquery eager load.
+> **IMPORTANT:** See the docs of [`with_subquery`](#with_subquery) method for details.
+> - `schema`: Schema for the eager loading.
+> **IMPORTANT:** See the docs of [`with_schema`](#with_schema) method for details.
 
 > **Returns:**
-
 > - `Self`: Instance for method chaining.
 
 > **Raises:**
-
-> - `NoResultFound`: If no row is found.
+> - `NoResultFound`: If no result is found.
 > - `MultipleResultsFound`: If multiple rows match.
 
 > **Example:**
-
 > ```python
 > user = await User.get_or_fail(1)  # Raises if not found
 > ```
 
-#### options
+#### scalars
 ```python
-def options(*args: ExecutableOption)
+@classmethod
+async def scalars() -> ScalarResult[Self]
 ```
 
-> Creates a query and applies the given list of mapper options.
+> Returns a `sqlalchemy.engine.ScalarResult` instance containing all rows.
+
+> **Returns:**
+> - `sqlalchemy.engine.ScalarResult[Self]`: Scalars.
+
+> **Example:**
+> ```python
+> result = await User.scalars()  # <sqlalchemy.engine.result.ScalarResult>
+> users = result.all()           # [<User 1>, <User 2>, ...]
+> ```
+
+#### first
+```python
+@classmethod
+async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
+```
+
+> Fetches the first row or `None` if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`),
+> otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Example:**
+> ```python
+> user = await User.first()             # <User 1>
+> row = await User.first(scalar=False)  # (<User 1>,)
+> ```
+
+#### one
+```python
+@classmethod
+async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
+```
+
+> Fetches one row or raises an exception if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`),
+> otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Raises:**
+> - `NoResultFound`: If no row is found.
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+> ```python
+> user = await User.one()             # <User 1>
+> row = await User.one(scalar=False)  # (<User 1>,)
+> ```
+
+#### one_or_none
+```python
+@classmethod
+async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
+```
+
+> Fetches one row or `None` if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`),
+> otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Raises:**
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+> ```python
+> user = await User.one_or_none()             # <User 1>
+> row = await User.one_or_none(scalar=False)  # (<User 1>,)
+> ```
+
+#### all
+```python
+@classmethod
+async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
+```
+
+> Fetches all rows.
+
+> **Parameters:**
+> - `scalars`: If `True`, returns scalar values (`Sequence[Self]`),
+> otherwise returns rows (default: `True`).
+
+> **Returns:**
+> - `Sequence[Self]`: Sequence of instances (scalars).
+> - `Sequence[sqlalchemy.engine.Row[tuple[Any, ...]]]`: Sequence of rows.
+
+> **Example:**
+> ```python
+> users = await User.all()              # [<User 1>, <User 2>, ...]
+> rows = await User.all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
+> ```
+
+#### unique
+```python
+@classmethod
+async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any, ...]]
+```
+
+> Apply unique filtering to the objects returned in the result instance.
+
+> **Parameters:**
+> - `scalars`: If `True`, returns a `sqlalchemy.engine.ScalarResult`
+> instance. Otherwise, returns a `sqlalchemy.engine.Result` instance.
+
+> **Returns:**
+> - `sqlalchemy.engine.ScalarResult[Self]`: Scalars.
+> - `sqlalchemy.engine.Result[tuple[Any, ...]]`: Rows.
+
+> **Example:**
+> ```python
+> result = await User.unique()
+> users = result.all()  # [<User 1>, <User 2>, ...]
+> result = await User.unique(scalars=False)
+> rows = result.all()  # [(<User 1>,), (<User 2>,), ...]
+> ```
+
+#### unique_first
+```python
+@classmethod
+async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
+```
+
+> Fetches the first unique row or `None` if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`),
+> otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Example:**
+> ```python
+> user = await User.unique_first()             # <User 1>
+> row = await User.unique_first(scalar=False)  # (<User 1>,)
+> ```
+
+#### unique_one
+```python
+@classmethod
+async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
+```
+
+> Fetches one unique row or raises an exception if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`),
+> otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Raises:**
+> - `NoResultFound`: If no row is found.
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+> ```python
+> user = await User.unique_one()             # <User 1>
+> row = await User.unique_one(scalar=False)  # (<User 1>,)
+> ```
+
+#### unique_one_or_none
+```python
+@classmethod
+async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
+```
+
+> Fetches one unique row or `None` if no results are found.
+
+> **Parameters:**
+> - `scalar`: If `True`, returns a scalar value (`Self`), otherwise returns a row (default: `True`).
+
+> **Returns:**
+> - `Self`: Instance for method chaining (scalar).
+> - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
+
+> **Raises:**
+> - `MultipleResultsFound`: If multiple rows match.
+
+> **Example:**
+> ```python
+> user = await User.unique_one_or_none()             # <User 1>
+> row = await User.unique_one_or_none(scalar=False)  # (<User 1>,)
+> ```
+
+#### unique_all
+```python
+@classmethod
+async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
+```
+
+> Fetches all unique rows.
+
+> **Parameters:**
+> - `scalars`: If `True`, returns scalar values (`Sequence[Self]`),
+> otherwise returns rows (default: `True`).
+
+> **Returns:**
+> - `Sequence[Self]`: Sequence of instances (scalars).
+> - `Sequence[sqlalchemy.engine.Row[tuple[Any, ...]]]`: Sequence of rows.
+
+> **Example:**
+> ```python
+> users = await User.unique_all()              # [<User 1>, <User 2>, ...]
+> rows = await User.unique_all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
+> ```
+
+#### select
+```python
+@classmethod
+def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
+```
+
+> Creates a brand new [`AsyncQuery`](async-query.md) instance
+> with the specified entities selected.
+
+> **Parameters:**
+> - `entities`: Entities to be selected.
+
+> **Returns:**
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
+
+> **Example:**
+> ```python
+> User.select()
+> # SELECT users.id, users.username, users.age, ... FROM users
+>
+> User.select(User.name, User.age)
+> # SELECT users.name, users.age FROM users
+>
+> User.select(User.name, func.max(User.age))
+> # SELECT users.name, max(users.age) AS max_1 FROM users
+> ```
+
+#### options
+```python
+@classmethod
+def options(*args: ExecutableOption) -> AsyncQuery
+```
+
+> Applies the given list of mapper options.
 
 > !!! warning
 >
 >     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
 >
 >         When including `joinedload()` in reference to a one-to-many or
->         many-to-many collection, the `Result.unique()` method must be
->         applied to the returned result, which will make the incoming rows
->         unique by primary key that otherwise are multiplied out by the join.
->         The ORM will raise an error if this is not present.
+>         many-to-many collection, the `Result.unique()` method or related
+>         (i.e. `unique_all()`) must be applied to the returned result, which
+>         will make the incoming rows unique by primary key that otherwise are
+>         multiplied out by the join.
+>         SQLAlchemy will raise an error if this is not present.
 >
 >         This is not automatic in modern SQLAlchemy, as it changes the behavior
 >         of the result set to return fewer ORM objects than the statement would
@@ -522,373 +794,216 @@ def options(*args: ExecutableOption)
 >     [`sqlalchemy.orm.Query.options`](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options) docs.
 
 > **Parameters:**
-
 > - `args`: Mapper options.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
-
 > ```python
 > users = await User.options(joinedload(User.posts)).unique_all()
->
 > user = await User.options(joinedload(User.posts)).first()
->
 > users = await User.options(subqueryload(User.posts)).all()
-> ```
-
-#### filter
-```python
-def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Creates a filtered query using SQLAlchemy or Django-style filters.
-
-> **Parameters:**
-
-> - `criterion`: SQLAlchemy style filter expressions.
-> - `filters`: Django-style filters.
-
-> **Returns:**
-
-> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
-
-> **Example:**
-
-> ```python
-> # SQLAlchemy style
-> users = await User.filter(User.age >= 18).all()
->
-> # Django style
-> users = await User.filter(age__gte=18).all()
->
-> # Mixed
-> users = await User.filter(User.age >= 18, name__like='%Bob%').all()
 > ```
 
 #### where
 ```python
-def where(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
+@classmethod
+def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery
 ```
 
-> Synonym for `filter()`.
+> Applies one or more WHERE criteria to the query.
 
-#### find
-```python
-def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Synonym for `filter()`.
-
-#### find_one
-```python
-async def find_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single row matching the criteria.
-
-> This is same as calling `await cls.find(*criterion, **filters).one()`.
-
-> **Returns:**
-
-> - `Self`: Instance for method chaining.
-
-> **Raises:**
-
-> - `NoResultFound`: If no row is found.
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.find_one(name='Bob')  # Raises if not found
-> ```
-
-#### find_one_or_none
-```python
-async def find_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single row matching the criteria or `None`.
-
-> This is same as calling `await cls.find(*criterion, **filters).one_or_none()`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Raises:**
-
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.find_one_or_none(name='Bob')  # Returns None if not found
-> ```
-
-#### find_all
-```python
-async def find_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds all rows matching the criteria.
-
-> This is same as calling `await cls.find(*criterion, **filters).all()`.
-
-> **Returns:**
-
-> - `list[Self]`: List of instances for method chaining.
-
-> **Example:**
-
-> ```python
-> users = await User.find_all(age__gte=18)
-> ```
-
-#### find_first
-```python
-async def find_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single row matching the criteria or `None`.
-
-> This is same as calling `await cls.find(*criterion, **filters).first()`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Example:**
-
-> ```python
-> user = await User.find_first(name='Bob')
-> ```
-
-#### find_unique
-```python
-async def find_unique(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds all unique rows matching the criteria and
-> returns an `ScalarResult` object with them.
-
-> This is same as calling `await cls.find(*criterion, **filters).unique()`.
-
-> **Returns:**
-
-> - `sqlalchemy.engine.ScalarResult`: Scalars.
-
-> **Example:**
-
-> ```python
-> users_scalars = await User.find_unique(name__like='%John%')
-> users = users_scalars.all()
-> ```
-
-#### find_unique_all
-```python
-async def find_unique_all(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds all unique rows matching the criteria and returns a list.
-
-> This is same as calling `await cls.find(*criterion, **filters).unique_all()`.
-
-> **Returns:**
-
-> - `list[Self]`: List of instances.
-
-> **Example:**
-
-> ```python
-> users = await User.find_unique_all(name__like='%John%')
-> ```
-
-#### find_unique_first
-```python
-async def find_unique_first(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single unique row matching the criteria or `None`.
-
-> This is same as calling `await cls.find(*criterion, **filters).unique_first()`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Example:**
-
-> ```python
-> user = await User.find_unique_first(name__like='%John%', age=30)
-> ```
-
-#### find_unique_one
-```python
-async def find_unique_one(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single unique row matching the criteria.
-
-> This is same as calling `await cls.find(*criterion, **filters).unique_one()`.
-
-> **Returns:**
-
-> - `Self`: Instance for method chaining.
-
-> **Raises:**
-
-> - `NoResultFound`: If no row is found.
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.find_unique_one(name__like='%John%', age=30)
-> ```
-
-#### find_unique_one_or_none
-```python
-async def find_unique_one_or_none(*criterion: _ColumnExpressionArgument[bool], **filters: Any)
-```
-
-> Finds a single unique row matching the criteria or `None`.
-
-> This is same as calling `await cls.find(*criterion, **filters).unique_one_or_none()`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Raises:**
-
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.find_unique_one_or_none(name__like='%John%', age=30)
-> ```
-
-#### order_by
-```python
-def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any])
-```
-
-> Creates a query with ORDER BY clause.
+> It supports both Django-like syntax and SQLAlchemy syntax.
 
 > **Parameters:**
-
-> - `columns`: Column names or SQLAlchemy column expressions.
+> - `criteria`: SQLAlchemy style filter expressions.
+> - `filters`: Django-style filters.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
-
 > ```python
-> # String column names (Django style)
+> # SQLAlchemy style
+> users = await User.where(User.age >= 18).all()
+>
+> # Django style
+> users = await User.where(age__gte=18).all()
+>
+> # Mixed
+> users = await User.where(User.age >= 18, name__like='%Bob%').all()
+> ```
+
+#### filter
+```python
+@classmethod
+def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery
+```
+
+> Synonym for `where()`.
+
+#### find
+```python
+@classmethod
+def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery
+```
+
+> Synonym for `where()`.
+
+#### order_by
+```python
+@classmethod
+def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery
+```
+
+> Applies one or more ORDER BY criteria to the query.
+
+> It supports both Django-like syntax and SQLAlchemy syntax.
+
+> **Parameters:**
+> - `columns`: Django-like or SQLAlchemy sort expressions.
+
+> **Returns:**
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
+
+> **Example:**
+> ```python
+> # SQLAlchemy style
+> users = await User.order_by(User.created_at.desc(), User.name).all()
+>
+> # Django style
 > users = await User.order_by('-created_at', 'name').all()
 >
-> # SQLAlchemy expressions
-> users = await User.order_by(User.created_at.desc(), User.name).all()
+> # Mixed
+> users = await User.order_by('-created_at', User.name.asc()).all()
 > ```
 
 #### sort
 ```python
-def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any])
+@classmethod
+def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery
 ```
 
 > Synonym for `order_by()`.
 
-#### offset
+#### group_by
 ```python
-def offset(offset: int)
+@classmethod
+def group_by(
+    *columns: _ColumnExpressionOrStrLabelArgument[Any],
+    select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
+) -> AsyncQuery
 ```
 
-> Creates a query with OFFSET clause.
+> Applies one or more GROUP BY criteria to the query.
+
+> It supports both Django-like syntax and SQLAlchemy syntax.
+
+> It is recommended to select specific columns. You can use
+> the `select_columns` parameter to select specific columns.
 
 > **Parameters:**
+> - `columns`: Django-like or SQLAlchemy columns.
+> - `select_columns`: Columns to be selected.
 
+> **Returns:**
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
+
+> **Example:**
+> ```python
+> from sqlalchemy.sql import text
+> from sqlalchemy.sql.functions import func
+>
+> # Using the `select_columns` parameter
+> columns = (User.age, func.count(User.age))
+> async_query = User.group_by(User.age, select_columns=columns)
+> rows = await async_query.all(scalars=False)
+>
+> # Calling `select()` before (and with relations)
+> async_query = Post.select(Post.rating, text('users_1.name'), func.count(Post.title))
+> async_query = async_query.group_by('rating', 'user___name')
+> rows = async_query.all(scalars=False)
+> ```
+
+#### offset
+```python
+@classmethod
+def offset(offset: int) -> AsyncQuery
+```
+
+> Applies an OFFSET clause to the query.
+
+> **Parameters:**
 > - `offset`: Number of rows to skip.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Raises:**
-
 > - `ValueError`: If offset is negative.
 
 > **Example:**
-
 > ```python
 > users = await User.offset(10).all()
 > ```
 
 #### skip
 ```python
-def skip(skip: int)
+@classmethod
+def skip(skip: int) -> AsyncQuery
 ```
 
 > Synonym for `offset()`.
 
 #### limit
 ```python
-def limit(limit: int)
+@classmethod
+def limit(limit: int) -> AsyncQuery
 ```
 
-> Creates a query with LIMIT clause.
+> Applies a LIMIT clause to the query.
 
 > **Parameters:**
-
 > - `limit`: Maximum number of rows to return.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Raises:**
-
 > - `ValueError`: If limit is negative.
 
 > **Example:**
-
 > ```python
 > users = await User.limit(5).all()
 > ```
 
 #### take
 ```python
-def take(take: int)
+@classmethod
+def take(take: int) -> AsyncQuery
 ```
 
 > Synonym for `limit()`.
 
 #### join
 ```python
-def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
+@classmethod
+def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery
 ```
 
-> Creates a query with `LEFT OUTER JOIN` eager loading.
+> Joined eager loading using LEFT OUTER JOIN.
 
-> When a tuple is passed, the second element must be boolean.
-> If it is `True`, the join is `INNER JOIN`, otherwise `LEFT OUTER JOIN`.
+> When a tuple is passed, the second element must be boolean, and
+> if `True`, the join is `INNER JOIN`, otherwise `LEFT OUTER JOIN`.
 
 > **Parameters:**
-
 > - `paths`: Relationship attributes to join.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
-
 > ```python
 > comments = await Comment.join(
 >     Comment.user,
@@ -898,10 +1013,11 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 #### with_subquery
 ```python
-def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
+@classmethod
+def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery
 ```
 
-> Creates a query with subquery or selectin loading.
+> Subqueryload or Selectinload eager loading.
 
 > Emits a second `SELECT` statement (Subqueryload) for each relationship
 > to be loaded, across all result objects at once.
@@ -932,15 +1048,12 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 >     ```
 
 > **Parameters:**
-
 > - `paths`: Relationship attributes to load.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
-
 > ```python
 > users = await User.with_subquery(
 >     User.posts,
@@ -950,26 +1063,26 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool])
 
 #### with_schema
 ```python
+@classmethod
 def with_schema(
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
-)
+) -> AsyncQuery
 ```
 
-> Creates a query with complex eager loading schema.
+> Joined, subqueryload and selectinload eager loading.
 
 > Useful for complex cases where you need to load nested relationships in
 > separate queries.
 
 > **Parameters:**
-
 > - `schema`: Dictionary defining the loading strategy.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > ```python
 > from sqlactive import JOINED, SUBQUERY
+>
 > schema = {
 >     User.posts: JOINED,
 >     User.comments: (SUBQUERY, {
@@ -979,259 +1092,118 @@ def with_schema(
 > users = await User.with_schema(schema).all()
 > ```
 
-#### scalars
-```python
-async def scalars()
-```
-
-> Returns a `sqlalchemy.engine.ScalarResult` object containing all rows.
-
-> **Returns:**
-
-> - `sqlalchemy.engine.ScalarResult`: Scalars.
-
-> **Example:**
-
-> ```python
-> result = await User.scalars()
-> users = result.all()
-> ```
-
-#### first
-```python
-async def first()
-```
-
-> Fetches the first row.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None` if no matches.
-
-> **Example:**
-
-> ```python
-> user = await User.first()
-> ```
-
-#### one
-```python
-async def one()
-```
-
-> Fetches exactly one row.
-
-> **Returns:**
-
-> - `Self`: Instance for method chaining.
-
-> **Raises:**
-
-> - `NoResultFound`: If no row is found.
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.one()  # Raises if not exactly one match
-> ```
-
-#### one_or_none
-```python
-async def one_or_none()
-```
-
-> Fetches exactly one row or `None`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Raises:**
-
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.one_or_none()
-> ```
-
-#### fetch_one
-```python
-async def fetch_one()
-```
-
-> Synonym for `one()`.
-
-#### fetch_one_or_none
-```python
-async def fetch_one_or_none()
-```
-
-> Synonym for `one_or_none()`.
-
-#### all
-```python
-async def all()
-```
-
-> Fetches all rows.
-
-> **Returns:**
-
-> - `list[Self]`: List of instances.
-
-> **Example:**
-
-> ```python
-> users = await User.all()
-> ```
-
-#### fetch_all
-```python
-async def fetch_all()
-```
-
-> Synonym for `all()`.
-
-#### to_list
-```python
-async def to_list()
-```
-
-> Synonym for `all()`.
-
-#### unique
-```python
-async def unique()
-```
-
-> Returns a `sqlalchemy.engine.ScalarResult` object containing all unique rows.
-
-> **Returns:**
-
-> - `sqlalchemy.engine.ScalarResult`: Scalars.
-
-> **Example:**
-
-> ```python
-> result = await User.unique()
-> users = result.all()
-> ```
-
-#### unique_all
-```python
-async def unique_all()
-```
-
-> Fetches all unique rows.
-
-> **Returns:**
-
-> - `list[Self]`: List of instances.
-
-> **Example:**
-
-> ```python
-> users = await User.unique_all()
-> ```
-
-#### unique_first
-```python
-async def unique_first()
-```
-
-> Fetches the first unique row.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Example:**
-
-> ```python
-> user = await User.unique_first()
-> ```
-
-#### unique_one
-```python
-async def unique_one()
-```
-
-> Fetches exactly one unique row.
-
-> **Returns:**
-
-> - `Self`: Instance for method chaining.
-
-> **Raises:**
-
-> - `NoResultFound`: If no row is found.
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.unique_one()
-> ```
-
-#### unique_one_or_none
-```python
-async def unique_one_or_none()
-```
-
-> Fetches exactly one unique row or `None`.
-
-> **Returns:**
-
-> - `Self | None`: Instance for method chaining or `None`.
-
-> **Raises:**
-
-> - `MultipleResultsFound`: If multiple rows match.
-
-> **Example:**
-
-> ```python
-> user = await User.unique_one_or_none()
-> ```
-
 #### smart_query
 ```python
+@classmethod
 def smart_query(
-    criterion: Sequence[_ColumnExpressionArgument[bool]] | None = None,
-    filters: dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None = None,
+    criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+    filters: (
+        dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
+    ) = None,
     sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     sort_attrs: Sequence[str] | None = None,
+    group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+    group_attrs: Sequence[str] | None = None,
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
-)
+) -> AsyncQuery
 ```
 
-> Creates a query combining filtering, sorting, and eager loading.
+> Creates a query combining filtering, sorting, grouping and eager loading.
+
+> Does magic Django-like joins like `post___user___name__startswith='Bob'`
+> (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
+
+> Does filtering, sorting and eager loading at the same time.
+> And if, say, filters, sorting and grouping need the same join,
+> it will be done only once.
+
+> It also supports SQLAlchemy syntax filter expressions like
+> >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
+> >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
+
+> !!! note
+>
+>     To get more information about the usage, see the documentation of
+>     [`filter_expr`](smart-query-mixin.md#filter_expr),
+>     [`order_expr`](smart-query-mixin.md#order_expr),
+>     [`columns_expr`](smart-query-mixin.md#columns_expr) and
+>     [`eager_expr`](smart-query-mixin.md#eager_expr) methods of the
+>     [`Smart Queries Mixin`](smart-query-mixin.md).
 
 > **Parameters:**
-
-> - `criterion`: SQLAlchemy filter expressions.
-> - `filters`: Django-style filters.
-> - `sort_columns`: SQLAlchemy columns to sort by.
-> - `sort_attrs`: String column names to sort by.
-> - `schema`: Eager loading schema.
+- `criteria`: SQLAlchemy syntax filter expressions.
+- `filters`: Django-like filter expressions.
+- `sort_columns`: Standalone sort columns.
+- `sort_attrs`: Django-like sort expressions.
+- `group_columns`: Standalone group columns.
+- `group_attrs`: Django-like group expressions.
+- `schema`: Schema for the eager loading.
 
 > **Returns:**
-
 > - [`AsyncQuery`](async-query.md): Async query instance for chaining.
 
 > **Example:**
-
 > ```python
+> from sqlactive import JOINED
+>
 > users = await User.smart_query(
 >     criterion=(User.age >= 18,),
->     filters={'name__like': '%Bob%'},
+>     filters={'name__like': '%John%'},
 >     sort_columns=(User.username,),
 >     sort_attrs=['-created_at'],
->     schema={User.posts: 'joined'}
+>     group_columns=(User.username,),
+>     group_attrs=['age'],
+>     schema={User.posts: JOINED}
 > ).all()
+> ```
+
+#### get_async_query
+```python
+@classmethod
+def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery
+```
+
+> Returns an `AsyncQuery` instance with the provided
+> `sqlalchemy.sql.Select` instance.
+
+> If no `sqlalchemy.sql.Select` instance is provided,
+> it uses the `query` property of the model.
+
+> **Parameters:**
+> - `query`: SQLAlchemy query.
+
+> **Returns:**
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
+
+> **Example:**
+> ```python
+> async_query = User.get_async_query()
+> first_bob = await async_query.where(name__startswith='Bob').first()
+> first_bob.name  # 'Bob Williams'
+> first_bob.age   # 30
+> ```
+
+#### get_primary_key_name
+```python
+@classmethod
+def get_primary_key_name() -> str
+```
+
+> Gets the primary key name of the model.
+
+> !!! warning
+>
+>     This method can only be used if the model has a single primary key.
+
+> **Returns:**
+> - `str`: Primary key name.
+
+> **Raises:**
+> - `InvalidRequestError`: If the model has a composite primary key.
+
+> **Example:**
+> ```python
+> User.get_primary_key_name()  # 'id'
 > ```
 
 ## Important Notes
@@ -1241,7 +1213,7 @@ def smart_query(
    correct results.
 
 2. For joined eager loading with one-to-many or many-to-many relationships,
-   use the `unique()` method or unique-related methods (i.e. `unique_all()`) to
+   use the `unique()` method or related (i.e. `unique_all()`) to
    prevent duplicate rows:
    ```python
    users = await User.options(joinedload(User.posts)).unique_all()

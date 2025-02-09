@@ -17,7 +17,7 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 def __repr__(self) -> str
 ```
 
-> Print the model in a readable format including the primary key.
+> Prints the model in a readable format including the primary key.
 
 > Format:
 > ```
@@ -27,10 +27,11 @@ def __repr__(self) -> str
 > **Example:**
 > ```python
 > user = await User.get(id=1)
-> print(user)
-> # User #1
+> user
+> # <User #1>
+>
 > users = await User.find(username__endswith='Doe').all()
-> print(users)
+> users
 > # [<User #1>, <User #2>]
 > ```
 
@@ -74,9 +75,8 @@ def id_str() -> str
 
 > **Example:**
 > ```python
-> bob = User.create(name='Bob')
-> print(bob.id_str)
-> # 1
+> bob = User.insert(name='Bob')
+> bob.id_str  # 1
 > ```
 
 ### Class Properties
@@ -91,7 +91,7 @@ def columns() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.columns)
+> User.columns
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
 > ```
 
@@ -107,7 +107,7 @@ def primary_keys_full() -> list[InstrumentedAttribute]
 
 > **Example:**
 > ```python
-> print(User.primary_keys_full)
+> User.primary_keys_full
 > # [<sqlalchemy.orm.attributes.InstrumentedAttribute 'id'>]
 > ```
 
@@ -121,7 +121,7 @@ def primary_keys() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.primary_keys)
+> User.primary_keys
 > # ['id']
 > ```
 
@@ -135,7 +135,7 @@ def relations() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.relations)
+> User.relations
 > # ['posts', 'comments']
 > ```
 
@@ -149,7 +149,7 @@ def settable_relations() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.settable_relations)
+> User.settable_relations
 > # ['posts', 'comments']
 > ```
 
@@ -163,7 +163,7 @@ def hybrid_properties() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.hybrid_properties)
+> User.hybrid_properties
 > # ['is_adult']
 > ```
 
@@ -177,7 +177,7 @@ def hybrid_methods_full() -> dict[str, InstrumentedAttribute]
 
 > **Example:**
 > ```python
-> print(User.hybrid_methods_full)
+> User.hybrid_methods_full
 > # {'is_adult': <sqlalchemy.orm.attributes.InstrumentedAttribute 'is_adult'>}
 > ```
 
@@ -191,7 +191,7 @@ def hybrid_methods() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.hybrid_methods)
+> User.hybrid_methods
 > # ['is_adult']
 > ```
 
@@ -207,8 +207,8 @@ def filterable_attributes() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.filterable_attributes)
-> # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
+> User.filterable_attributes
+> # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', ...]
 > ```
 
 #### sortable_attributes
@@ -223,7 +223,7 @@ def sortable_attributes() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.sortable_attributes)
+> User.sortable_attributes
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
 > ```
 
@@ -239,6 +239,6 @@ def settable_attributes() -> list[str]
 
 > **Example:**
 > ```python
-> print(User.settable_attributes)
-> # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
+> User.settable_attributes
+> # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', ...]
 > ```

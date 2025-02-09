@@ -1,7 +1,7 @@
 # Smart Queries Mixin
 
 The `SmartQueryMixin` class provides advanced query functionality for SQLAlchemy
-models, allowing you to filter, sort, and eager load data in a single query,
+models, allowing you to filter, sort, group and eager load data in a single query,
 making it easier to retrieve specific data from the database.
 
 It uses the [`InspectionMixin`](inspection-mixin.md) class functionality.
@@ -101,11 +101,12 @@ users = await User.smart_query(
 
 ## API Reference
 
-The `SmartQueryMixin` class provides three low-level methods for building filter, sort
-and eager load expressions:
+The `SmartQueryMixin` class provides three low-level methods for building
+filter, sort, group and eager load expressions:
 
 * `filter_expr`: Builds filter expressions.
 * `order_expr`: Builds order expressions.
+* `columns_expr`: Builds column expressions.
 * `eager_expr`: Builds eager load expressions.
 
 !!! warning
