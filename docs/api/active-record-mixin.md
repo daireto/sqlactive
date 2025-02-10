@@ -978,6 +978,38 @@ def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 
 > Synonym for `where()`.
 
+#### search
+```python
+@classmethod
+def search(
+    search_term: str,
+    columns: Sequence[str | InstrumentedAttribute] | None = None,
+) -> AsyncQuery
+```
+
+> Applies a search filter to the query.
+
+> Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
+> of the model. If `columns` are provided, searches only these columns.
+
+> **Parameters:**
+
+> - `search_term`: Search term.
+> - `columns`: Columns to search in.
+
+> **Returns:**
+
+> - [`AsyncQuery`](async-query.md): Async query instance for chaining.
+
+> **Example:**
+
+> ```python
+> users = await User.search('Bob').all()
+> users = await User.search('Bob', columns=(User.name,)).all()
+> users = await User.search('Bob', columns=(User.name, User.email)).all()
+> users = await User.search('Bob', columns=('name',)).all()
+> ```
+
 #### order_by
 ```python
 @classmethod

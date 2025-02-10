@@ -121,6 +121,18 @@ users = await User.smart_query(
 ).all()
 ```
 
+### Searching
+
+You can search data using the `search` method.
+
+```python
+users = await User.search(
+    query=User.query,
+    search_term='Bob',
+    columns=(User.name, User.username),
+).all()
+```
+
 ## API Reference
 
 The `SmartQueryMixin` class provides three low-level methods for building
@@ -360,7 +372,7 @@ def smart_query(
 
 > **Parameters:**
 
-> - `query`: Query for the model.
+> - `query`: Native SQLAlchemy query.
 > - `criteria`: SQLAlchemy syntax filter expressions.
 > - `filters`: Django-like filter expressions.
 > - `sort_columns`: Standalone sort columns.
@@ -386,4 +398,43 @@ def smart_query(
 >     sort_columns=[User.name],
 >     group_columns=[User.name],
 > ).all()
+> ```
+
+#### apply_search_filter
+```python
+@classmethod
+def apply_search_filter(
+    query: Select[tuple[Any, ...]],
+    search_term: str,
+    columns: Sequence[str | InstrumentedAttribute] | None = None,
+) -> AsyncQuery
+```
+
+> Applies a search filter to the query.
+
+> Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
+> of the model. If `columns` are provided, searches only these columns.
+
+> **Parameters:**
+
+> - `query`: Native SQLAlchemy query.
+> - `search_term`: Search term.
+> - `columns`: Columns to search in.
+
+> **Returns:**
+
+> - `Select[tuple[Any, ...]]`: Filtered query.
+
+> **Example:**
+
+> ```python
+> query = User.apply_search_filter('Bob')
+> query = User.apply_search_filter('Bob', columns=(User.name, User.username))
+> query = User.apply_search_filter('Bob', columns=('name', 'username'))
+>
+> # You should call `search` method instead in order
+> # to use the `AsyncQuery` wrapper.
+> users = await User.search('Bob').all()
+> users = await User.search('Bob', columns=(User.name, User.username)).all()
+> users = await User.search('Bob', columns=('name', 'username')).all()
 > ```

@@ -92,13 +92,28 @@ def id_str() -> str
 def columns() -> list[str]
 ```
 
-> Sequence of string key names for all columns in this collection.
+> Returns a `list` of column names.
 
 > **Example:**
 
 > ```python
 > User.columns
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
+> ```
+
+#### string_columns
+```python
+@classproperty
+def string_columns() -> list[str]
+```
+
+> Returns a `list` of string column names.
+
+> **Example:**
+
+> ```python
+> User.string_columns
+> # ['username', 'name']
 > ```
 
 #### primary_keys_full
@@ -275,4 +290,21 @@ def settable_attributes() -> list[str]
 > ```python
 > User.settable_attributes
 > # ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', ...]
+> ```
+
+#### searchable_attributes
+```python
+@classproperty
+def searchable_attributes() -> list[str]
+```
+
+> Returns a `list` of searchable attributes.
+
+> These are all string columns.
+
+> **Example:**
+
+> ```python
+> User.searchable_attributes
+> # ['username', 'name']
 > ```

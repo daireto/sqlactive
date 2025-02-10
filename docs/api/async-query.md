@@ -206,6 +206,39 @@ def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Self
 
 > Synonym for `where()`.
 
+#### search
+```python
+def search(
+    search_term: str,
+    columns: Sequence[str | InstrumentedAttribute] | None = None,
+) -> Self
+```
+
+> Applies a search filter to the query.
+
+> Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
+> of the model. If `columns` are provided, searches only these columns.
+
+> **Parameters:**
+
+> - `search_term`: Search term.
+> - `columns`: Columns to search in.
+
+> **Returns:**
+
+> - `Self`: The instance itself for method chaining.
+
+> **Example:**
+
+> ```python
+> query = select(User)
+> async_query = AsyncQuery(query)
+> users = await async_query.search('Bob').all()
+> users = await async_query.search('Bob', columns=(User.name,)).all()
+> users = await async_query.search('Bob', columns=(User.name, User.email)).all()
+> users = await async_query.search('Bob', columns=('name',)).all()
+> ```
+
 #### order_by
 ```python
 def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self
