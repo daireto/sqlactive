@@ -12,7 +12,7 @@ from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel, Comment, Post, User
+from ._models import BaseModel, Comment, Post, User, Sell
 from ._seed import Seed
 
 
@@ -34,6 +34,14 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
             asyncio.run(cls.conn.close(BaseModel))
+
+    def test_get_primary_key_name(self):
+        """Test for `_get_primary_key_name` function."""
+
+        logger.info('Testing `_get_primary_key_name` function...')
+        with self.assertRaises(InvalidRequestError) as context:
+            Sell.get_primary_key_name()
+        self.assertIn('has a composite primary key', str(context.exception))
 
     def test_fill(self):
         """Test for `fill` function."""
@@ -505,6 +513,34 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Jane Doe', user.name)
         user = await User.find(username='John84').one()
         self.assertEqual('John Doe', user.name)
+
+    async def test_search(self):
+        """Test for `search` function."""
+
+        logger.info('Testing `search` function...')
+        users = await User.search('John').all()
+        self.assertEqual('John84', users[0].username)
+        self.assertEqual('John Doe', users[0].name)
+        self.assertEqual('Diana84', users[1].username)
+        self.assertEqual('Diana Johnson', users[1].name)
+        self.assertEqual('Johnny665', users[2].username)
+        self.assertEqual('Johnny Depp', users[2].name)
+        users = await User.search('John', columns=(User.username,)).all()
+        self.assertEqual('John84', users[0].username)
+        self.assertEqual('John Doe', users[0].name)
+        self.assertEqual('Johnny665', users[1].username)
+        self.assertEqual('Johnny Depp', users[1].name)
+        users = await User.search('John', columns=('name',)).all()
+        self.assertEqual('John84', users[0].username)
+        self.assertEqual('John Doe', users[0].name)
+        self.assertEqual('Diana84', users[1].username)
+        self.assertEqual('Diana Johnson', users[1].name)
+        self.assertEqual('Johnny665', users[2].username)
+        self.assertEqual('Johnny Depp', users[2].name)
+        with self.assertRaises(KeyError):
+            User.search('John', columns=('age',))
+        with self.assertRaises(KeyError):
+            User.search('John', columns=(User.age,))
 
     async def test_order_by(self):
         """Test for `order_by` and `sort` functions."""

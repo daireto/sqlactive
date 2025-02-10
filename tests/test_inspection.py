@@ -129,3 +129,9 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
             ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult', 'posts', 'comments'],
             User.settable_attributes,
         )
+
+    def test_searchable_attributes(self):
+        """Test for `searchable_attributes` classproperty."""
+
+        logger.info('Testing `searchable_attributes` classproperty...')
+        self.assertCountEqual(['username', 'name'], User.searchable_attributes)
