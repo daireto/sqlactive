@@ -12,7 +12,7 @@ from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import Select, asc, desc, extract, operators
 from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.sql.elements import UnaryExpression
-from sqlalchemy.sql.operators import OperatorType
+from sqlalchemy.sql.operators import OperatorType, or_
 from typing_extensions import Self
 
 from .definitions import JOINED, SELECT_IN, SUBQUERY
@@ -351,7 +351,7 @@ class SmartQueryMixin(InspectionMixin):
         Parameters
         ----------
         query : Select[tuple[Any, ...]]
-            Query for the model.
+            Native SQLAlchemy query.
         criteria : Sequence[_ColumnExpressionArgument[bool]] | None, optional
             SQLAlchemy syntax filter expressions, by default None.
         filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None, optional
@@ -380,7 +380,7 @@ class SmartQueryMixin(InspectionMixin):
         if not group_attrs:
             group_attrs = []
 
-        root_cls = query.__dict__['_propagate_attrs']['plugin_subject'].class_  # for example, User or Post
+        root_cls: type[Self] = query.__dict__['_propagate_attrs']['plugin_subject'].class_  # for example, User or Post
         attrs = (
             list(cls._flatten_filter_keys(filters))
             + list(map(lambda s: s.lstrip(cls._DESC_PREFIX), sort_attrs))
@@ -417,6 +417,79 @@ class SmartQueryMixin(InspectionMixin):
             query = query.options(*cls._eager_expr_from_schema(schema))
 
         return query
+
+    @classmethod
+    def apply_search_filter(
+        cls,
+        query: Select[tuple[Any, ...]],
+        search_term: str,
+        columns: Sequence[str | InstrumentedAttribute] | None = None,
+    ) -> Select[tuple[Any, ...]]:
+        """Applies a search filter to the query.
+
+        Searches for `search_term` in the searchable columns of the model.
+        If `columns` are provided, searches only these columns.
+
+        Parameters
+        ----------
+        query : Select[tuple[Any, ...]]
+            Native SQLAlchemy query.
+        search_term : str
+            Search term.
+        columns : Sequence[str  |  InstrumentedAttribute] | None, optional
+            Columns to search in, by default None.
+        """
+
+        root_cls: type[Self] = query.__dict__['_propagate_attrs']['plugin_subject'].class_  # for example, User or Post
+        searchable_columns = cls._get_searchable_columns(root_cls, columns)
+        if len(searchable_columns) > 1:
+            criteria = or_(*[getattr(root_cls, col).ilike(f'%{search_term}%') for col in searchable_columns])
+        else:
+            criteria = getattr(root_cls, searchable_columns[0]).ilike(f'%{search_term}%')
+
+        query = query.filter(criteria)  # type: ignore
+        return query
+
+    @classmethod
+    def _get_searchable_columns(
+        cls,
+        root_cls: type[Self],
+        columns: Sequence[str | InstrumentedAttribute] | None = None,
+    ) -> list[str]:
+        """Returns a list of searchable columns.
+
+        If `columns` are provided, returns only these columns.
+
+        Parameters
+        ----------
+        root_cls : type[Self]
+            Model class.
+        columns : Sequence[str  |  InstrumentedAttribute] | None, optional
+            Columns to search in, by default None.
+
+        Returns
+        -------
+        list[str]
+            List of searchable columns.
+
+        Raises
+        ------
+        KeyError
+            If column is not searchable.
+        """
+
+        searchable_columns = []
+        if columns:
+            for col in columns:
+                col_name = col if isinstance(col, str) else col.key
+                if col_name not in root_cls.searchable_attributes:
+                    raise KeyError(f'Column `{col_name}` is not searchable.')
+                searchable_columns.append(col_name)
+
+            return searchable_columns
+
+        else:
+            return root_cls.searchable_attributes
 
     @classmethod
     def _flatten_filter_keys(cls, filters: dict | list) -> Generator[str, None, None]:
@@ -650,7 +723,7 @@ class SmartQueryMixin(InspectionMixin):
         Parameters
         ----------
         query : Select[tuple[Any, ...]]
-            Query for the model.
+            Native SQLAlchemy query.
         sort_attrs : Sequence[str]
             Sort columns.
         root_cls : type[SmartQueryMixin]
@@ -715,7 +788,7 @@ class SmartQueryMixin(InspectionMixin):
         Parameters
         ----------
         query : Select[tuple[Any, ...]]
-            Query for the model.
+            Native SQLAlchemy query.
         group_attrs : Sequence[str]
             Group columns.
         root_cls : type[SmartQueryMixin]

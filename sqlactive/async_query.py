@@ -195,7 +195,39 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
         return self.where(*criteria, **filters)
 
-    # TODO: Add search() method to search for a value in a string-type columns
+    def search(
+        self,
+        search_term: str,
+        columns: Sequence[str | InstrumentedAttribute] | None = None,
+    ):
+        """Applies a search filter to the query.
+
+        Searches for `search_term` in the searchable columns of the model.
+        If `columns` are provided, searches only these columns.
+
+        Parameters
+        ----------
+        search_term : str
+            Search term.
+        columns : Sequence[str | InstrumentedAttribute] | None, optional
+            Columns to search in, by default None.
+
+        Example:
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> users = await async_query.search(search_term='John').all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users[0].name
+        # John Doe
+        >>> users[1].name
+        # Diana Johnson
+        >>> users[1].username
+        # Diana84
+        """
+
+        self.query = self.apply_search_filter(query=self.query, search_term=search_term, columns=columns)
+        return self
 
     def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """Applies one or more ORDER BY criteria to the query.

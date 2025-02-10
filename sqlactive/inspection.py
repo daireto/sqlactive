@@ -77,9 +77,15 @@ class InspectionMixin(DeclarativeBase):
 
     @classproperty
     def columns(cls) -> list[str]:
-        """Sequence of string key names for all columns in this collection."""
+        """Returns a `list` of column names."""
 
         return cls.__table__.columns.keys()
+
+    @classproperty
+    def string_columns(cls) -> list[str]:
+        """Returns a `list` of string column names."""
+
+        return [c.key for c in cls.__table__.columns if c.type.python_type is str]
 
     @classproperty
     def primary_keys_full(cls) -> tuple[Column[Any], ...]:
@@ -165,3 +171,12 @@ class InspectionMixin(DeclarativeBase):
         """
 
         return cls.columns + cls.hybrid_properties + cls.settable_relations
+
+    @classproperty
+    def searchable_attributes(cls) -> list[str]:
+        """Returns a `list` of searchable attributes.
+
+        These are all string columns.
+        """
+
+        return cls.string_columns

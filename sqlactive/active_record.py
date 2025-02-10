@@ -889,6 +889,39 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.where(*criteria, **filters)
 
     @classmethod
+    def search(
+        cls,
+        search_term: str,
+        columns: Sequence[str | InstrumentedAttribute] | None = None,
+    ):
+        """Applies a search filter to the query.
+
+        Searches for `search_term` in the searchable columns of the model.
+        If `columns` are provided, searches only these columns.
+
+        Parameters
+        ----------
+        search_term : str
+            Search term.
+        columns : Sequence[str | InstrumentedAttribute] | None, optional
+            Columns to search in, by default None.
+
+        Example:
+        >>> users = await User.search(search_term='John').all()
+        >>> users
+        # [<User 1>, <User 2>, ...]
+        >>> users[0].name
+        # John Doe
+        >>> users[1].name
+        # Diana Johnson
+        >>> users[1].username
+        # Diana84
+        """
+
+        async_query = cls.get_async_query()
+        return async_query.search(search_term=search_term, columns=columns)
+
+    @classmethod
     def order_by(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """Applies one or more ORDER BY criteria to the query.
 
@@ -1209,11 +1242,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             return AsyncQuery[cls](cls.query)
         return AsyncQuery[cls](query)
 
+    @classmethod
     @deprecated(
         'Deprecated since version 0.2: Use `primary_key_name` property instead.',
         stacklevel=2,
     )
-    @classmethod
     def get_primary_key_name(cls) -> str:
         """_Deprecated since version 0.2: Use `primary_key_name` property instead._
 
