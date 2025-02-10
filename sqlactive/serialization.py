@@ -1,10 +1,10 @@
 """This module defines `SerializationMixin` class."""
 
 import json
-
 from collections.abc import Iterable
-from sqlalchemy.orm.exc import DetachedInstanceError
 from typing import Any, overload
+
+from sqlalchemy.orm.exc import DetachedInstanceError
 from typing_extensions import Self
 
 from .inspection import InspectionMixin

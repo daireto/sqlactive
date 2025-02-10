@@ -191,10 +191,9 @@ Otherwise, it will raise an `NoSessionError` exception.
 from .active_record import ActiveRecordMixin
 from .base_model import ActiveRecordBaseModel
 from .conn import DBConnection, execute
-from .definitions import JOINED, SUBQUERY, SELECT_IN
+from .definitions import JOINED, SELECT_IN, SUBQUERY
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
-
 
 __all__ = [
     'ActiveRecordBaseModel',

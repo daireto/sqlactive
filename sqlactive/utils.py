@@ -3,7 +3,6 @@
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar
 
-
 _T = TypeVar('_T')
 
 

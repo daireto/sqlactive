@@ -1,21 +1,22 @@
 """This module defines `AsyncQuery` class."""
 
 from collections.abc import Sequence
+from typing import Any, Generic, Literal, TypeVar, overload
+
+from sqlalchemy.engine import Result, Row, ScalarResult
+from sqlalchemy.orm import joinedload, selectinload, subqueryload
+from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql import Select, select
 from sqlalchemy.sql._typing import (
     _ColumnExpressionArgument,
     _ColumnExpressionOrStrLabelArgument,
     _ColumnsClauseArgument,
 )
-from sqlalchemy.engine import Result, Row, ScalarResult
-from sqlalchemy.orm import joinedload, subqueryload, selectinload
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.sql.base import ExecutableOption
-from typing import Any, Generic, Literal, TypeVar, overload
+from sqlalchemy.sql.functions import func
 
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
-
 
 _T = TypeVar('_T')
 
@@ -52,8 +53,8 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
     __abstract__ = True
 
-    _query: Select[tuple[Any, ...]]
-    """The original `sqlalchemy.sql.Select` instance."""
+    query: Select[tuple[Any, ...]]
+    """The wrapped `sqlalchemy.sql.Select` instance."""
 
     def __init__(self, query: Select[tuple[Any, ...]]) -> None:
         """Builds an async wrapper for SQLAlchemy `Query`.
@@ -66,53 +67,30 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         NOTE: You must provide a session by calling the `set_session` method.
         """
 
-        self._query = query
+        self.query = query
 
-    @property
-    def query(self) -> Select[tuple[Any, ...]]:
-        """Returns the original `sqlalchemy.sql.Select` instance."""
+    def select(self, *entities: _ColumnsClauseArgument[Any]):
+        """Replaces the columns clause with the given entities.
 
-        return self._query
-
-    @query.setter
-    def query(self, query: Select[tuple[Any, ...]]) -> None:
-        """Sets the original `sqlalchemy.sql.Select` instance."""
-
-        self._query = query
-
-    @classmethod
-    def select(cls, *entities: _ColumnsClauseArgument[Any]):
-        """Creates a brand new `AsyncQuery` instance
-        with the specified entities selected.
-
-        **WARNING:**
-
-            When calling this method, the query will be completely reset and
-            overwritten with a new query. Every WHERE, ORDER BY, GROUP BY, LIMIT,
-            OFFSET, etc. will be cancelled. So, make sure to call this method before
-            calling any other method in the query build process.
+        The existing set of FROMs are maintained, including those
+        implied by the current columns clause.
 
         Example:
-        >>> async_query = AsyncQuery.select(User)
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> async_query.order_by('-created_at')
         >>> async_query
-        # SELECT users.id, users.username, ... FROM users
-        >>> async_query = AsyncQuery.select(User.name, User.age)
+        # SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
+        >>> async_query.select(User.name, User.age)
         >>> async_query
-        # SELECT users.name, users.age FROM users
-        >>> async_query = AsyncQuery.select(User.name, func.max(User.age))
-        >>> async_query
-        # SELECT users.name, max(users.age) AS max_1 FROM users
-
-        Raises
-        ------
-        ValueError
-            If no entities are selected.
+        # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
         """
 
-        if len(entities) == 0:
-            raise ValueError('At least one column must be selected.')
+        if not entities:
+            return self
 
-        return cls(select(*entities))
+        self.query = self.query.with_only_columns(*entities, maintain_column_froms=True)
+        return self
 
     def options(self, *args: ExecutableOption):
         """Applies the given list of mapper options.
@@ -171,7 +149,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         # InvalidRequestError: 'The unique() method must be invoked...'
         """
 
-        self._query = self._query.options(*args)
+        self.query = self.query.options(*args)
         return self
 
     def where(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
@@ -204,7 +182,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         # [<User 2>]
         """
 
-        self._query = self.smart_query(query=self._query, criteria=criteria, filters=filters)
+        self.query = self.smart_query(query=self.query, criteria=criteria, filters=filters)
         return self
 
     def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
@@ -216,6 +194,8 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         """Synonym for `where()`."""
 
         return self.where(*criteria, **filters)
+
+    # TODO: Add search() method to search for a value in a string-type columns
 
     def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
         """Applies one or more ORDER BY criteria to the query.
@@ -248,7 +228,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         """
 
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
-        self._query = self.smart_query(query=self._query, sort_columns=sort_columns, sort_attrs=sort_attrs)
+        self.query = self.smart_query(query=self.query, sort_columns=sort_columns, sort_attrs=sort_attrs)
         return self
 
     def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
@@ -299,7 +279,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
             self.query = select(*select_columns)
 
         group_columns, group_attrs = self._split_columns_and_attrs(columns)
-        self._query = self.smart_query(query=self._query, group_columns=group_columns, group_attrs=group_attrs)
+        self.query = self.smart_query(query=self.query, group_columns=group_columns, group_attrs=group_attrs)
         return self
 
     def offset(self, offset: int):
@@ -326,7 +306,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         if offset < 0:
             raise ValueError('Offset must be positive.')
 
-        self._query = self._query.offset(offset)
+        self.query = self.query.offset(offset)
         return self
 
     def skip(self, skip: int):
@@ -358,13 +338,18 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         if limit < 0:
             raise ValueError('Limit must be positive.')
 
-        self._query = self._query.limit(limit)
+        self.query = self.query.limit(limit)
         return self
 
     def take(self, take: int):
         """Synonym for `limit()`."""
 
         return self.limit(take)
+
+    def top(self, top: int):
+        """Synonym for `limit()`."""
+
+        return self.limit(top)
 
     def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None):
         """Joined eager loading using LEFT OUTER JOIN.
@@ -577,7 +562,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         """
 
         async with self.AsyncSession() as session:
-            return await session.execute(self._query)
+            return await session.execute(self.query)
 
     async def scalars(self) -> ScalarResult[_T]:
         """Returns a `sqlalchemy.engine.ScalarResult` instance
@@ -757,6 +742,20 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
             return (await self.scalars()).all()
 
         return (await self.execute()).all()
+
+    async def count(self) -> int:
+        """Fetches the number of rows.
+
+        Example:
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> count = await async_query.count()
+        >>> count
+        # 34
+        """
+
+        self._set_count_query()
+        return (await self.execute()).scalars().one()
 
     @overload
     async def unique(self) -> ScalarResult[_T]: ...
@@ -940,10 +939,24 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
         return (await self.unique(scalars)).all()
 
+    async def unique_count(self) -> int:
+        """Fetches the number of unique rows.
+
+        Example:
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> count = await async_query.unique_count()
+        >>> count
+        # 34
+        """
+
+        self._set_count_query()
+        return (await self.execute()).scalars().unique().one()
+
     def __str__(self) -> str:
         """Returns the raw SQL query."""
 
-        return str(self._query)
+        return str(self.query)
 
     def __repr__(self) -> str:
         """Returns the raw SQL query."""
@@ -971,3 +984,8 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
                 columns.append(column)
 
         return columns, attrs
+
+    def _set_count_query(self):
+        """Sets the count aggregate function to the query."""
+
+        self.query = self.query.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)

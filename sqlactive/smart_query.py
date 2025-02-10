@@ -2,20 +2,21 @@
 
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Sequence
+from typing import Any
+
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
+from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql import Select, asc, desc, operators, extract
+from sqlalchemy.sql import Select, asc, desc, extract, operators
 from sqlalchemy.sql._typing import _ColumnExpressionArgument, _ColumnExpressionOrStrLabelArgument
 from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.sql.operators import OperatorType
-from typing import Any
 from typing_extensions import Self
 
+from .definitions import JOINED, SELECT_IN, SUBQUERY
 from .inspection import InspectionMixin
-from .definitions import JOINED, SUBQUERY, SELECT_IN
 
 
 class SmartQueryMixin(InspectionMixin):

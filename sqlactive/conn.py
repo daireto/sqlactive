@@ -1,15 +1,15 @@
 """This module defines `DBConnection` class."""
 
 from asyncio import current_task
+from typing import Any, TypeVar
+
 from sqlalchemy.engine import Result
 from sqlalchemy.engine.interfaces import _CoreAnyExecuteParams
 from sqlalchemy.engine.url import URL
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, async_scoped_session
+from sqlalchemy.ext.asyncio import async_scoped_session, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.selectable import TypedReturnsRows
-from typing import Any, TypeVar
 
 from .base_model import ActiveRecordBaseModel
-
 
 _T = TypeVar('_T', bound=Any)
 

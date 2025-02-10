@@ -1,8 +1,12 @@
 """This module defines `InspectionMixin` class."""
 
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
+from typing import Any
+
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
+from sqlalchemy.sql.schema import Column
 from typing_extensions import Self
 
 from .utils import classproperty
@@ -78,22 +82,30 @@ class InspectionMixin(DeclarativeBase):
         return cls.__table__.columns.keys()
 
     @classproperty
-    def primary_keys_full(cls):
-        """Gets primary key properties for a SQLAlchemy cls.
+    def primary_keys_full(cls) -> tuple[Column[Any], ...]:
+        """Returns the columns that form the primary key."""
 
-        Taken from marshmallow_sqlalchemy.
-
-        Returns a list of `sqlalchemy.orm.interfaces.MapperProperty` objects.
-        """
-
-        mapper = cls.__mapper__
-        return [mapper.get_property_by_column(column) for column in mapper.primary_key]
+        return cls.__mapper__.primary_key
 
     @classproperty
     def primary_keys(cls) -> list[str]:
-        """Returns a `list` of primary key names."""
+        """Returns the names of the primary key columns."""
 
         return [pk.key for pk in cls.primary_keys_full]
+
+    @classproperty
+    def primary_key_name(cls) -> str:
+        """Returns the primary key name of the model.
+
+        **WARNING:**
+
+            This property can only be used if the model has a single primary key.
+            If the model has a composite primary key, an `InvalidRequestError` is raised.
+        """
+
+        if len(cls.primary_keys) > 1:
+            raise InvalidRequestError(f'Model {cls.__name__} has a composite primary key.')
+        return cls.primary_keys[0]
 
     @classproperty
     def relations(cls) -> list[str]:

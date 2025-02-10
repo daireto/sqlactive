@@ -1,6 +1,6 @@
 """This module defines `SessionMixin` class."""
 
-from sqlalchemy.ext.asyncio import async_scoped_session, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
 from .exceptions import NoSessionError
 from .utils import classproperty

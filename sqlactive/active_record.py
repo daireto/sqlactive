@@ -1,10 +1,13 @@
 """This module defines `ActiveRecordMixin` class."""
 
 from collections.abc import Sequence
+from typing import Any, Literal, overload
+
 from sqlalchemy.engine import Result, Row, ScalarResult
-from sqlalchemy.exc import InvalidRequestError, NoResultFound
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
-from sqlalchemy.sql import FromClause, Select, select
+from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.sql import Select, select
 from sqlalchemy.sql._typing import (
     _ColumnExpressionArgument,
     _ColumnExpressionOrStrLabelArgument,
@@ -12,12 +15,10 @@ from sqlalchemy.sql._typing import (
 )
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.operators import OperatorType
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
-from typing import Any, Literal, cast, overload
-from typing_extensions import Self
+from typing_extensions import Self, deprecated
 
-from .session import SessionMixin
 from .async_query import AsyncQuery
+from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 from .utils import classproperty
 
@@ -255,10 +256,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If the model has a composite primary key.
         """
 
-        primary_key_name = cls.get_primary_key_name()
         async with cls.AsyncSession() as session:
             try:
-                query = cls.smart_query(filters={f'{primary_key_name}__in': ids}).query
+                query = cls.smart_query(filters={f'{cls.primary_key_name}__in': ids}).query
                 rows = (await session.execute(query)).scalars().all()
                 for row in rows:
                     await session.delete(row)
@@ -306,9 +306,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If multiple results are found.
         """
 
-        primary_key_name = cls.get_primary_key_name()
         async_query = cls.get_async_query()
-        async_query = async_query.where(**{primary_key_name: pk})
+        async_query = async_query.where(**{cls.primary_key_name: pk})
         if join:
             async_query = async_query.join(*join)
         if subquery:
@@ -547,6 +546,19 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         async_query = cls.get_async_query()
         return await async_query.all(scalars)
 
+    @classmethod
+    async def count(cls) -> int:
+        """Fetches the number of rows.
+
+        Example:
+        >>> count = await User.count()
+        >>> count
+        # 34
+        """
+
+        async_query = cls.get_async_query()
+        return await async_query.count()
+
     @overload
     @classmethod
     async def unique(cls) -> ScalarResult[Self]: ...
@@ -743,6 +755,19 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         async_query = cls.get_async_query()
         return await async_query.unique_all(scalars)
 
+    @classmethod
+    async def unique_count(cls) -> int:
+        """Fetches the number of unique rows.
+
+        Example:
+        >>> count = await User.unique_count()
+        >>> count
+        # 34
+        """
+
+        async_query = cls.get_async_query()
+        return await async_query.unique_count()
+
     @overload
     @classmethod
     def select(cls) -> AsyncQuery[Self]: ...
@@ -753,25 +778,22 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def select(cls, *entities: _ColumnsClauseArgument[Any]):
-        """Creates a brand new `AsyncQuery` instance
-        with the specified entities selected.
+        """Replaces the columns clause with the given entities.
+
+        The existing set of FROMs are maintained, including those
+        implied by the current columns clause.
 
         Example:
-        >>> async_query = User.select()
+        >>> async_query = User.order_by('-created_at')
         >>> async_query
-        # SELECT users.id, users.username, ... FROM users
-        >>> async_query = User.select(User.name, User.age)
+        # SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
+        >>> async_query.select(User.name, User.age)
         >>> async_query
-        # SELECT users.name, users.age FROM users
-        >>> async_query = User.select(User.name, func.max(User.age))
-        >>> async_query
-        # SELECT users.name, max(users.age) AS max_1 FROM users
+        # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
         """
 
-        if not entities:
-            return cls.get_async_query()
-
-        return AsyncQuery.select(*entities)
+        async_query = cls.get_async_query()
+        return async_query.select(*entities)
 
     @classmethod
     def options(cls, *args: ExecutableOption):
@@ -989,6 +1011,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.limit(take)
 
     @classmethod
+    def top(cls, top: int):
+        """Synonym for `limit()`."""
+
+        return cls.limit(top)
+
+    @classmethod
     def join(cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]):
         """Joined eager loading using LEFT OUTER JOIN.
 
@@ -1181,9 +1209,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             return AsyncQuery[cls](cls.query)
         return AsyncQuery[cls](query)
 
+    @deprecated(
+        'Deprecated since version 0.2: Use `primary_key_name` property instead.',
+        stacklevel=2,
+    )
     @classmethod
     def get_primary_key_name(cls) -> str:
-        """Gets the primary key name of the model.
+        """_Deprecated since version 0.2: Use `primary_key_name` property instead._
+
+        Gets the primary key name of the model.
 
         NOTE: This method can only be used if the model has a single primary key.
 
@@ -1198,10 +1232,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             If the model has a composite primary key.
         """
 
-        primary_keys = cast(FromClause, cls.__table__.primary_key).columns
-        if len(primary_keys) > 1:
-            raise InvalidRequestError(f'Model {cls.__name__} has a composite primary key.')
-        return primary_keys[0].name
+        return cls.primary_key_name
 
     @classmethod
     def set_session(cls, session: async_scoped_session[AsyncSession]) -> None:
