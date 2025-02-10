@@ -1,10 +1,12 @@
 import asyncio
 import unittest
 
+from sqlalchemy.exc import InvalidRequestError
+
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel, User, Sell
+from ._models import BaseModel, Sell, User
 from ._seed import Seed
 
 
@@ -56,6 +58,14 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `primary_keys` classproperty...')
         self.assertCountEqual(['id'], User.primary_keys)
+
+    def test_primary_key_name(self):
+        """Test for `primary_key_name` classproperty."""
+
+        logger.info('Testing `primary_key_name` classproperty...')
+        with self.assertRaises(InvalidRequestError) as context:
+            _ = Sell.primary_key_name
+        self.assertIn('has a composite primary key', str(context.exception))
 
     def test_relations(self):
         """Test for `relations` classproperty."""

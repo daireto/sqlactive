@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 
-from sqlalchemy.sql import select, func
+from sqlalchemy.sql import func, select
 
 from sqlactive.base_model import ActiveRecordBaseModel
 from sqlactive.conn import DBConnection, execute

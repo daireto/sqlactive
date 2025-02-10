@@ -5,7 +5,7 @@ from sqlactive.async_query import AsyncQuery
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel, User, Post
+from ._models import BaseModel, Post, User
 from ._seed import Seed
 
 
@@ -45,16 +45,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         users = (await async_query.execute()).scalars().all()
         self.assertEqual(1, len(users))
         self.assertEqual('Bob Williams', users[0].name)
-
-    async def test_select(self):
-        """Test for `select` function."""
-
-        logger.info('Testing `select` function...')
-        async_query = AsyncQuery.select(User.name, User.age)
-        self.assertIn('SELECT users.name, users.age', str(async_query))
-        with self.assertRaises(ValueError) as context:
-            AsyncQuery.select()
-        self.assertEqual('At least one column must be selected.', str(context.exception))
 
     async def test_str_and_repr(self):
         """Test for `__str__` and `__repr__` functions."""
@@ -97,12 +87,12 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         users = await async_query.skip(2).filter(username__like='Ji%').all()
         self.assertEqual(1, len(users))
 
-    async def test_limit(self):
-        """Test for `take` function."""
+    async def test_take_and_top(self):
+        """Test for `take` and `top` functions."""
 
-        logger.info('Test for `take` function...')
+        logger.info('Test for `take` and `top` functions...')
         async_query = User.get_async_query()
         users = await async_query.take(2).filter(username__like='Ji%').all()
         self.assertEqual(2, len(users))
-        users = await async_query.take(1).filter(username__like='Ji%').all()
+        users = await async_query.top(1).filter(username__like='Ji%').all()
         self.assertEqual(1, len(users))

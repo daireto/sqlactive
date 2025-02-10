@@ -5,7 +5,7 @@ import unittest
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel, User, Post
+from ._models import BaseModel, Post, User
 from ._seed import Seed
 
 

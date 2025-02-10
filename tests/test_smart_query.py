@@ -1,20 +1,19 @@
 import asyncio
 import unittest
-
 from collections import OrderedDict
 
 from sqlalchemy import func
-from sqlalchemy.sql import asc, desc
-from sqlalchemy.sql.operators import like_op, and_, or_
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import aliased, joinedload, subqueryload, selectinload
+from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
+from sqlalchemy.sql import asc, desc
+from sqlalchemy.sql.operators import and_, like_op, or_
 
-from sqlactive import JOINED, SUBQUERY, SELECT_IN
-from sqlactive.smart_query import SmartQueryMixin
+from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
+from sqlactive.smart_query import SmartQueryMixin
 
 from ._logger import logger
-from ._models import BaseModel, Post, User, Comment
+from ._models import BaseModel, Comment, Post, User
 from ._seed import Seed
 
 

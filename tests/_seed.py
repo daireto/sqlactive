@@ -4,7 +4,7 @@ from sqlactive.base_model import ActiveRecordBaseModel
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import User, Post, Comment, Product, Sell
+from ._models import Comment, Post, Product, Sell, User
 
 
 class Seed:

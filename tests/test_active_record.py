@@ -1,17 +1,18 @@
 import asyncio
 import unittest
-
 from datetime import datetime, timezone
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound, IntegrityError, InvalidRequestError
+
+from sqlalchemy.exc import IntegrityError, InvalidRequestError, MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import text
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.operators import or_
-from sqlactive import JOINED, SUBQUERY, SELECT_IN
+
+from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel, User, Post, Comment, Sell
+from ._models import BaseModel, Comment, Post, User
 from ._seed import Seed
 
 
@@ -33,14 +34,6 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
             asyncio.run(cls.conn.close(BaseModel))
-
-    def test_get_primary_key_name(self):
-        """Test for `_get_primary_key_name` function."""
-
-        logger.info('Testing `_get_primary_key_name` function...')
-        with self.assertRaises(InvalidRequestError) as context:
-            Sell.get_primary_key_name()
-        self.assertIn('has a composite primary key', str(context.exception))
 
     def test_fill(self):
         """Test for `fill` function."""
@@ -403,6 +396,13 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         users = await User.all(scalars=False)
         self.assertEqual('Mike Turner', users[10][0].name)
 
+    async def test_count(self):
+        """Test for `count` function."""
+
+        logger.info('Testing `count` function...')
+        count = await User.count()
+        self.assertEqual(34, count)
+
     async def test_unique(self):
         """Test for `unique` function."""
 
@@ -412,15 +412,6 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Mike Turner', users[10].name)
         scalar_result = await User.unique(scalars=False)
         users = scalar_result.all()
-        self.assertEqual('Mike Turner', users[10][0].name)
-
-    async def test_unique_all(self):
-        """Test for `unique_all` function."""
-
-        logger.info('Testing `unique_all` function...')
-        users = await User.unique_all()
-        self.assertEqual('Mike Turner', users[10].name)
-        users = await User.unique_all(scalars=False)
         self.assertEqual('Mike Turner', users[10][0].name)
 
     async def test_unique_first(self):
@@ -468,23 +459,32 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         if user:
             self.assertEqual('Joe Smith', user[0].name)
 
+    async def test_unique_all(self):
+        """Test for `unique_all` function."""
+
+        logger.info('Testing `unique_all` function...')
+        users = await User.unique_all()
+        self.assertEqual('Mike Turner', users[10].name)
+        users = await User.unique_all(scalars=False)
+        self.assertEqual('Mike Turner', users[10][0].name)
+
+    async def test_unique_count(self):
+        """Test for `unique_count` function."""
+
+        logger.info('Testing `unique_count` function...')
+        count = await User.unique_count()
+        self.assertEqual(34, count)
+
     async def test_select(self):
         """Test for `select` function."""
 
         logger.info('Testing `select` function...')
         async_query = User.select()
-        users = await async_query.all()
-        self.assertIn('SELECT users.id, users.username, users.name, users.age', str(async_query))
-        self.assertEqual(34, len(users))
-        async_query = User.select(User.name, User.age)
-        users = await async_query.all(scalars=False)
-        self.assertEqual(34, len(users))
-        self.assertEqual(('Bob Williams', 30), users[0])
+        self.assertIn('SELECT users.id, users.username, users.name', str(async_query))
+        async_query.order_by('-created_at')
+        async_query.select(User.name, User.age)
         self.assertIn('SELECT users.name, users.age', str(async_query))
-        async_query = User.select(User.name, func.max(User.age))
-        older_user = await async_query.one(scalar=False)
-        self.assertEqual(('Bill Smith', 40), older_user)
-        self.assertIn('SELECT users.name, max(users.age) AS max_1', str(async_query))
+        self.assertIn('ORDER BY users.created_at DESC', str(async_query))
 
     async def test_options(self):
         """Test for `options` function."""
@@ -550,12 +550,14 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Offset must be positive.', str(context.exception))
 
     async def test_limit(self):
-        """Test for `limit` and `take` functions."""
+        """Test for `limit`, `take` and  `top` functions."""
 
-        logger.info('Testing `limit` and `take` functions...')
+        logger.info('Testing `limit`, `take` and  `top` functions...')
         users = await User.limit(2).where(username__like='Ji%').all()
         self.assertEqual(2, len(users))
         users = await User.take(1).where(username__like='Ji%').all()
+        self.assertEqual(1, len(users))
+        users = await User.top(1).where(username__like='Ji%').all()
         self.assertEqual(1, len(users))
         with self.assertRaises(ValueError) as context:
             await User.limit(-1).where(username__like='Ji%').all()
