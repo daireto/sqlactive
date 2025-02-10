@@ -33,7 +33,7 @@ model class to the `base_model` argument of the `execute` method:
     result = await execute(query, BaseModel) # or execute(query, User)
 ```
 
-!!! warning
+???+ warning
 
     Your base model must have a session in order to use this method.
     Otherwise, it will raise an `NoSessionError` exception. Session

@@ -6,13 +6,13 @@ making it easier to retrieve specific data from the database.
 
 It uses the functionality of the [`Inspection Mixin`](inspection-mixin.md).
 
-!!! info
+???+ info
 
     This mixin is intended to extend the functionality of the
     [`Active Record Mixin`](active-record-mixin.md)
     which the examples below are based on. It is not intended to be used on its own.
 
-!!! warning
+???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
     not just being a `backref`.
@@ -148,7 +148,7 @@ def filter_expr(**filters: object) -> list
 > [Product.age_from == 5, Product.subject_ids.in_([1,2])]
 > ```
 
-> !!! info
+> ???+ info
 >
 >     When using alias, for example:
 >

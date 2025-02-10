@@ -24,13 +24,13 @@ class User(BaseModel):
     name: Mapped[str] = mapped_column(String(100))
 ```
 
-!!! tip
+???+ tip
 
     You can also make your base inherit from the `ActiveRecordBaseModel` class
     which is a combination of `ActiveRecordMixin`, `SerializationMixin` and
     `TimestampMixin`.
 
-!!! warning
+???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
     not just being a `backref`.
@@ -342,7 +342,7 @@ async def delete()
 
 > Deletes the current row.
 
-> !!! danger
+> ???+ danger
 >
 >     This is not a soft delete method. It will permanently delete the row from
 >     the database. So, if you want to keep the row in the database, you can implement
@@ -686,6 +686,24 @@ async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, 
 > rows = await User.all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
 > ```
 
+#### count
+```python
+@classmethod
+async def count() -> int
+```
+
+> Fetches the number of rows.
+
+> **Returns:**
+
+> - `int`: Number of rows.
+
+> **Example:**
+
+> ```python
+> count = await User.count()  # 34
+> ```
+
 #### unique
 ```python
 @classmethod
@@ -821,14 +839,34 @@ async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tupl
 > rows = await User.unique_all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
 > ```
 
+#### unique_count
+```python
+@classmethod
+async def unique_count() -> int
+```
+
+> Fetches the number of unique rows.
+
+> **Returns:**
+
+> - `int`: Number of unique rows.
+
+> **Example:**
+
+> ```python
+> unique_count = await User.unique_count()  # 34
+> ```
+
 #### select
 ```python
 @classmethod
 def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
 ```
 
-> Creates a brand new [`AsyncQuery`](async-query.md) instance
-> with the specified entities selected.
+> Replaces the columns clause with the given entities.
+
+> The existing set of FROMs are maintained, including those
+> implied by the current columns clause.
 
 > **Parameters:**
 
@@ -841,14 +879,11 @@ def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
 > **Example:**
 
 > ```python
-> User.select()
-> # SELECT users.id, users.username, users.age, ... FROM users
+> async_query = User.order_by('-created_at')
+> # SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
 >
-> User.select(User.name, User.age)
-> # SELECT users.name, users.age FROM users
->
-> User.select(User.name, func.max(User.age))
-> # SELECT users.name, max(users.age) AS max_1 FROM users
+> async_query.select(User.name, User.age)
+> # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
 > ```
 
 #### options
@@ -859,7 +894,7 @@ def options(*args: ExecutableOption) -> AsyncQuery
 
 > Applies the given list of mapper options.
 
-> !!! warning
+> ???+ warning
 >
 >     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
 >
@@ -1092,6 +1127,14 @@ def take(take: int) -> AsyncQuery
 
 > Synonym for `limit()`.
 
+#### top
+```python
+@classmethod
+def top(top: int) -> AsyncQuery
+```
+
+> Synonym for `limit()`.
+
 #### join
 ```python
 @classmethod
@@ -1135,7 +1178,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) 
 > If it is `True`, the eager loading strategy is `SELECT IN` (Selectinload),
 > otherwise `SELECT JOIN` (Subqueryload).
 
-> !!! warning
+> ???+ warning
 >
 >     A query which makes use of `subqueryload()` in conjunction with a limiting
 >     modifier such as `Query.limit()` or `Query.offset()` should always include
@@ -1237,7 +1280,7 @@ def smart_query(
 > db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
 > ```
 
-> !!! note
+> ???+ note
 >
 >     To get more information about the usage, see the documentation of
 >     [`filter_expr`](smart-query-mixin.md#filter_expr),
@@ -1311,11 +1354,13 @@ def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery
 def get_primary_key_name() -> str
 ```
 
+> ???+ warning
+>
+>     _Deprecated since version 0.2: Use `primary_key_name` property instead._
+
 > Gets the primary key name of the model.
 
-> !!! warning
->
->     This method can only be used if the model has a single primary key.
+> This method can only be used if the model has a single primary key.
 
 > **Returns:**
 

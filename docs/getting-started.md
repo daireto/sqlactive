@@ -74,12 +74,12 @@ class Comment(BaseModel):
     user: Mapped['User'] = relationship(back_populates='comments')
 ```
 
-!!! warning
+???+ warning
 
     When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
     in the base class to avoid creating tables for the base class.
 
-!!! tip
+???+ tip
 
     The models can directly inherit from the `ActiveRecordBaseModel` class:
 
@@ -139,7 +139,7 @@ async with async_engine.begin() as conn:
 
 The use of the `expire_on_commit` flag is explained in the warning of [this section](#4-perform-bulk-operations).
 
-!!! tip
+???+ tip
 
     Use the `DBConnection` class as a shortcut to initialize the database.
     The `DBConnection` class is a wrapper around the `async_engine`, `async_sessionmaker`
@@ -175,7 +175,7 @@ user.age  # 20
 await user.delete()
 ```
 
-!!! danger
+???+ danger
 
     The `delete()` and `remove()` methods are not soft deletes methods.
     Both of them will permanently delete the row from the database.
@@ -184,7 +184,7 @@ await user.delete()
     the row with a flag indicating if the row is deleted or not
     (i.e. a boolean `is_deleted` column).
 
-!!! tip
+???+ tip
 
     Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
@@ -208,7 +208,7 @@ users = await User.find(username__endswith='Doe').all()
 users  # []
 ```
 
-!!! warning
+???+ warning
 
     When calling bulk operation methods, i.e. `save_all`, `insert_all`
     and `update_all`, the `refresh` flag must be set to `True` in order
@@ -256,7 +256,7 @@ users  # []
     )
     ```
 
-!!! tip
+???+ tip
 
     Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
@@ -294,7 +294,7 @@ user = await User.with_schema(schema).unique_first()
 user.comments[0].post.title  # Lorem ipsum
 ```
 
-!!! warning
+???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
     not just being a `backref`.
@@ -316,7 +316,7 @@ user.comments[0].post.title  # Lorem ipsum
         user: Mapped['User'] = relationship(back_populates='posts')
     ```
 
-!!! tip
+???+ tip
 
     Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
@@ -335,7 +335,7 @@ and `eager_expr` methods can be used.
 > It's like [filter in SQLALchemy](https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter),
 > but also allows magic operators like `rating__gt`.
 
-!!! important
+???+ note
 
     Low-level `filter_expr`, `order_expr`, `column_expr` and `eager_expr` methods
     are very low-level and does NOT do magic Django-like joins. Use `smart_query`
@@ -358,7 +358,7 @@ and `eager_expr` methods can be used.
     )
     ```
 
-!!! tip
+???+ tip
 
     Check the [Smart Query Mixin API Reference](api/smart-query-mixin.md#api-reference)
     for more details about the `smart_query` method and the low-level methods.
@@ -413,7 +413,7 @@ await user.update(name='Johnny Doe')
 user.updated_at  # 2024-12-28 23:00:52
 ```
 
-!!! tip
+???+ tip
 
     Check the [`TimestampMixin`](api/timestamp-mixin.md) class to know how to customize the timestamps behavior.
 

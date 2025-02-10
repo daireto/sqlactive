@@ -2,7 +2,7 @@
 
 The `InspectionMixin` class provides attributes and properties inspection functionality for SQLAlchemy models.
 
-!!! info
+???+ info
 
     This mixin is intended to extend the functionality of the
     [`Smart Queries`](smart-query-mixin.md) and [`Serialization`](serialization-mixin.md) mixins.
@@ -104,18 +104,16 @@ def columns() -> list[str]
 #### primary_keys_full
 ```python
 @classproperty
-def primary_keys_full() -> list[InstrumentedAttribute]
+def primary_keys_full() -> tuple[Column[Any], ...]
 ```
 
-> Gets primary key properties for a SQLAlchemy cls.
-
-> Taken from marshmallow_sqlalchemy.
+> Returns the columns that form the primary key.
 
 > **Example:**
 
 > ```python
 > User.primary_keys_full
-> # [<sqlalchemy.orm.attributes.InstrumentedAttribute 'id'>]
+> # (<sqlalchemy.sql.schema.Column 'id'>,)
 > ```
 
 #### primary_keys
@@ -124,13 +122,33 @@ def primary_keys_full() -> list[InstrumentedAttribute]
 def primary_keys() -> list[str]
 ```
 
-> Returns a `list` of primary key names.
+> Returns the names of the primary key columns.
 
 > **Example:**
 
 > ```python
 > User.primary_keys
 > # ['id']
+> ```
+
+#### primary_key_name
+```python
+@classproperty
+def primary_key_name() -> str
+```
+
+> Returns the primary key name of the model.
+
+> ???+ warning
+>
+>     This property can only be used if the model has a single primary key.
+>     If the model has a composite primary key, an `InvalidRequestError` is raised.
+
+> **Example:**
+
+> ```python
+> User.primary_key_name
+> # 'id'
 > ```
 
 #### relations

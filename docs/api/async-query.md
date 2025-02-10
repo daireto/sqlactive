@@ -29,7 +29,7 @@ use the `query` property:
     # <sqlalchemy.sql.Select>
 ```
 
-!!! warning
+???+ warning
 
     If a `NoSessionError` is raised, it means that there is no session
     associated with the `AsyncQuery` instance. This can happen
@@ -57,15 +57,14 @@ use the `query` property:
 
 ## API Reference
 
-### Properties
+### Attributes
 
 #### query
 ```python
-@property
-def query(query: Select[tuple[Any, ...]]) -> Select[tuple[Any, ...]]
+query: Select[tuple[Any, ...]]
 ```
 
-> Sets and returns the original `sqlalchemy.sql.Select` instance.
+> The wrapped `sqlalchemy.sql.Select` instance.
 
 > **Example:**
 ```python
@@ -83,17 +82,13 @@ users = await async_query.all()
 #### select
 ```python
 @classmethod
-def select(cls, *entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
+def select(cls, *entities: _ColumnsClauseArgument[Any]) -> Self
 ```
 
-> Creates a brand new `AsyncQuery` instance with the specified entities selected.
+> Replaces the columns clause with the given entities.
 
-> !!! danger
->
->     When calling this method, the query will be completely reset and
->     overwritten with a new query. Every WHERE, ORDER BY, GROUP BY, LIMIT,
->     OFFSET, etc. will be cancelled. So, make sure to call this method before
->     calling any other method in the query build process.
+> The existing set of FROMs are maintained, including those
+> implied by the current columns clause.
 
 > **Parameters:**
 
@@ -101,23 +96,19 @@ def select(cls, *entities: _ColumnsClauseArgument[Any]) -> AsyncQuery
 
 > **Returns:**
 
-> - `AsyncQuery`: Async query instance.
-
-> **Raises:**
-
-> - `ValueError`: If no entities are selected.
+> - `Self`: The instance itself for method chaining.
 
 > **Example:**
 
 > ```python
-> AsyncQuery.select(User)
-> # SELECT users.id, users.username, users.age, ... FROM users
+> query = select(User)
+> async_query = AsyncQuery(query)
 >
-> AsyncQuery.select(User.name, User.age)
-> # SELECT users.name, users.age FROM users
+> async_query.order_by('-created_at')
+> # SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
 >
-> AsyncQuery.select(User.name, func.max(User.age))
-> # SELECT users.name, max(users.age) AS max_1 FROM users
+> async_query.select(User.name, User.age)
+> # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
 > ```
 
 ### Instance Methods
@@ -129,7 +120,7 @@ def options(*args: ExecutableOption) -> Self
 
 > Applies the given list of mapper options.
 
-> !!! warning
+> ???+ warning
 >
 >     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
 >
@@ -270,7 +261,7 @@ def group_by(
 > It is recommended to select specific columns. You can use
 > the `select_columns` parameter to select specific columns.
 
-> !!! danger
+> ???+ danger
 >
 >     When selecting specific columns with the `select_columns` parameter,
 >     the query will be completely reset and overwritten with a new query.
@@ -376,6 +367,13 @@ def take(take: int) -> Self
 
 > Synonym for `limit()`.
 
+#### top
+```python
+def top(top: int) -> Self
+```
+
+> Synonym for `limit()`.
+
 #### join
 ```python
 def join(
@@ -433,7 +431,7 @@ def with_subquery(
 > If it is `True`, the eager loading strategy is `SELECT IN` (Selectinload),
 > otherwise `SELECT JOIN` (Subqueryload).
 
-> !!! warning
+> ???+ warning
 >
 >     A query which makes use of `subqueryload()` in conjunction with a limiting
 >     modifier such as `Query.limit()` or `Query.offset()` should always include
@@ -672,6 +670,25 @@ async def all(scalars: bool = True) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > rows = await async_query.all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
 > ```
 
+#### count
+```python
+async def count() -> int
+```
+
+> Fetches the number of rows.
+
+> **Returns:**
+
+> - `int`: Number of rows.
+
+> **Example:**
+
+> ```python
+> query = select(User)
+> async_query = AsyncQuery(query)
+> count = await async_query.count()  # 34
+> ```
+
 #### unique
 ```python
 async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, ...]]
@@ -810,4 +827,23 @@ async def unique_all(scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > async_query = AsyncQuery(query)
 > users = await async_query.unique_all()              # [<User 1>, <User 2>, ...]
 > rows = await async_query.unique_all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
+> ```
+
+#### unique_count
+```python
+async def unique_count() -> int
+```
+
+> Fetches the number of unique rows.
+
+> **Returns:**
+
+> - `int`: Number of unique rows.
+
+> **Example:**
+
+> ```python
+> query = select(User)
+> async_query = AsyncQuery(query)
+> unique_count = await async_query.unique_count()  # 34
 > ```
