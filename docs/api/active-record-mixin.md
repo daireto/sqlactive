@@ -1388,7 +1388,7 @@ def get_primary_key_name() -> str
 
 > ???+ warning
 >
->     _Deprecated since version 0.2: Use `primary_key_name` property instead._
+>     _Deprecated since version 0.2: Use [`primary_key_name`](inspection-mixin.md#primary_key_name) property instead._
 
 > Gets the primary key name of the model.
 
