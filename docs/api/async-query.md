@@ -77,12 +77,11 @@ async_query.query = async_query.query.limit(10).order_by(User.age.desc())
 users = await async_query.all()
 ```
 
-### Class Methods
+### Instance Methods
 
 #### select
 ```python
-@classmethod
-def select(cls, *entities: _ColumnsClauseArgument[Any]) -> Self
+def select(*entities: _ColumnsClauseArgument[Any]) -> Self
 ```
 
 > Replaces the columns clause with the given entities.
@@ -110,8 +109,6 @@ def select(cls, *entities: _ColumnsClauseArgument[Any]) -> Self
 > async_query.select(User.name, User.age)
 > # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
 > ```
-
-### Instance Methods
 
 #### options
 ```python
@@ -153,6 +150,7 @@ def options(*args: ExecutableOption) -> Self
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.options(joinedload(User.posts)).unique_all()
 > user = await async_query.options(joinedload(User.posts)).first()
 > users = await async_query.options(subqueryload(User.posts)).all()
@@ -233,6 +231,7 @@ def search(
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.search('Bob').all()
 > users = await async_query.search('Bob', columns=(User.name,)).all()
 > users = await async_query.search('Bob', columns=(User.name, User.email)).all()
@@ -327,6 +326,7 @@ def group_by(
 > # Group by with relations
 > query = select(Post)
 > async_query = AsyncQuery(query)
+>
 > columns = (Post.rating, text('users_1.name'), func.count(Post.title))
 > async_query = async_query.group_by('rating', 'user___name', select_columns=columns)
 > rows = async_query.all(scalars=False)
@@ -356,6 +356,7 @@ def offset(offset: int) -> Self
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.offset(10).all()
 > ```
 
@@ -390,6 +391,7 @@ def limit(limit: int) -> Self
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.limit(5).all()
 > ```
 
@@ -586,6 +588,7 @@ async def scalars() -> ScalarResult[_T]
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > result = await async_query.scalars()  # <sqlalchemy.engine.result.ScalarResult>
 > users = result.all()                  # [<User 1>, <User 2>, ...]
 > ```
@@ -612,6 +615,7 @@ async def first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.first()             # <User 1>
 > row = await async_query.first(scalar=False)  # (<User 1>,)
 > ```
@@ -643,6 +647,7 @@ async def one(scalar: bool = True) -> _T | Row[tuple[Any, ...]]
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.one()             # <User 1>
 > row = await async_query.one(scalar=False)  # (<User 1>,)
 > ```
@@ -673,6 +678,7 @@ async def one_or_none(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.one_or_none()             # <User 1>
 > row = await async_query.one_or_none(scalar=False)  # (<User 1>,)
 > ```
@@ -699,6 +705,7 @@ async def all(scalars: bool = True) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.all()              # [<User 1>, <User 2>, ...]
 > rows = await async_query.all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
 > ```
@@ -719,6 +726,7 @@ async def count() -> int
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > count = await async_query.count()  # 34
 > ```
 
@@ -744,6 +752,7 @@ async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, .
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > result = await async_query.unique()
 > users = result.all()  # [<User 1>, <User 2>, ...]
 > result = await async_query.unique(scalars=False)
@@ -772,6 +781,7 @@ async def unique_first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.unique_first()             # <User 1>
 > row = await async_query.unique_first(scalar=False)  # (<User 1>,)
 > ```
@@ -803,6 +813,7 @@ async def unique_one(scalar: bool) -> _T | Row[tuple[Any, ...]]
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.unique_one()             # <User 1>
 > row = await async_query.unique_one(scalar=False)  # (<User 1>,)
 > ```
@@ -832,6 +843,7 @@ async def unique_one_or_none(scalar: bool) -> _T | Row[tuple[Any, ...]] | None
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > user = await async_query.unique_one_or_none()             # <User 1>
 > row = await async_query.unique_one_or_none(scalar=False)  # (<User 1>,)
 > ```
@@ -858,6 +870,7 @@ async def unique_all(scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > users = await async_query.unique_all()              # [<User 1>, <User 2>, ...]
 > rows = await async_query.unique_all(scalars=False)  # [(<User 1>,), (<User 2>,), ...]
 > ```
@@ -878,5 +891,6 @@ async def unique_count() -> int
 > ```python
 > query = select(User)
 > async_query = AsyncQuery(query)
+>
 > unique_count = await async_query.unique_count()  # 34
 > ```
