@@ -341,7 +341,6 @@ def eager_expr(
 ```python
 @classmethod
 def smart_query(
-    cls,
     query: Select[tuple[Any, ...]],
     criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
     filters: (
