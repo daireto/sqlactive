@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+import warnings
 from datetime import datetime, timezone
 
 from sqlalchemy.exc import IntegrityError, InvalidRequestError, MultipleResultsFound, NoResultFound
@@ -23,6 +24,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
+        warnings.filterwarnings('ignore', category=DeprecationWarning)
+
         logger.info('***** ActiveRecordMixin tests *****')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
