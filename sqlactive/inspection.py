@@ -1,10 +1,10 @@
-"""This module defines `InspectionMixin` class."""
+"""This module defines ``InspectionMixin`` class."""
 
+from numbers import Number
 from typing import Any
 
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
-from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
 from sqlalchemy.sql.schema import Column
 from typing_extensions import Self
@@ -19,61 +19,29 @@ class InspectionMixin(DeclarativeBase):
 
     __abstract__ = True
 
-    def __repr__(self) -> str:
-        """Print the model in a readable format including the primary key.
-
-        Format:
-            <ClassName #PrimaryKey>
-
-        Example:
-        >>> bob = User.insert(name='Bob')
-        >>> bob
-        # <User #1>
-        >>> users = await User.find(name__like='%John%')
-        >>> users
-        # [<User #1>, <User #2>, ...]
-        """
-
-        id_str = ('#' + self.id_str) if self.id_str else ''
-        return f'<{self.__class__.__name__} {id_str}>'
-
-    @classmethod
-    def get_class_of_relation(cls, relation_name: str) -> type[Self]:
-        """Gets the class of a relationship by its name.
-
-        Parameters
-        ----------
-        relation_name : str
-            The name of the relationship
-
-        Example:
-        >>> bob = User.insert(name='Bob')
-        >>> bob.get_class_of_relation('posts')
-        # <class 'Post'>
-        """
-
-        return cls.__mapper__.relationships[relation_name].mapper.class_
-
     @property
     def id_str(self) -> str:
-        """Returns primary key as string.
+        """Returns a string representation of the primary key.
 
-        If there is a composite primary key, returns a hyphenated string,
-        as follows: '1-2-3'.
+        If the primary key is composite, returns a comma-separated list of key-value pairs.
 
-        Example:
+        Examples
+        --------
+        Assuming you have a model named ``User`` with a primary key named ``id`` and
+        a model named ``Sell`` with a primary key composed of ``id`` and ``product_id``:
         >>> bob = User.insert(name='Bob')
         >>> bob.id_str
-        # 1
-
-        If there is no primary key, returns 'None'.
+        'id=1'
+        >>> sell = Sell(id=1, product_id=1)
+        >>> sell.id_str
+        'id=1, product_id=1'
         """
 
-        ids = inspect(self).identity
-        if ids and len(ids) > 0:
-            return '-'.join([str(x) for x in ids]) if len(ids) > 1 else str(ids[0])
-        else:
-            return 'None'
+        mapped = []
+        for pk in self.primary_keys_full:
+            value = getattr(self, pk.key)
+            mapped.append(f'{pk.key}={value}' if isinstance(value, Number) or value is None else f'{pk.key}="{value}"')
+        return ', '.join(mapped)
 
     @classproperty
     def columns(cls) -> list[str]:
@@ -103,14 +71,14 @@ class InspectionMixin(DeclarativeBase):
     def primary_key_name(cls) -> str:
         """Returns the primary key name of the model.
 
-        **WARNING:**
+        **WARNING**
 
             This property can only be used if the model has a single primary key.
             If the model has a composite primary key, an `InvalidRequestError` is raised.
         """
 
         if len(cls.primary_keys) > 1:
-            raise InvalidRequestError(f'Model {cls.__name__} has a composite primary key.')
+            raise InvalidRequestError(f'model `{cls.__name__}` has a composite primary key')
         return cls.primary_keys[0]
 
     @classproperty
@@ -180,3 +148,60 @@ class InspectionMixin(DeclarativeBase):
         """
 
         return cls.string_columns
+
+    @classmethod
+    def get_primary_key_filter_criteria(cls, pk: object | dict[str, object]) -> dict[str, Any]:
+        """Returns a `dict` of primary key filter criteria.
+
+        Parameters
+        ----------
+        pk : object | dict[str, object]
+            Primary key value or dict of composite primary key values.
+
+        Returns
+        -------
+        dict[str, Any]
+            Primary key filter criteria.
+        """
+        if isinstance(pk, dict):
+            return {pk_column.key: pk[pk_column.key] for pk_column in cls.primary_keys_full if pk_column.key in pk}
+
+        return {cls.primary_key_name: pk}
+
+    @classmethod
+    def get_class_of_relation(cls, relation_name: str) -> type[Self]:
+        """Gets the class of a relationship by its name.
+
+        Parameters
+        ----------
+        relation_name : str
+            The name of the relationship
+
+        Examples
+        --------
+        Assuming you have a model named ``User`` related to a model named ``Post``
+        through a relationship named ``posts``:
+        >>> bob = User.insert(name='Bob')
+        >>> bob.get_class_of_relation('posts')
+        <class 'Post'>
+        """
+
+        return cls.__mapper__.relationships[relation_name].mapper.class_
+
+    def __repr__(self) -> str:
+        """Returns a string representation of the model.
+
+        Representation format is ``ClassName(pk1=value1, pk2=value2, ...)``
+
+        Examples
+        --------
+        Assuming you have a model named ``User`` with a primary key named ``id``:
+        >>> bob = User.insert(name='Bob')
+        >>> bob
+        User(id=1)
+        >>> users = await User.find(name__like='%John%')
+        >>> users
+        [User(id=1), User(id=2), ...]
+        """
+
+        return f'{self.__class__.__name__}({self.id_str})'

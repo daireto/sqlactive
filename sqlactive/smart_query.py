@@ -4,7 +4,6 @@ from collections import OrderedDict
 from collections.abc import Callable, Generator, Sequence
 from typing import Any
 
-from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.strategy_options import _AbstractLoad
@@ -151,7 +150,7 @@ class SmartQueryMixin(InspectionMixin):
         """
 
         if isinstance(cls, AliasedClass):
-            mapper, _class = cls, inspect(cls).mapper.class_
+            mapper, _class = cls, cls.__mapper__.class_
         else:
             mapper = _class = cls
 
@@ -222,7 +221,7 @@ class SmartQueryMixin(InspectionMixin):
         """
 
         if isinstance(cls, AliasedClass):
-            mapper, _class = cls, inspect(cls).mapper.class_
+            mapper, _class = cls, cls.__mapper__.class_
         else:
             mapper = _class = cls
 
@@ -274,7 +273,7 @@ class SmartQueryMixin(InspectionMixin):
         """
 
         if isinstance(cls, AliasedClass):
-            mapper, _class = cls, inspect(cls).mapper.class_
+            mapper, _class = cls, cls.__mapper__.class_
         else:
             mapper = _class = cls
 

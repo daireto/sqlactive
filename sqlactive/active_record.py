@@ -144,7 +144,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def delete(self):
         """Deletes the current row.
 
-        **CAUTION:**
+        **CAUTION**
 
             This is not a soft delete method. It will permanently delete the row from
             the database. So, if you want to keep the row in the database, you can implement
@@ -271,8 +271,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def get(
         cls,
         pk: object,
-        join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+        join: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+        subquery: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ):
         """Fetches a row by primary key or `None`
@@ -290,10 +290,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ----------
         pk : object
             Primary key value.
-        join : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of `join()` method for details.
-        subquery : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of `with_subquery()` method for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
@@ -307,7 +307,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
 
         async_query = cls.get_async_query()
-        async_query = async_query.where(**{cls.primary_key_name: pk})
+        async_query = async_query.where(**cls.get_primary_key_filter_criteria(pk))
         if join:
             async_query = async_query.join(*join)
         if subquery:
@@ -320,8 +320,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def get_or_fail(
         cls,
         pk: object,
-        join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+        join: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+        subquery: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
     ):
         """Fetches a row by primary key or raises an exception
@@ -341,10 +341,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ----------
         pk : object
             Primary key.
-        join : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of `join()` method for details.
-        subquery : list[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of `with_subquery()` method for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional

@@ -34,18 +34,18 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `__repr__` function...')
         user = await User.get_or_fail(1)
-        self.assertEqual('<User #1>', str(user))
+        self.assertEqual('User(id=1)', str(user))
 
     async def test_id_str(self):
         """Test for `id_str` property."""
 
         logger.info('Testing `id_str` property...')
         user = await User.get_or_fail(1)
-        self.assertEqual('1', user.id_str)
+        self.assertEqual('id=1', user.id_str)
         sell = await Sell.limit(1).one()
-        self.assertEqual('1-1', sell.id_str)
+        self.assertEqual('id=1, product_id=1', sell.id_str)
         unknown_sell = Sell(id=1, product_id=1)
-        self.assertEqual('None', unknown_sell.id_str)
+        self.assertEqual('id=1, product_id=1', unknown_sell.id_str)
 
     def test_columns(self):
         """Test for `columns` classproperty."""
@@ -65,7 +65,7 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing `primary_key_name` classproperty...')
         with self.assertRaises(InvalidRequestError) as context:
             _ = Sell.primary_key_name
-        self.assertIn('has a composite primary key', str(context.exception))
+        self.assertEqual('model `Sell` has a composite primary key', str(context.exception))
 
     def test_relations(self):
         """Test for `relations` classproperty."""

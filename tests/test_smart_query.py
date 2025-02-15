@@ -3,7 +3,6 @@ import unittest
 from collections import OrderedDict
 
 from sqlalchemy import func
-from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
 from sqlalchemy.sql import asc, desc
 from sqlalchemy.sql.operators import and_, like_op, or_
@@ -144,7 +143,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             aliases=aliases,
         )
         self.assertTrue(type(aliases['post'][0]) is type(aliased(Post)))
-        self.assertTrue(inspect(aliases['post'][0]).mapper.class_ == Post)
+        self.assertTrue(aliases['post'][0].__mapper__.class_ == Post)
         with self.assertRaises(KeyError) as context:
             SmartQueryMixin._parse_path_and_make_aliases(
                 entity=Comment, entity_path='', attrs=['author___name', 'post_id', 'user_id', 'id'], aliases=aliases
