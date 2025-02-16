@@ -400,5 +400,5 @@ def get_class_of_relation(relation_name: str) -> type[Self]
 > >>> User.get_class_of_relation('sells')
 > Traceback (most recent call last):
 >     ...
-> RelationError: no such relation: 'sells'
+> RelationError: no such relation: 'sells' in model 'User'
 > ```

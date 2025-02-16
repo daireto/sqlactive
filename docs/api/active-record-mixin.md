@@ -338,10 +338,12 @@ def query() -> Select[tuple[Self]]
 > **Examples**
 
 > ```python
-> from sqlalchemy import select
->
-> User.query    # SELECT * FROM users
-> select(User)  # SELECT * FROM users
+> >>> User.query
+> 'SELECT * FROM users'
+> # Is equivalent to
+> >>> from sqlalchemy import select
+> >>> select(User)
+> 'SELECT * FROM users'
 > ```
 
 ### Instance Methods
@@ -355,7 +357,7 @@ def fill(**kwargs) -> Self
 
 > **Parameters**
 
-> - `kwargs`: Key-value pairs of attributes to set.
+> - `kwargs`: Key-value pairs of columns to set.
 
 > **Returns**
 
@@ -363,13 +365,20 @@ def fill(**kwargs) -> Self
 
 > **Raises**
 
-> - `KeyError`: If attribute doesn't exist.
+> - `AttributeError`: If attribute doesn't exist.
+> - `NoSettableError`: If attribute is not settable.
 
 > **Examples**
 
 > ```python
-> user = User()
-> user.fill(name='Bob Williams', age=30)
+> >>> user = User(name='Bob')
+> >>> user.name
+> 'Bob'
+> >>> user.fill(name='Bob Williams', age=30)
+> >>> user.name
+> 'Bob Williams'
+> >>> user.age
+> 30
 > ```
 
 #### save
@@ -379,17 +388,23 @@ async def save() -> Self
 
 > Saves the current row.
 
+> ???+ note
+>
+>     All database errors will trigger a rollback and be raised.
+
 > **Returns**
 
 > - `Self`: The instance itself for method chaining.
 
-> **Raises** Any database errors are caught and will trigger a rollback.
+> **Raises**
+
+> - `Exception`: If saving fails.
 
 > **Examples**
 
 > ```python
-> user = User(name='Bob')
-> await user.save()
+> >>> user = User(name='Bob Williams', age=30)
+> >>> await user.save()
 > ```
 
 #### update
@@ -409,13 +424,15 @@ async def update(**kwargs) -> Self
 
 > - `Self`: The instance itself for method chaining.
 
-> **Raises** Any database errors are caught and will trigger a rollback.
-
 > **Examples**
 
 > ```python
-> user = User(name='Bob', age=30)
-> await user.update(name='Bob Williams', age=31)
+> >>> user = User(name='Bob', age=30)
+> >>> user.name
+> 'Bob'
+> >>> await user.update(name='Bob Williams', age=31)
+> >>> user.name
+> 'Bob Williams'
 > ```
 
 #### delete
@@ -432,12 +449,15 @@ async def delete()
 >     a custom soft delete method, i.e. using `save()` method to update the row with a
 >     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
 
-> **Raises** Any database errors are caught and will trigger a rollback.
-
 > **Examples**
 
 > ```python
-> await user.delete()
+> >>> user = await User.find(username='Bob324').one_or_none()
+> >>> user.name
+> 'Bob Williams'
+> >>> await user.delete()
+> >>> await User.find(username='Bob324').one_or_none()
+> None
 > ```
 
 #### remove
@@ -465,8 +485,6 @@ async def insert(**kwargs) -> Self
 
 > - `Self`: The created instance for method chaining.
 
-> **Raises** Any database errors are caught and will trigger a rollback.
-
 > **Examples**
 
 > ```python
@@ -493,8 +511,6 @@ async def save_all(rows: Sequence[Self], refresh: bool = False)
 
 > - `rows`: Sequence of rows to be saved.
 > - `refresh`: Whether to refresh the rows after saving (default: `False`).
-
-> **Raises** Any database errors are caught and will trigger a rollback.
 
 > **Examples**
 
@@ -535,8 +551,6 @@ async def delete_all(rows: Sequence[Self])
 
 > - `rows`: Sequence of rows to be deleted.
 
-> **Raises** Any database errors are caught and will trigger a rollback.
-
 > **Examples**
 
 > ```python
@@ -557,8 +571,6 @@ async def destroy(*ids: object)
 > **Parameters**
 
 > - `ids`: Primary key values of rows to delete.
-
-> **Raises** Any database errors are caught and will trigger a rollback.
 
 > **Examples**
 
