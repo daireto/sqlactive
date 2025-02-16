@@ -26,38 +26,66 @@ from .utils import classproperty
 class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     """Mixin for Active Record style models.
 
-    Example:
-    ```python
-        from sqlalchemy import Mapped, mapped_column
-        from sqlactive import ActiveRecordMixin
+    Provides a set of ActiveRecord-like helper methods for SQLAlchemy models,
+    allowing for more intuitive and chainable database operations with async/await support.
 
-        class BaseModel(ActiveRecordMixin):
-            __abstract__ = True
+    Define a base model class that inherits from this class:
+    >>> from sqlalchemy import String
+    >>> from sqlalchemy import Mapped, mapped_column
+    >>> from sqlactive import ActiveRecordMixin
+    >>> class BaseModel(ActiveRecordMixin):
+    ...     __abstract__ = True
 
-        class User(BaseModel):
-            __tablename__ = 'users'
-            id: Mapped[int] = mapped_column(primary_key=True)
-            name: Mapped[str] = mapped_column(String(100))
-    ```
+    You can also make your base inherit from the ``ActiveRecordBaseModel``
+    class which is a combination of ``ActiveRecordMixin``, ``SerializationMixin``
+    and ``TimestampMixin`` (this is the recommended way to use this library):
+    >>> from sqlactive import ActiveRecordBaseModel
+    >>> class BaseModel(ActiveRecordBaseModel):
+    ...     __abstract__ = True
 
-    Usage:
-    >>> bob = User.insert(name='Bob')
-    >>> bob
-    # <User #1>
-    >>> bob.name
-    # Bob
-    >>> User.where(name='Bob').all()
-    # [<User #1>]
+    Define your model classes that inherit from `BaseModel`:
+    >>> class User(BaseModel):
+    ...     __tablename__ = 'users'
+    ...     id: Mapped[int] = mapped_column(primary_key=True)
+    ...     name: Mapped[str] = mapped_column(String(100))
+    ...     # ...and more
+
+    Enjoy the power of Active Record!
+    >>> user = User.insert(name='Bob Williams', age=30)
+    >>> user
+    User(id=6)
+    >>> user.name
+    'Bob Williams'
+    >>> User.where(name__startswith='Bob').all()
+    [User(id=3), User(id=6)]
+    >>> joe = User.get(1)
+    >>> joe.name
+    'Joe Harris'
+    >>> joe.update(name='Joe Smith')
+    >>> joe.name
+    'Joe Smith'
+    >>> joe.delete()
     >>> User.get(1)
-    # <User #1>
-    >>> bob.update(name='Bob2')
-    >>> bob.name
-    # Bob2
-    >>> bob.delete()
+    None
     >>> User.all()
-    # []
+    [User(id=2), User(id=3), User(id=4), User(id=5), User(id=6)]
 
-    Visit the [API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
+    .. warning::
+        All relations used in filtering/sorting/grouping should be explicitly set,
+        not just being a `backref`. This is because SQLActive does not know the
+        relation direction and cannot infer it. So, when defining a relationship like::
+
+            class User(BaseModel):
+                # ...
+                posts: Mapped[list['Post']] = relationship(back_populates='user')
+
+        It is required to define the reverse relationship::
+
+            class Post(BaseModel):
+                # ...
+                user: Mapped['User'] = relationship(back_populates='posts')
+
+    Visit the `API Reference <https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference>`_
     for the full list of available methods.
     """
 
@@ -289,7 +317,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Parameters
         ----------
         pk : object
-            Primary key value.
+            Primary key value. It can also be a dict of composite primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of `join()` method for details.
@@ -305,9 +333,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         MultipleResultsFound
             If multiple results are found.
         """
+        if isinstance(pk, dict):
+            criteria = pk
+        else:
+            criteria = {cls.primary_key_name: pk}
 
         async_query = cls.get_async_query()
-        async_query = async_query.where(**cls.get_primary_key_filter_criteria(pk))
+        async_query = async_query.where(**criteria)
         if join:
             async_query = async_query.join(*join)
         if subquery:
@@ -340,7 +372,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Parameters
         ----------
         pk : object
-            Primary key.
+            Primary key value. It can also be a dict of composite primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of `join()` method for details.
@@ -358,7 +390,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         MultipleResultsFound
             If multiple results are found.
         """
-
         cursor = await cls.get(pk, join=join, subquery=subquery, schema=schema)
         if cursor:
             return cursor
@@ -1248,11 +1279,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         stacklevel=2,
     )
     def get_primary_key_name(cls) -> str:
-        """_Deprecated since version 0.2: Use `primary_key_name` property instead._
+        """Gets the primary key name of the model.
 
-        Gets the primary key name of the model.
+        .. deprecated:: 0.2.0
+            This method will be removed in SQLActive 1.0.0.
+            Use `primary_key_name` property instead.
 
-        NOTE: This method can only be used if the model has a single primary key.
+        .. warning::
+            This method can only be used if the model has a single primary key.
+            If the model has a composite primary key, an ``CompositePrimaryKeyError`` is raised.
 
         Returns
         -------
@@ -1261,10 +1296,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        InvalidRequestError
+        CompositePrimaryKeyError
             If the model has a composite primary key.
         """
-
         return cls.primary_key_name
 
     @classmethod
