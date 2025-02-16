@@ -11,7 +11,7 @@ from sqlalchemy.sql.operators import or_
 
 from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
-from sqlactive.exceptions import CompositePrimaryKeyError
+from sqlactive.exceptions import CompositePrimaryKeyError, NoSettableError
 
 from ._logger import logger
 from ._models import BaseModel, Comment, Post, User, Sell
@@ -56,9 +56,12 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob28', user.username)
         self.assertEqual('Bob Williams', user.name)
         self.assertEqual(32, user.age)
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(AttributeError) as context:
             user.fill(**{'foo': 'bar'})
-        self.assertIn('`foo`', str(context.exception))
+        self.assertEqual("no such attribute: 'foo' in model 'User'", str(context.exception))
+        with self.assertRaises(NoSettableError) as context:
+            user.fill(**{'older_than': True})
+        self.assertEqual("attribute not settable: 'older_than' in model 'User'", str(context.exception))
 
     async def test_save(self):
         """Test for `save` function."""

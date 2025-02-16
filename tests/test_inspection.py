@@ -147,4 +147,4 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(Product, Sell.get_class_of_relation('product'))
         with self.assertRaises(RelationError) as context:
             User.get_class_of_relation('sells')
-        self.assertEqual("no such relation: 'sells'", str(context.exception))
+        self.assertEqual("no such relation: 'sells' in model 'User'", str(context.exception))

@@ -27,7 +27,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have two models named ``User`` and ``Sell`` like this:
+        Assume two models ``User`` and ``Sell``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -38,7 +38,7 @@ class InspectionMixin(DeclarativeBase):
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
 
-        You will get this:
+        Usage:
         >>> user = User.insert(name='Bob')
         >>> user.id_str
         'id=1'
@@ -58,7 +58,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -67,7 +67,7 @@ class InspectionMixin(DeclarativeBase):
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.columns
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
         """
@@ -79,7 +79,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -88,7 +88,7 @@ class InspectionMixin(DeclarativeBase):
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.string_columns
         ['username', 'name']
         """
@@ -100,14 +100,14 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     username: Mapped[str] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.primary_keys_full
         (Column('id', Integer(), table=<users>, primary_key=True, nullable=False),)
         """
@@ -119,14 +119,14 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     username: Mapped[str] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.primary_keys
         ['id']
         """
@@ -147,18 +147,18 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     username: Mapped[str] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.primary_key_name
         'id'
 
-        Assuming you have a model named ``Sell`` like this:
+        Assume a model ``Sell``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class Sell(ActiveRecordBaseModel):
         ...     __tablename__ = 'sells'
@@ -166,7 +166,7 @@ class InspectionMixin(DeclarativeBase):
         ...     product_id: Mapped[int] = mapped_column(primary_key=True)
         ...     quantity: Mapped[int] = mapped_column()
 
-        You will get an error:
+        An error is raised:
         >>> Sell.primary_key_name
         Traceback (most recent call last):
         ...
@@ -183,7 +183,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -192,7 +192,7 @@ class InspectionMixin(DeclarativeBase):
         ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
         ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
-        You will get this:
+        Usage:
         >>> User.relations
         ['posts', 'comments']
         """
@@ -204,7 +204,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -213,11 +213,11 @@ class InspectionMixin(DeclarativeBase):
         ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
         ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
-        You will get this:
+        Usage:
         >>> User.settable_relations
         ['posts', 'comments']
 
-        Assuming you have a model named ``Product`` like this:
+        Assume a model ``Product``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class Product(BaseModel):
         ...     __tablename__ = 'products'
@@ -228,7 +228,7 @@ class InspectionMixin(DeclarativeBase):
         ...         viewonly=True  # Not settable
         ...     )
 
-        You will get this:
+        Usage:
         >>> Product.settable_relations
         []
         """
@@ -240,7 +240,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -252,7 +252,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def is_adult(self):
         ...         return self.age > 18
 
-        You will get this:
+        Usage:
         >>> User.hybrid_properties
         ['is_adult']
         """
@@ -265,7 +265,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -277,7 +277,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def older_than(self, other: 'User'):
         ...         return self.age > other.age
 
-        You will get this:
+        Usage:
         >>> User.hybrid_methods_full
         {'older_than': hybrid_method(...)}
         """
@@ -290,7 +290,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -302,7 +302,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def older_than(self, other: 'User'):
         ...         return self.age > other.age
 
-        You will get this:
+        Usage:
         >>> User.hybrid_methods
         ['older_than']
         """
@@ -316,7 +316,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -333,7 +333,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def older_than(self, other: 'User'):
         ...         return self.age > other.age
 
-        You will get this:
+        Usage:
         >>> User.filterable_attributes
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult', 'older_than']
         """
@@ -347,7 +347,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -361,7 +361,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def is_adult(self):
         ...         return self.age > 18
 
-        You will get this:
+        Usage:
         >>> User.sortable_attributes
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
         """
@@ -375,7 +375,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -389,7 +389,7 @@ class InspectionMixin(DeclarativeBase):
         ...     def is_adult(self):
         ...         return self.age > 18
 
-        You will get this:
+        Usage:
         >>> User.settable_attributes
         ['username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
         """
@@ -403,7 +403,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -412,7 +412,7 @@ class InspectionMixin(DeclarativeBase):
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
 
-        You will get this:
+        Usage:
         >>> User.searchable_attributes
         ['username', 'name']
         """
@@ -434,7 +434,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` like this:
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -443,7 +443,7 @@ class InspectionMixin(DeclarativeBase):
         ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
         ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
-        You will get this:
+        Usage:
         >>> User.get_class_of_relation('posts')
         <class 'Post'>
         >>> User.get_class_of_relation('comments')
@@ -451,12 +451,12 @@ class InspectionMixin(DeclarativeBase):
         >>> User.get_class_of_relation('sells')
         Traceback (most recent call last):
             ...
-        RelationError: no such relation: 'sells'
+        RelationError: no such relation: 'sells' in model 'User'
         """
         try:
             return cls.__mapper__.relationships[relation_name].mapper.class_
         except KeyError:
-            raise RelationError(relation_name)
+            raise RelationError(cls.__name__, relation_name)
 
     def __repr__(self) -> str:
         """Returns a string representation of the model.
@@ -465,7 +465,7 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` with a primary key named ``id``:
+        Assume a model ``User`` with a primary key ``id``:
         >>> user = User.insert(name='Bob')
         >>> user
         User(id=1)

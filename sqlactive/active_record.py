@@ -18,6 +18,7 @@ from sqlalchemy.sql.operators import OperatorType
 from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery
+from .exceptions import NoSettableError
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 from .utils import classproperty
@@ -98,53 +99,87 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         This is a shortcut for `select(cls)`.
 
-        Example:
-        >>> from sqlalchemy import select
-        >>> select(User)
-        # SELECT * FROM users
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> User.query
+        'SELECT * FROM users'
 
         Is equivalent to:
-        >>> User.query
-        # SELECT * FROM users
+        >>> from sqlalchemy import select
+        >>> select(User)
+        'SELECT * FROM users'
         """
-
         return select(cls)  # type: ignore
 
     def fill(self, **kwargs):
         """Fills the object with values from `kwargs`
         without saving to the database.
 
-        Example:
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> user = User(name='Bob')
         >>> user.name
-        # Bob
+        'Bob'
         >>> user.fill(name='Bob Williams', age=30)
         >>> user.name
-        # Bob Williams
+        'Bob Williams'
         >>> user.age
-        # 30
+        30
 
         Raises
         ------
-        KeyError
-            If attribute doesn't exist.
+        AttributeError
+            If attribute does not exist.
+        NoSettableError
+            If attribute is not settable.
         """
-
         for name in kwargs.keys():
+            if not hasattr(self, name):
+                raise AttributeError(f"no such attribute: '{name}' in model '{self.__class__.__name__}'")
             if name in self.settable_attributes:
                 setattr(self, name, kwargs[name])
             else:
-                raise KeyError(f'Attribute `{name}` does not exist')
+                raise NoSettableError(self.__class__.__name__, name)
+
         return self
 
     async def save(self):
         """Saves the current row.
 
-        Example:
+        .. note::
+            All database errors will trigger a rollback and be raised.
+
+        Raises
+        ------
+        Exception
+            If saving fails.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> user = User(name='Bob Williams', age=30)
         >>> await user.save()
         """
-
         async with self.AsyncSession() as session:
             try:
                 session.add(self)
@@ -160,26 +195,55 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         This is the same as calling `self.fill(**kwargs).save()`.
 
-        Example:
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> user = User(name='Bob', age=30)
+        >>> user.name
+        'Bob'
         >>> await user.update(name='Bob Williams', age=31)
         >>> user.name
-        # Bob Williams
+        'Bob Williams'
         """
-
         return await self.fill(**kwargs).save()
 
     async def delete(self):
         """Deletes the current row.
 
-        **CAUTION**
-
+        .. warning::
             This is not a soft delete method. It will permanently delete the row from
             the database. So, if you want to keep the row in the database, you can implement
             a custom soft delete method, i.e. using `save()` method to update the row with a
             flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
-        """
 
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> user = await User.find(username='Bob324').one_or_none()
+        >>> user.name
+        'Bob Williams'
+        >>> await user.delete()
+        >>> await User.find(username='Bob324').one_or_none()
+        None
+        """
         async with self.AsyncSession() as session:
             try:
                 await session.delete(self)
@@ -190,7 +254,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     async def remove(self):
         """Synonym for `delete()`."""
-
         return await self.delete()
 
     @classmethod
