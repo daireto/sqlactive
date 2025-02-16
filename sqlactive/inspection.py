@@ -3,12 +3,12 @@
 from numbers import Number
 from typing import Any
 
-from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
 from sqlalchemy.sql.schema import Column
 from typing_extensions import Self
 
+from .exceptions import CompositePrimaryKeyError, RelationError
 from .utils import classproperty
 
 
@@ -27,16 +27,25 @@ class InspectionMixin(DeclarativeBase):
 
         Examples
         --------
-        Assuming you have a model named ``User`` with a primary key named ``id`` and
-        a model named ``Sell`` with a primary key composed of ``id`` and ``product_id``:
-        >>> bob = User.insert(name='Bob')
-        >>> bob.id_str
+        Assuming you have two models named ``User`` and ``Sell`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        >>> class Sell(ActiveRecordBaseModel):
+        ...     __tablename__ = 'sells'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+
+        You will get this:
+        >>> user = User.insert(name='Bob')
+        >>> user.id_str
         'id=1'
         >>> sell = Sell(id=1, product_id=1)
         >>> sell.id_str
         'id=1, product_id=1'
         """
-
         mapped = []
         for pk in self.primary_keys_full:
             value = getattr(self, pk.key)
@@ -45,128 +54,369 @@ class InspectionMixin(DeclarativeBase):
 
     @classproperty
     def columns(cls) -> list[str]:
-        """Returns a `list` of column names."""
+        """Returns a list of column names.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        You will get this:
+        >>> User.columns
+        ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
+        """
         return cls.__table__.columns.keys()
 
     @classproperty
     def string_columns(cls) -> list[str]:
-        """Returns a `list` of string column names."""
+        """Returns a list of string column names.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        You will get this:
+        >>> User.string_columns
+        ['username', 'name']
+        """
         return [c.key for c in cls.__table__.columns if c.type.python_type is str]
 
     @classproperty
     def primary_keys_full(cls) -> tuple[Column[Any], ...]:
-        """Returns the columns that form the primary key."""
+        """Returns the columns that form the primary key.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+
+        You will get this:
+        >>> User.primary_keys_full
+        (Column('id', Integer(), table=<users>, primary_key=True, nullable=False),)
+        """
         return cls.__mapper__.primary_key
 
     @classproperty
     def primary_keys(cls) -> list[str]:
-        """Returns the names of the primary key columns."""
+        """Returns the names of the primary key columns.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+
+        You will get this:
+        >>> User.primary_keys
+        ['id']
+        """
         return [pk.key for pk in cls.primary_keys_full]
 
     @classproperty
     def primary_key_name(cls) -> str:
         """Returns the primary key name of the model.
 
-        **WARNING**
-
+        .. warning::
             This property can only be used if the model has a single primary key.
-            If the model has a composite primary key, an `InvalidRequestError` is raised.
-        """
+            If the model has a composite primary key, an ``CompositePrimaryKeyError`` is raised.
 
+        Raises
+        ------
+        CompositePrimaryKeyError
+            If the model has a composite primary key.
+
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+
+        You will get this:
+        >>> User.primary_key_name
+        'id'
+
+        Assuming you have a model named ``Sell`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Sell(ActiveRecordBaseModel):
+        ...     __tablename__ = 'sells'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     product_id: Mapped[int] = mapped_column(primary_key=True)
+        ...     quantity: Mapped[int] = mapped_column()
+
+        You will get an error:
+        >>> Sell.primary_key_name
+        Traceback (most recent call last):
+        ...
+        CompositePrimaryKeyError: model `Sell` has a composite primary key
+        """
         if len(cls.primary_keys) > 1:
-            raise InvalidRequestError(f'model `{cls.__name__}` has a composite primary key')
+            raise CompositePrimaryKeyError(cls.__name__)
+
         return cls.primary_keys[0]
 
     @classproperty
     def relations(cls) -> list[str]:
-        """Returns a `list` of relationship names."""
+        """Returns a list of relationship names.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+
+        You will get this:
+        >>> User.relations
+        ['posts', 'comments']
+        """
         return [c.key for c in cls.__mapper__.attrs if isinstance(c, RelationshipProperty)]
 
     @classproperty
     def settable_relations(cls) -> list[str]:
-        """Returns a `list` of settable relationship names."""
+        """Returns a list of settable (not viewonly) relationship names.
 
-        return [r for r in cls.relations if getattr(cls, r).property.viewonly is False]
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+
+        You will get this:
+        >>> User.settable_relations
+        ['posts', 'comments']
+
+        Assuming you have a model named ``Product`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Product(BaseModel):
+        ...     __tablename__ = 'products'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     sells: Mapped[list['Sell']] = relationship(
+        ...         back_populates='product',
+        ...         viewonly=True  # Not settable
+        ...     )
+
+        You will get this:
+        >>> Product.settable_relations
+        []
+        """
+        return [r for r in cls.relations if not getattr(cls, r).property.viewonly]
 
     @classproperty
     def hybrid_properties(cls) -> list[str]:
-        """Returns a `list` of hybrid property names."""
+        """Returns a list of hybrid property names.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_property
+        ...     def is_adult(self):
+        ...         return self.age > 18
+
+        You will get this:
+        >>> User.hybrid_properties
+        ['is_adult']
+        """
         items = cls.__mapper__.all_orm_descriptors
         return [item.__name__ for item in items if isinstance(item, hybrid_property)]
 
     @classproperty
-    def hybrid_methods_full(cls):
-        """Returns a `dict` of hybrid methods."""
+    def hybrid_methods_full(cls) -> dict[str, hybrid_method[..., Any]]:
+        """Returns a dict of hybrid methods.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_method
+        ...     def older_than(self, other: 'User'):
+        ...         return self.age > other.age
+
+        You will get this:
+        >>> User.hybrid_methods_full
+        {'older_than': hybrid_method(...)}
+        """
         items = cls.__mapper__.all_orm_descriptors
         return {item.func.__name__: item for item in items if type(item) is hybrid_method}
 
     @classproperty
     def hybrid_methods(cls) -> list[str]:
-        """Returns a `list` of hybrid method names."""
+        """Returns a list of hybrid method names.
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_method
+        ...     def older_than(self, other: 'User'):
+        ...         return self.age > other.age
+
+        You will get this:
+        >>> User.hybrid_methods
+        ['older_than']
+        """
         return list(cls.hybrid_methods_full.keys())
 
     @classproperty
     def filterable_attributes(cls) -> list[str]:
-        """Returns a `list` of filterable attributes.
+        """Returns a list of filterable attributes.
 
-        These are all columns, relations and hybrid properties.
+        These are all columns, relations, hybrid properties and hybrid methods.
+
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_property
+        ...     def is_adult(self):
+        ...         return self.age > 18
+        ...     @hybrid_method
+        ...     def older_than(self, other: 'User'):
+        ...         return self.age > other.age
+
+        You will get this:
+        >>> User.filterable_attributes
+        ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult', 'older_than']
         """
-
-        return cls.relations + cls.columns + cls.hybrid_properties + cls.hybrid_methods
+        return cls.columns + cls.relations + cls.hybrid_properties + cls.hybrid_methods
 
     @classproperty
     def sortable_attributes(cls) -> list[str]:
-        """Returns a `list` of sortable attributes.
+        """Returns a list of sortable attributes.
 
         These are all columns and hybrid properties.
-        """
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_property
+        ...     def is_adult(self):
+        ...         return self.age > 18
+
+        You will get this:
+        >>> User.sortable_attributes
+        ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
+        """
         return cls.columns + cls.hybrid_properties
 
     @classproperty
     def settable_attributes(cls) -> list[str]:
-        """Returns a `list` of settable attributes.
+        """Returns a list of settable attributes.
 
         These are all columns, settable relations and hybrid properties.
-        """
 
-        return cls.columns + cls.hybrid_properties + cls.settable_relations
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     @hybrid_property
+        ...     def is_adult(self):
+        ...         return self.age > 18
+
+        You will get this:
+        >>> User.settable_attributes
+        ['username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
+        """
+        return cls.columns + cls.settable_relations + cls.hybrid_properties
 
     @classproperty
     def searchable_attributes(cls) -> list[str]:
-        """Returns a `list` of searchable attributes.
+        """Returns a list of searchable attributes.
 
         These are all string columns.
-        """
 
+        Examples
+        --------
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        You will get this:
+        >>> User.searchable_attributes
+        ['username', 'name']
+        """
         return cls.string_columns
-
-    @classmethod
-    def get_primary_key_filter_criteria(cls, pk: object | dict[str, object]) -> dict[str, Any]:
-        """Returns a `dict` of primary key filter criteria.
-
-        Parameters
-        ----------
-        pk : object | dict[str, object]
-            Primary key value or dict of composite primary key values.
-
-        Returns
-        -------
-        dict[str, Any]
-            Primary key filter criteria.
-        """
-        if isinstance(pk, dict):
-            return {pk_column.key: pk[pk_column.key] for pk_column in cls.primary_keys_full if pk_column.key in pk}
-
-        return {cls.primary_key_name: pk}
 
     @classmethod
     def get_class_of_relation(cls, relation_name: str) -> type[Self]:
@@ -175,18 +425,38 @@ class InspectionMixin(DeclarativeBase):
         Parameters
         ----------
         relation_name : str
-            The name of the relationship
+            The name of the relationship.
+
+        Raises
+        ------
+        RelationError
+            If the relation is not found.
 
         Examples
         --------
-        Assuming you have a model named ``User`` related to a model named ``Post``
-        through a relationship named ``posts``:
-        >>> bob = User.insert(name='Bob')
-        >>> bob.get_class_of_relation('posts')
-        <class 'Post'>
-        """
+        Assuming you have a model named ``User`` like this:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     # other columns
+        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
+        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
-        return cls.__mapper__.relationships[relation_name].mapper.class_
+        You will get this:
+        >>> User.get_class_of_relation('posts')
+        <class 'Post'>
+        >>> User.get_class_of_relation('comments')
+        <class 'Comment'>
+        >>> User.get_class_of_relation('sells')
+        Traceback (most recent call last):
+            ...
+        RelationError: no such relation: 'sells'
+        """
+        try:
+            return cls.__mapper__.relationships[relation_name].mapper.class_
+        except KeyError:
+            raise RelationError(relation_name)
 
     def __repr__(self) -> str:
         """Returns a string representation of the model.
@@ -196,12 +466,11 @@ class InspectionMixin(DeclarativeBase):
         Examples
         --------
         Assuming you have a model named ``User`` with a primary key named ``id``:
-        >>> bob = User.insert(name='Bob')
-        >>> bob
+        >>> user = User.insert(name='Bob')
+        >>> user
         User(id=1)
-        >>> users = await User.find(name__like='%John%')
+        >>> users = await User.find(name__endswith='Doe').all()
         >>> users
-        [User(id=1), User(id=2), ...]
+        [User(id=4), User(id=5)]
         """
-
         return f'{self.__class__.__name__}({self.id_str})'

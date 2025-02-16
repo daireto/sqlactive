@@ -348,13 +348,13 @@ class Seed:
 
         await Sell.insert_all(
             [
-                Sell(id=1, product_id=1),
-                Sell(id=2, product_id=2),
-                Sell(id=3, product_id=3),
-                Sell(id=4, product_id=4),
-                Sell(id=5, product_id=5),
-                Sell(id=6, product_id=6),
-                Sell(id=7, product_id=7),
-                Sell(id=8, product_id=8),
+                Sell(id=1, product_id=1, quantity=2),
+                Sell(id=2, product_id=2, quantity=2),
+                Sell(id=3, product_id=3, quantity=5),
+                Sell(id=4, product_id=4, quantity=4),
+                Sell(id=5, product_id=5, quantity=3),
+                Sell(id=6, product_id=6, quantity=4),
+                Sell(id=7, product_id=7, quantity=1),
+                Sell(id=8, product_id=8, quantity=4),
             ]
         )

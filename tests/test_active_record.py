@@ -11,6 +11,7 @@ from sqlalchemy.sql.operators import or_
 
 from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
+from sqlactive.exceptions import CompositePrimaryKeyError
 
 from ._logger import logger
 from ._models import BaseModel, Comment, Post, User, Sell
@@ -42,7 +43,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `_get_primary_key_name` function."""
 
         logger.info('Testing `_get_primary_key_name` function...')
-        with self.assertRaises(InvalidRequestError) as context:
+        with self.assertRaises(CompositePrimaryKeyError) as context:
             Sell.get_primary_key_name()
         self.assertIn('has a composite primary key', str(context.exception))
 
@@ -314,6 +315,16 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(2, user.posts[0].id)
             self.assertEqual(3, user.comments[0].id)
             self.assertEqual(2, user.comments[0].post.id)
+        unknown_sell = await Sell.get({'id': 1000, 'product_id': 2000})
+        self.assertIsNone(unknown_sell)
+        sell = await Sell.get({'id': 1, 'product_id': 1})
+        self.assertIsNotNone(sell)
+        if sell:
+            self.assertEqual(1, sell.id)
+            self.assertEqual(1, sell.product_id)
+        sell = await Sell.get_or_fail({'id': 1, 'product_id': 1})
+        self.assertEqual(1, sell.id)
+        self.assertEqual(1, sell.product_id)
 
     async def test_get_or_fail(self):
         """Test for `get_or_fail` function."""
@@ -600,7 +611,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(users))
         with self.assertRaises(ValueError) as context:
             await User.limit(-1).where(username__like='Ji%').all()
-        self.assertEqual('Limit must be positive.', str(context.exception))
+        self.assertEqual('limit must be >= 0', str(context.exception))
 
     async def test_join(self):
         """Test for `join` function."""

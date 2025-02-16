@@ -1,12 +1,11 @@
 import asyncio
 import unittest
 
-from sqlalchemy.exc import InvalidRequestError
-
 from sqlactive.conn import DBConnection
+from sqlactive.exceptions import CompositePrimaryKeyError, RelationError
 
 from ._logger import logger
-from ._models import BaseModel, Sell, User
+from ._models import BaseModel, Comment, Post, Product, Sell, User
 from ._seed import Seed
 
 
@@ -34,7 +33,9 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `__repr__` function...')
         user = await User.get_or_fail(1)
-        self.assertEqual('User(id=1)', str(user))
+        self.assertEqual('User(id=1)', repr(user))
+        users = await User.find(name__endswith='Doe').all()
+        self.assertEqual('[User(id=4), User(id=5)]', repr(users))
 
     async def test_id_str(self):
         """Test for `id_str` property."""
@@ -63,9 +64,9 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `primary_key_name` classproperty."""
 
         logger.info('Testing `primary_key_name` classproperty...')
-        with self.assertRaises(InvalidRequestError) as context:
+        with self.assertRaises(CompositePrimaryKeyError) as context:
             _ = Sell.primary_key_name
-        self.assertEqual('model `Sell` has a composite primary key', str(context.exception))
+        self.assertEqual("model 'Sell' has a composite primary key", str(context.exception))
 
     def test_relations(self):
         """Test for `relations` classproperty."""
@@ -78,6 +79,7 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `settable_relations` classproperty...')
         self.assertCountEqual(['posts', 'comments'], User.settable_relations)
+        self.assertEqual(0, len(Product.settable_relations))
 
     def test_hybrid_properties(self):
         """Test for `hybrid_properties` classproperty."""
@@ -135,3 +137,14 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `searchable_attributes` classproperty...')
         self.assertCountEqual(['username', 'name'], User.searchable_attributes)
+
+    def test_get_class_of_relation(self):
+        """Test for `get_class_of_relation` function."""
+
+        logger.info('Testing `get_class_of_relation` function...')
+        self.assertEqual(Post, User.get_class_of_relation('posts'))
+        self.assertEqual(Comment, User.get_class_of_relation('comments'))
+        self.assertEqual(Product, Sell.get_class_of_relation('product'))
+        with self.assertRaises(RelationError) as context:
+            User.get_class_of_relation('sells')
+        self.assertEqual("no such relation: 'sells'", str(context.exception))

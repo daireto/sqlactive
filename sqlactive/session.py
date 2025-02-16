@@ -50,4 +50,4 @@ class SessionMixin:
         if cls._session is not None:
             return cls._session
         else:
-            raise NoSessionError('Cannot get session. Please, call SaActiveRecord.set_session()')
+            raise NoSessionError()

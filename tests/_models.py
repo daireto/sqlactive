@@ -64,9 +64,14 @@ class Product(BaseModel):
     description: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[float] = mapped_column(nullable=False)
 
+    sells: Mapped[list['Sell']] = relationship(back_populates='product', viewonly=True)
+
 
 class Sell(BaseModel):
     __tablename__ = 'sells'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+    quantity: Mapped[int] = mapped_column(nullable=False)
+
+    product: Mapped['Product'] = relationship(back_populates='sells')

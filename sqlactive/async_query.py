@@ -75,15 +75,16 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         The existing set of FROMs are maintained, including those
         implied by the current columns clause.
 
-        Example:
+        Examples
+        --------
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
         >>> async_query.order_by('-created_at')
         >>> async_query
-        # SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
+        'SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC'
         >>> async_query.select(User.name, User.age)
         >>> async_query
-        # SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
+        'SELECT users.name, users.age FROM users ORDER BY users.created_at DESC'
         """
 
         if not entities:
@@ -280,7 +281,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         It is recommended to select specific columns. You can use
         the `select_columns` parameter to select specific columns.
 
-        **WARNING:**
+        **WARNING**
 
             When selecting specific columns with the `select_columns` parameter,
             the query will be completely reset and overwritten with a new query.
@@ -354,21 +355,26 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         limit : int
             Limit.
 
-        Example:
+        Raises
+        ------
+        ValueError
+            If ``limit`` is negative.
+
+        Examples
+        --------
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
         >>> users = await async_query.limit(2).all()
         >>> users
-        # [<User 1>, <User 2>]
-
-        Raises
-        ------
-        ValueError
-            If limit is negative.
+        [User(id=1), User(id=2)]
+        >>> async_query.limit(-1)
+        Traceback (most recent call last):
+            ...
+        ValueError: limit must be >= 0
         """
 
         if limit < 0:
-            raise ValueError('Limit must be positive.')
+            raise ValueError('limit must be >= 0')
 
         self.query = self.query.limit(limit)
         return self
