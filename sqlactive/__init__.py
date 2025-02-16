@@ -105,6 +105,21 @@ in the base class to avoid creating tables for the base class.
 >>> User.all()
 # []
 
+.. warning::
+    All relations used in filtering/sorting/grouping should be explicitly set,
+    not just being a `backref`. This is because SQLActive does not know the
+    relation direction and cannot infer it. So, when defining a relationship like::
+
+        class User(BaseModel):
+            # ...
+            posts: Mapped[list['Post']] = relationship(back_populates='user')
+
+    It is required to define the reverse relationship::
+
+        class Post(BaseModel):
+            # ...
+            user: Mapped['User'] = relationship(back_populates='posts')
+
 ### DBConnection helper
 To create a DB connection, create an instance of the `DBConnection` class and call
 the `init_db` method:
