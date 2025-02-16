@@ -8,8 +8,6 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     [`Smart Queries`](smart-query-mixin.md) and [`Serialization`](serialization-mixin.md) mixins.
     It is not intended to be used on its own.
 
-## API Reference
-
 ???+ info
 
     The examples below assume the following models:
@@ -91,6 +89,8 @@ The `InspectionMixin` class provides attributes and properties inspection functi
 
         product: Mapped['Product'] = relationship(back_populates='sells')
     ```
+
+## API Reference
 
 ### Properties
 
