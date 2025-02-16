@@ -369,7 +369,7 @@ user.comments[0].post.title  # Lorem ipsum
 For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
 and `eager_expr` methods can be used.
 
-**Example of `filter_expr` method usage:**
+**Example of `filter_expr` method usage**
 
 > ```python
 > Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
@@ -499,7 +499,7 @@ To run a specific test, use the following command:
 python -m unittest tests.<test_name>
 ```
 
-**Available tests:**
+**Available tests**
 - `test_active_record.py`
 - `test_db_connection.py`
 - `test_execute.py`

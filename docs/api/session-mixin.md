@@ -15,11 +15,11 @@ def set_session(session: async_scoped_session[AsyncSession])
 
 > Sets the async session factory.
 
-> **Parameters:**
+> **Parameters**
 
 > - `session`: Async session factory.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > from asyncio import current_task
@@ -51,7 +51,7 @@ def close_session()
 
 > Closes the async session.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > ActiveRecordBaseModel.close_session()
@@ -67,11 +67,11 @@ def AsyncSession() -> async_scoped_session[AsyncSession]
 
 > Async session factory.
 
-> **Raises:**
+> **Raises**
 
 > - `NoSessionError`: If no session is available.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > async with SaActiveRecord.AsyncSession() as session:

@@ -195,21 +195,21 @@ def filter_expr(**filters: object) -> list
 >     db.query(alias).filter(*alias.filter_expr(age_from=5))
 >     ```
 
-> **Parameters:**
+> **Parameters**
 
 > - `filters`: Django-style filters.
 
-> **Returns:**
+> **Returns**
 
 > - `list[sqlalchemy.sql.elements.BinaryExpression]`: List of filter expressions.
 
-> **Raises:**
+> **Raises**
 
 > - `KeyError`:
 >     - If operator is not found in `_operators`.
 >     - If attribute is not found in `filterable_attributes` property.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > db.query(Product).filter(
@@ -236,19 +236,19 @@ def order_expr(*columns: str) -> list[UnaryExpression]
 > [desc(User.first_name), asc(User.phone)]
 > ```
 
-> **Parameters:**
+> **Parameters**
 
 > - `columns`: Django-style columns.
 
-> **Returns:**
+> **Returns**
 
 > - `list[sqlalchemy.sql.elements.UnaryExpression]`: List of sort expressions.
 
-> **Raises:**
+> **Raises**
 
 > - `KeyError`: If attribute is not sortable.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > db.query(User).order_by(*User.order_expr('-first_name'))
@@ -274,19 +274,19 @@ def columns_expr(*columns: str) -> list[UnaryExpression]
 > [User.first_name, User.age]
 > ```
 
-> **Parameters:**
+> **Parameters**
 
 > - `columns`: Django-style columns.
 
-> **Returns:**
+> **Returns**
 
 > - `list[sqlalchemy.sql.elements.UnaryExpression]`: List of column expressions.
 
-> **Raises:**
+> **Raises**
 
 > - `KeyError`: If attribute is not found.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > db.query(User).group_by(*User.columns_expr('first_name'))
@@ -319,15 +319,15 @@ def eager_expr(
 > [joinedload(Post.user), subqueryload(Post.comments).options(joinedload(Comment.user))]
 > ```
 
-> **Parameters:**
+> **Parameters**
 
 > - `schema`: Eager loading schema.
 
-> **Returns:**
+> **Returns**
 
 > - `list[sqlalchemy.orm.strategy_options._AbstractLoad]`: List of eager loading expressions.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > schema = {
@@ -370,7 +370,7 @@ def smart_query(
 > db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
 > ```
 
-> **Parameters:**
+> **Parameters**
 
 > - `query`: Native SQLAlchemy query.
 > - `criteria`: SQLAlchemy syntax filter expressions.
@@ -381,15 +381,15 @@ def smart_query(
 > - `group_attrs`: Django-like group expressions.
 > - `schema`: Schema for the eager loading.
 
-> **Returns:**
+> **Returns**
 
 > - `Select[tuple[Any, ...]]`: Smart query.
 
-> **Raises:**
+> **Raises**
 
 > - `KeyError`: If filter, sort or group path is incorrect.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > users = await User.smart_query(
@@ -415,17 +415,17 @@ def apply_search_filter(
 > Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
 > of the model. If `columns` are provided, searches only these columns.
 
-> **Parameters:**
+> **Parameters**
 
 > - `query`: Native SQLAlchemy query.
 > - `search_term`: Search term.
 > - `columns`: Columns to search in.
 
-> **Returns:**
+> **Returns**
 
 > - `Select[tuple[Any, ...]]`: Filtered query.
 
-> **Example:**
+> **Examples**
 
 > ```python
 > query = User.apply_search_filter('Bob')
