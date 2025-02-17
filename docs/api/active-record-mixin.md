@@ -340,7 +340,10 @@ def query() -> Select[tuple[Self]]
 > ```python
 > >>> User.query
 > 'SELECT * FROM users'
-> # Is equivalent to
+> ```
+
+> Is equivalent to:
+> ```python
 > >>> from sqlalchemy import select
 > >>> select(User)
 > 'SELECT * FROM users'
@@ -437,7 +440,7 @@ async def update(**kwargs) -> Self
 
 #### delete
 ```python
-async def delete()
+async def delete() -> None
 ```
 
 > Deletes the current row.
@@ -462,7 +465,7 @@ async def delete()
 
 #### remove
 ```python
-async def remove()
+async def remove() -> None
 ```
 
 > Synonym for `delete()`.
@@ -475,7 +478,7 @@ async def remove()
 async def insert(**kwargs) -> Self
 ```
 
-> Inserts a new row.
+> Inserts a new row and returns the saved instance.
 
 > **Parameters**
 
@@ -488,13 +491,15 @@ async def insert(**kwargs) -> Self
 > **Examples**
 
 > ```python
-> user = await User.insert(name='Bob Williams', age=30)
+> >>> user = await User.insert(name='Bob Williams', age=30)
+> >>> user.name
+> 'Bob Williams'
 > ```
 
 #### create
 ```python
 @classmethod
-async def create(**kwargs)
+async def create(**kwargs) -> Self
 ```
 
 > Synonym for `insert()`.
@@ -502,50 +507,128 @@ async def create(**kwargs)
 #### save_all
 ```python
 @classmethod
-async def save_all(rows: Sequence[Self], refresh: bool = False)
+async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
 > Saves multiple rows in a single transaction.
 
+> When using this method to update existing rows, instances are not refreshed after
+> commit by default. Accessing the attributes of the updated rows without refreshing
+> them after commit will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
+
+> To access the attributes of updated rows, the `refresh` flag must be set to
+> ``True`` in order to refresh them after commit.
+
+> ???+ warning
+>
+>     Refreshing multiple instances may be expensive,
+>     which may lead to a higher latency due to additional database queries.
+
+> ???+ note
+>
+>     When inserting new rows, refreshing the instances after commit is not necessary.
+>     The instances are already available after commit, but you still can use the
+>     `refresh` flag to refresh them if needed.
+
 > **Parameters**
 
 > - `rows`: Sequence of rows to be saved.
-> - `refresh`: Whether to refresh the rows after saving (default: `False`).
+> - `refresh`: Whether to refresh the rows after commit (default: `False`).
 
 > **Examples**
 
+> Inserting new rows:
 > ```python
-> users = [User(name='Bob'), User(name='Alice')]
-> await User.save_all(users, refresh=True)
+> >>> users = [
+> ...     User(name='Bob Williams', age=30),
+> ...     User(name='Jane Doe', age=31),
+> ...     User(name='John Doe', age=32),
+> ... ]
+> >>> await User.save_all(users)
+> >>> users[0].name
+> 'Bob Williams'
+> >>> users[1].age
+> 31
+> ```
+
+> Updating existing rows (with refreshing after commit):
+> ```python
+> >>> users = User.where(name__endswith='Doe').all()
+> >>> for user in users:
+> ...     user.name = user.name.replace('Doe', 'Smith')
+> >>> await User.save_all(users, refresh=True)
+> >>> users[0].name
+> 'Jane Smith'
+> >>> users[1].name
+> 'John Smith'
+> ```
+
+> Updating existing rows (without refreshing after commit):
+> ```python
+> >>> users = User.where(name__endswith='Doe').all()
+> >>> for user in users:
+> ...     user.name = user.name.replace('Doe', 'Smith')
+> >>> await User.save_all(users)
+> >>> users[0].name
+> Traceback (most recent call last):
+>     ...
+> DetachedInstanceError: Instance <User at 0x...> is not bound to a Session...
 > ```
 
 #### insert_all
 ```python
 @classmethod
-async def insert_all(rows: Sequence[Self], refresh: bool = False)
+async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
 > Inserts multiple rows in a single transaction.
 
 > This is mostly a shortcut for `save_all()` when inserting new rows.
 
+> ???+ note
+>
+>     When inserting new rows, refreshing the instances after commit is not necessary.
+>     The instances are already available after commit, but you still can use the
+>     ``refresh`` flag to refresh them if needed.
+
+> See the ``save_all()`` method for more details.
+
 #### update_all
 ```python
 @classmethod
-async def update_all(rows: Sequence[Self], refresh: bool = False)
+async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
 > Updates multiple rows in a single transaction.
 
 > This is mostly a shortcut for `save_all()` when updating existing rows.
 
+> If you are planning to access the attributes of the updated instances after commit,
+> you must set the ``refresh`` flag to ``True`` in order to refresh them. Accessing
+> the attributes of the updated instances without refreshing them after commit
+> will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
+
+> ???+ warning
+>
+>     Refreshing multiple instances may be expensive,
+>     which may lead to a higher latency due to additional database queries.
+
+> See the ``save_all()`` method for more details.
+
 #### delete_all
 ```python
 @classmethod
-async def delete_all(rows: Sequence[Self])
+async def delete_all(rows: Sequence[Self]) -> None
 ```
 
 > Deletes multiple rows in a single transaction.
+
+> ???+ danger
+>
+>     This is not a soft delete method. It will permanently delete the row from
+>     the database. So, if you want to keep the row in the database, you can implement
+>     a custom soft delete method, i.e. using `save()` method to update the row with a
+>     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
 
 > **Parameters**
 
@@ -554,28 +637,49 @@ async def delete_all(rows: Sequence[Self])
 > **Examples**
 
 > ```python
-> users = await User.where(age__lt=18).all()
-> await User.delete_all(users)
+> >>> users = await User.where(name__endswith='Doe').all()
+> >>> users
+> [User(id=1), User(id=2)]
+> >>> await User.delete_all(users)
+> >>> await User.where(name__endswith='Doe').all()
+> []
 > ```
 
 #### destroy
 ```python
 @classmethod
-async def destroy(*ids: object)
+async def destroy(*ids: object) -> None
 ```
 
 > Deletes multiple rows by their primary key.
 
-> If rows have a composite primary key, this method will raise `InvalidRequestError`.
+> This method can only be used if the model has a single primary key.
+> Otherwise, it will raise a ``CompositePrimaryKeyError``.
+
+> ???+ danger
+>
+>     This is not a soft delete method. It will permanently delete the row from
+>     the database. So, if you want to keep the row in the database, you can implement
+>     a custom soft delete method, i.e. using `save()` method to update the row with a
+>     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
 
 > **Parameters**
 
 > - `ids`: Primary key values of rows to delete.
 
+> **Raises**
+
+> - `CompositePrimaryKeyError`: If the model has a composite primary key.
+
 > **Examples**
 
 > ```python
-> await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
+> >>> users = await User.where(name__endswith='Doe').all()
+> >>> [user.id for user in users]
+> [1, 2]
+> >>> await User.destroy(1, 2)
+> >>> await User.where(name__endswith='Doe').all()
+> []
 > ```
 
 #### get

@@ -112,9 +112,21 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         return select(cls)  # type: ignore
 
-    def fill(self, **kwargs):
+    def fill(self, **kwargs) -> Self:
         """Fills the object with values from `kwargs`
         without saving to the database.
+
+        Returns
+        -------
+        self
+            The instance itself for method chaining.
+
+        Raises
+        ------
+        AttributeError
+            If attribute does not exist.
+        NoSettableError
+            If attribute is not settable.
 
         Examples
         --------
@@ -136,13 +148,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         'Bob Williams'
         >>> user.age
         30
-
-        Raises
-        ------
-        AttributeError
-            If attribute does not exist.
-        NoSettableError
-            If attribute is not settable.
         """
         for name in kwargs.keys():
             if not hasattr(self, name):
@@ -154,11 +159,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         return self
 
-    async def save(self):
+    async def save(self) -> Self:
         """Saves the current row.
 
         .. note::
             All database errors will trigger a rollback and be raised.
+
+        Returns
+        -------
+        self
+            The instance itself for method chaining.
 
         Raises
         ------
@@ -190,10 +200,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.rollback()
                 raise error
 
-    async def update(self, **kwargs):
+    async def update(self, **kwargs) -> Self:
         """Updates the current row with the provided values.
 
         This is the same as calling `self.fill(**kwargs).save()`.
+
+        Returns
+        -------
+        self
+            The instance itself for method chaining.
 
         Examples
         --------
@@ -216,7 +231,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         return await self.fill(**kwargs).save()
 
-    async def delete(self):
+    async def delete(self) -> None:
         """Deletes the current row.
 
         .. warning::
@@ -252,41 +267,112 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.rollback()
                 raise error
 
-    async def remove(self):
+    async def remove(self) -> None:
         """Synonym for `delete()`."""
         return await self.delete()
 
     @classmethod
-    async def insert(cls, **kwargs):
-        """Inserts a new row.
+    async def insert(cls, **kwargs) -> Self:
+        """Inserts a new row and returns the saved instance.
 
-        Example:
+        Returns
+        -------
+        self
+            The created instance for method chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> user = await User.insert(name='Bob Williams', age=30)
         >>> user.name
-        # Bob Williams
+        'Bob Williams'
         """
-
         return await cls().fill(**kwargs).save()
 
     @classmethod
-    async def create(cls, **kwargs):
+    async def create(cls, **kwargs) -> Self:
         """Synonym for `insert()`."""
-
         return await cls.insert(**kwargs)
 
     @classmethod
-    async def save_all(cls, rows: Sequence[Self], refresh: bool = False):
+    async def save_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Saves multiple rows in a single transaction.
+
+        When using this method to update existing rows, instances are not refreshed after
+        commit by default. Accessing the attributes of the updated rows without refreshing
+        them after commit will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
+
+        To access the attributes of updated rows, the ``refresh`` flag must be set to
+        ``True`` in order to refresh them after commit.
+
+        .. warning::
+            Refreshing multiple instances may be expensive,
+            which may lead to a higher latency due to additional database queries.
+
+        .. note::
+            When inserting new rows, refreshing the instances after commit is not necessary.
+            The instances are already available after commit, but you still can use the
+            ``refresh`` flag to refresh them if needed.
 
         Parameters
         ----------
         rows : Sequence[Self]
             Rows to be saved.
         refresh : bool, optional
-            Whether to refresh the rows after saving, by default False.
-            NOTE: Refreshing may be expensive.
-        """
+            Whether to refresh the rows after commit, by default False.
 
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Inserting new rows:
+        >>> users = [
+        ...     User(name='Bob Williams', age=30),
+        ...     User(name='Jane Doe', age=31),
+        ...     User(name='John Doe', age=32),
+        ... ]
+        >>> await User.save_all(users)
+        >>> users[0].name
+        'Bob Williams'
+        >>> users[1].age
+        31
+
+        Updating existing rows (with refreshing after commit):
+        >>> users = User.where(name__endswith='Doe').all()
+        >>> for user in users:
+        ...     user.name = user.name.replace('Doe', 'Smith')
+        >>> await User.save_all(users, refresh=True)
+        >>> users[0].name
+        'Jane Smith'
+        >>> users[1].name
+        'John Smith'
+
+        Updating existing rows (without refreshing after commit):
+        >>> users = User.where(name__endswith='Doe').all()
+        >>> for user in users:
+        ...     user.name = user.name.replace('Doe', 'Smith')
+        >>> await User.save_all(users)
+        >>> users[0].name
+        Traceback (most recent call last):
+            ...
+        DetachedInstanceError: Instance <User at 0x...> is not bound to a Session...
+        """
         async with cls.AsyncSession() as session:
             try:
                 session.add_all(rows)
@@ -299,35 +385,73 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     @classmethod
-    async def insert_all(cls, rows: Sequence[Self], refresh: bool = False):
+    async def insert_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Inserts multiple rows in a single transaction.
 
-        This is mostly a shortcut for `save_all()`
-        when inserting new rows.
-        """
+        This is mostly a shortcut for ``save_all()`` when inserting new rows.
 
+        .. note::
+            When inserting new rows, refreshing the instances after commit is not necessary.
+            The instances are already available after commit, but you still can use the
+            ``refresh`` flag to refresh them if needed.
+
+        See the ``save_all()`` method for more details.
+        """
         return await cls.save_all(rows, refresh)
 
     @classmethod
-    async def update_all(cls, rows: Sequence[Self], refresh: bool = False):
+    async def update_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Updates multiple rows in a single transaction.
 
-        This is mostly a shortcut for `save_all()`
-        when updating existing rows.
-        """
+        This is mostly a shortcut for ``save_all()`` when updating existing rows.
 
+        If you are planning to access the attributes of the updated instances after commit,
+        you must set the ``refresh`` flag to ``True`` in order to refresh them. Accessing
+        the attributes of the updated instances without refreshing them after commit
+        will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
+
+        .. warning::
+            Refreshing multiple instances may be expensive,
+            which may lead to a higher latency due to additional database queries.
+
+        See the ``save_all()`` method for more details.
+        """
         return await cls.save_all(rows, refresh)
 
     @classmethod
-    async def delete_all(cls, rows: Sequence[Self]):
+    async def delete_all(cls, rows: Sequence[Self]) -> None:
         """Deletes multiple rows in a single transaction.
+
+        .. warning::
+            This is not a soft delete method. It will permanently delete the row from
+            the database. So, if you want to keep the row in the database, you can implement
+            a custom soft delete method, i.e. using `save()` method to update the row with a
+            flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
 
         Parameters
         ----------
         rows : Sequence[Self]
             Rows to be deleted.
-        """
 
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> users = await User.where(name__endswith='Doe').all()
+        >>> users
+        [User(id=1), User(id=2)]
+        >>> await User.delete_all(users)
+        >>> await User.where(name__endswith='Doe').all()
+        []
+        """
         async with cls.AsyncSession() as session:
             try:
                 for row in rows:
@@ -338,15 +462,47 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     @classmethod
-    async def destroy(cls, *ids: object):
+    async def destroy(cls, *ids: object) -> None:
         """Deletes multiple rows by their primary key.
+
+        This method can only be used if the model has a single primary key.
+        Otherwise, it will raise a ``CompositePrimaryKeyError``.
+
+        .. warning::
+            This is not a soft delete method. It will permanently delete the row from
+            the database. So, if you want to keep the row in the database, you can implement
+            a custom soft delete method, i.e. using `save()` method to update the row with a
+            flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+
+        Parameters
+        ----------
+        *ids : object
+            Primary keys of the rows to be deleted.
 
         Raises
         ------
-        InvalidRequestError
+        CompositePrimaryKeyError
             If the model has a composite primary key.
-        """
 
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> users = await User.where(name__endswith='Doe').all()
+        >>> [user.id for user in users]
+        [1, 2]
+        >>> await User.destroy(1, 2)
+        >>> await User.where(name__endswith='Doe').all()
+        []
+        """
         async with cls.AsyncSession() as session:
             try:
                 query = cls.smart_query(filters={f'{cls.primary_key_name}__in': ids}).query
