@@ -337,7 +337,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bill65', user.username)
         with self.assertRaises(NoResultFound) as context:
             await User.get_or_fail(0)
-        self.assertIn('User with id `0` was not found', str(context.exception))
+        self.assertEqual("User with id '0' was not found", str(context.exception))
 
         user = await User.get_or_fail(2, join=[User.posts, (User.comments, True)])
         self.assertEqual(2, user.posts[0].id)
@@ -510,6 +510,19 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         async_query.select(User.name, User.age)
         self.assertIn('SELECT users.name, users.age', str(async_query))
         self.assertIn('ORDER BY users.created_at DESC', str(async_query))
+
+    async def test_distinct(self):
+        """Test for `distinct` function."""
+
+        logger.info('Testing `distinct` function...')
+        async_query = User.distinct()
+        self.assertIn('DISTINCT users.id, users.username, users.name', str(async_query))
+        all_ages = await User.select(User.age).all()
+        self.assertEqual(34, len(all_ages))
+        distinct_ages = await User.select(User.age).distinct().all()
+        self.assertEqual(15, len(distinct_ages))
+        expected_output = [30, 40, 26, 25, 19, 35, 36, 27, 28, 34, 29, 24, 31, 33, 32]
+        self.assertCountEqual(expected_output, distinct_ages)
 
     async def test_options(self):
         """Test for `options` function."""

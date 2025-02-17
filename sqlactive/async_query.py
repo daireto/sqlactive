@@ -14,6 +14,7 @@ from sqlalchemy.sql._typing import (
 )
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.functions import func
+from typing_extensions import Self
 
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
@@ -66,17 +67,36 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
         NOTE: You must provide a session by calling the `set_session` method.
         """
-
         self.query = query
 
-    def select(self, *entities: _ColumnsClauseArgument[Any]):
+    def select(self, *entities: _ColumnsClauseArgument[Any]) -> Self:
         """Replaces the columns clause with the given entities.
 
-        The existing set of FROMs are maintained, including those
-        implied by the current columns clause.
+        The existing set of FROMs are maintained, including those implied by
+        the current columns clause.
+
+        Parameters
+        ----------
+        *entities : _ColumnsClauseArgument[Any]
+            The entities to select.
+
+        Returns
+        -------
+        Self
+            The instance itself for method chaining.
 
         Examples
         --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> query = select(User)
         >>> async_query = AsyncQuery(query)
         >>> async_query.order_by('-created_at')
@@ -86,14 +106,33 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> async_query
         'SELECT users.name, users.age FROM users ORDER BY users.created_at DESC'
         """
-
         if not entities:
             return self
 
         self.query = self.query.with_only_columns(*entities, maintain_column_froms=True)
         return self
 
-    def options(self, *args: ExecutableOption):
+    def distinct(self) -> Self:
+        """Applies DISTINCT to the SELECT statement overall.
+
+        Returns
+        -------
+        Self
+            The instance itself for method chaining.
+
+        Examples
+        --------
+        >>> query = select(User)
+        >>> async_query = AsyncQuery(query)
+        >>> async_query
+        'SELECT users.id, users.username, users.name, ... FROM users'
+        >>> async_query.distinct()
+        'SELECT DISTINCT users.id, users.username, users.name, ... FROM users'
+        """
+        self.query = self.query.distinct()
+        return self
+
+    def options(self, *args: ExecutableOption) -> Self:
         """Applies the given list of mapper options.
 
         Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
@@ -149,11 +188,10 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         #     ...
         # InvalidRequestError: 'The unique() method must be invoked...'
         """
-
         self.query = self.query.options(*args)
         return self
 
-    def where(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+    def where(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
         """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -182,25 +220,22 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         # [<User 2>]
         """
-
         self.query = self.smart_query(query=self.query, criteria=criteria, filters=filters)
         return self
 
-    def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+    def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
         """Synonym for `where()`."""
-
         return self.where(*criteria, **filters)
 
-    def find(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any):
+    def find(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
         """Synonym for `where()`."""
-
         return self.where(*criteria, **filters)
 
     def search(
         self,
         search_term: str,
         columns: Sequence[str | InstrumentedAttribute] | None = None,
-    ):
+    ) -> Self:
         """Applies a search filter to the query.
 
         Searches for `search_term` in the searchable columns of the model.
@@ -226,11 +261,10 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users[1].username
         # Diana84
         """
-
         self.query = self.apply_search_filter(query=self.query, search_term=search_term, columns=columns)
         return self
 
-    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self:
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -259,21 +293,19 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> posts
         # [<Post 1>, <Post 4>, ...]
         """
-
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
         self.query = self.smart_query(query=self.query, sort_columns=sort_columns, sort_attrs=sort_attrs)
         return self
 
-    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]):
+    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self:
         """Synonym for `order_by()`."""
-
         return self.order_by(*columns)
 
     def group_by(
         self,
         *columns: _ColumnExpressionOrStrLabelArgument[Any],
         select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
-    ):
+    ) -> Self:
         """Applies one or more GROUP BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -307,7 +339,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> rows = await async_query.all(scalars=False)
         # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
-
         if select_columns:
             self.query = select(*select_columns)
 
@@ -315,7 +346,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         self.query = self.smart_query(query=self.query, group_columns=group_columns, group_attrs=group_attrs)
         return self
 
-    def offset(self, offset: int):
+    def offset(self, offset: int) -> Self:
         """Applies one OFFSET criteria to the query.
 
         Parameters
@@ -335,19 +366,17 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         ValueError
             If offset is negative.
         """
-
         if offset < 0:
             raise ValueError('Offset must be positive.')
 
         self.query = self.query.offset(offset)
         return self
 
-    def skip(self, skip: int):
+    def skip(self, skip: int) -> Self:
         """Synonym for `offset()`."""
-
         return self.offset(skip)
 
-    def limit(self, limit: int):
+    def limit(self, limit: int) -> Self:
         """Applies one LIMIT criteria to the query.
 
         Parameters
@@ -368,28 +397,25 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         [User(id=1), User(id=2)]
         >>> async_query.limit(-1)
-        Traceback (most recent call last):
+        Traceback (most recent call last) -> Self:
             ...
         ValueError: limit must be >= 0
         """
-
         if limit < 0:
             raise ValueError('limit must be >= 0')
 
         self.query = self.query.limit(limit)
         return self
 
-    def take(self, take: int):
+    def take(self, take: int) -> Self:
         """Synonym for `limit()`."""
-
         return self.limit(take)
 
-    def top(self, top: int):
+    def top(self, top: int) -> Self:
         """Synonym for `limit()`."""
-
         return self.limit(top)
 
-    def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None):
+    def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None) -> Self:
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
@@ -420,7 +446,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         KeyError
             If path is not a relationship of `model`.
         """
-
         options = []
         for path in paths:
             if isinstance(path, tuple):
@@ -444,7 +469,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         self,
         *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
         model: type[_T] | None = None,
-    ):
+    ) -> Self:
         """Subqueryload or Selectinload eager loading.
 
         Emits a second `SELECT` statement (Subqueryload) for each relationship
@@ -537,7 +562,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         KeyError
             If path is not a relationship of `model`.
         """
-
         options = []
         for path in paths:
             if isinstance(path, tuple):
@@ -560,7 +584,7 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
     def with_schema(
         self,
         schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict],
-    ):
+    ) -> Self:
         """Joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
@@ -591,14 +615,12 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
             Schema for the eager loading.
         """
-
         return self.options(*self.eager_expr(schema or {}))
 
     async def execute(self) -> Result[Any]:
         """Executes the query and returns a `sqlalchemy.engine.Result`
         instance containing the results.
         """
-
         async with self.AsyncSession() as session:
             return await session.execute(self.query)
 
@@ -620,7 +642,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         # [<User 2>]
         """
-
         return (await self.execute()).scalars()
 
     @overload
@@ -650,9 +671,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> user
         # (<User 1>,)
         """
-
-        self.limit(1)
-
         if scalar:
             return (await self.scalars()).first()
 
@@ -699,7 +717,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         MultipleResultsFound
             If multiple results are found.
         """
-
         if scalar:
             return (await self.scalars()).one()
 
@@ -742,7 +759,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         MultipleResultsFound
             If multiple results are found.
         """
-
         if scalar:
             return (await self.scalars()).one_or_none()
 
@@ -775,7 +791,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         # [(<User 1>,), (<User 2>,), ...]
         """
-
         if scalars:
             return (await self.scalars()).all()
 
@@ -791,7 +806,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> count
         # 34
         """
-
         self._set_count_query()
         return (await self.execute()).scalars().one()
 
@@ -826,7 +840,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         # [(<User 1>,), (<User 2>,), ...]
         """
-
         if scalars:
             return (await self.scalars()).unique()
 
@@ -859,8 +872,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> user
         # (<User 1>,)
         """
-
-        self.limit(1)
         return (await self.unique(scalar)).first()
 
     @overload
@@ -904,7 +915,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         MultipleResultsFound
             If multiple results are found.
         """
-
         return (await self.unique(scalar)).one()
 
     @overload
@@ -944,7 +954,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         MultipleResultsFound
             If multiple results are found.
         """
-
         return (await self.unique(scalar)).one_or_none()
 
     @overload
@@ -974,7 +983,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> users
         # [(<User 1>,), (<User 2>,), ...]
         """
-
         return (await self.unique(scalars)).all()
 
     async def unique_count(self) -> int:
@@ -987,18 +995,15 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         >>> count
         # 34
         """
-
         self._set_count_query()
         return (await self.execute()).scalars().unique().one()
 
     def __str__(self) -> str:
         """Returns the raw SQL query."""
-
         return str(self.query)
 
     def __repr__(self) -> str:
         """Returns the raw SQL query."""
-
         return str(self)
 
     def _split_columns_and_attrs(
@@ -1012,7 +1017,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
         tuple[list[str], list[str]]
             A tuple of columns and attrs.
         """
-
         columns = []
         attrs = []
         for column in columns_and_attrs:
@@ -1023,7 +1027,6 @@ class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
 
         return columns, attrs
 
-    def _set_count_query(self):
+    def _set_count_query(self) -> None:
         """Sets the count aggregate function to the query."""
-
         self.query = self.query.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
