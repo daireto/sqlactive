@@ -24,9 +24,9 @@ def to_dict(
 
 > **Parameters**
 
-> - `nested`: Set to `True` to include nested relationships' data, by default False.
-> - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
-> - `exclude`: Exclude specific attributes from the result, by default None.
+> - `nested`: Set to `True` to include nested relationships' data (default: `False`).
+> - `hybrid_attributes`: Set to `True` to include hybrid attributes (default: `False`).
+> - `exclude`: Exclude specific attributes from the result (default: `None`).
 
 > **Returns**
 
@@ -66,12 +66,12 @@ def to_json(
 
 > **Parameters**
 
-> - `nested`: Set to `True` to include nested relationships' data, by default False.
-> - `hybrid_attributes`: Set to `True` to include hybrid attributes, by default False.
-> - `exclude`: Exclude specific attributes from the result, by default None.
-> - `ensure_ascii`: If False, then the return value can contain non-ASCII characters if they appear in strings contained in obj. Otherwise, all such characters are escaped in JSON strings, by default False.
-> - `indent`: If indent is a non-negative integer, then JSON array elements and object members will be pretty-printed with that indent level. An indent level of 0 will only insert newlines. `None` is the most compact representation, by default None.
-> - `sort_keys`: Sort dictionary keys, by default False.
+> - `nested`: Set to `True` to include nested relationships' data (default: `False`).
+> - `hybrid_attributes`: Set to `True` to include hybrid attributes (default: `False`).
+> - `exclude`: Exclude specific attributes from the result (default: `None`).
+> - `ensure_ascii`: If False, then the return value can contain non-ASCII characters if they appear in strings contained in obj. Otherwise, all such characters are escaped in JSON strings (default: `False`).
+> - `indent`: If indent is a non-negative integer, then JSON array elements and object members will be pretty-printed with that indent level. An indent level of 0 will only insert newlines. `None` is the most compact representation (default: `None`).
+> - `sort_keys`: Sort dictionary keys (default: `False`).
 
 > **Returns**
 
@@ -110,7 +110,7 @@ def from_dict(
 > **Parameters**
 
 > - `data`: Data to deserialize.
-> - `exclude`: Exclude specific keys from the dictionary, by default None.
+> - `exclude`: Exclude specific keys from the dictionary (default: `None`).
 
 > **Returns**
 
@@ -151,7 +151,7 @@ def from_json(
 > **Parameters**
 
 > - `json_string`: JSON string.
-> - `exclude`: Exclude specific keys from the dictionary, by default None.
+> - `exclude`: Exclude specific keys from the dictionary (default: `None`).
 
 > **Returns**
 
