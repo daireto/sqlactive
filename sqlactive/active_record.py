@@ -1,4 +1,4 @@
-"""This module defines `ActiveRecordMixin` class."""
+"""This module defines ``ActiveRecordMixin`` class."""
 
 from collections.abc import Sequence
 from typing import Any, Literal, overload
@@ -46,7 +46,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     >>> class BaseModel(ActiveRecordBaseModel):
     ...     __abstract__ = True
 
-    Define your model classes that inherit from `BaseModel`:
+    Define your model classes that inherit from ``BaseModel``:
     >>> class User(BaseModel):
     ...     __tablename__ = 'users'
     ...     id: Mapped[int] = mapped_column(primary_key=True)
@@ -75,7 +75,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     .. warning::
         All relations used in filtering/sorting/grouping should be
-        explicitly set, not just being a `backref`. This is because
+        explicitly set, not just being a ``backref``. This is because
         SQLActive does not know the relation direction and cannot infer
         it. So, when defining a relationship like::
 
@@ -101,10 +101,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classproperty
     def query(cls) -> Select[tuple[Self]]:
-        """Returns a new `sqlalchemy.sql.Select` instance
+        """Returns a new ``sqlalchemy.sql.Select`` instance
         for the model.
 
-        This is a shortcut for `select(cls)`.
+        This is a shortcut for ``select(cls)``.
 
         Examples
         --------
@@ -120,7 +120,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return select(cls)  # type: ignore
 
     def fill(self, **kwargs) -> Self:
-        """Fills the object with values from `kwargs`
+        """Fills the object with values from ``kwargs``
         without saving to the database.
 
         Returns
@@ -213,7 +213,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def update(self, **kwargs) -> Self:
         """Updates the current row with the provided values.
 
-        This is the same as calling `self.fill(**kwargs).save()`.
+        This is the same as calling ``self.fill(**kwargs).save()``.
 
         Returns
         -------
@@ -248,9 +248,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             This is not a soft delete method. It will permanently delete
             the row from the database. So, if you want to keep the row
             in the database, you can implement a custom soft delete
-            method, i.e. using `save()` method to update the row with a
+            method, i.e. using ``save()`` method to update the row with a
             flag indicating if the row is deleted or not (i.e. a boolean
-            `is_deleted` column).
+            ``is_deleted`` column).
 
         Examples
         --------
@@ -280,7 +280,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     async def remove(self) -> None:
-        """Synonym for `delete()`."""
+        """Synonym for ``delete()``."""
         return await self.delete()
 
     @classmethod
@@ -312,7 +312,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def create(cls, **kwargs) -> Self:
-        """Synonym for `insert()`."""
+        """Synonym for ``insert()``."""
         return await cls.insert(**kwargs)
 
     @classmethod
@@ -452,9 +452,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             This is not a soft delete method. It will permanently delete
             the row from the database. So, if you want to keep the row
             in the database, you can implement a custom soft delete
-            method, i.e. using `save()` method to update the row with a
+            method, i.e. using ``save()`` method to update the row with a
             flag indicating if the row is deleted or not (i.e. a boolean
-            `is_deleted` column).
+            ``is_deleted`` column).
 
         Parameters
         ----------
@@ -501,9 +501,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             This is not a soft delete method. It will permanently delete
             the row from the database. So, if you want to keep the row
             in the database, you can implement a custom soft delete
-            method, i.e. using `save()` method to update the row with a
+            method, i.e. using ``save()`` method to update the row with a
             flag indicating if the row is deleted or not (i.e. a boolean
-            `is_deleted` column).
+            ``is_deleted`` column).
 
         Parameters
         ----------
@@ -567,7 +567,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             | None
         ) = None,
     ) -> Self | None:
-        """Fetches a row by primary key or `None` if no result is found.
+        """Fetches a row by primary key or ``None`` if no result is found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
@@ -579,15 +579,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join()` method for
+            IMPORTANT: See the documentation of ``join()`` method for
             details.
         subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery()` method
+            IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema()` method
+            IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
 
         Returns
@@ -617,7 +617,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.get(1)
         >>> user
         User(id=1)
-        >>> user = await User.get(100)  # Does not exist
+        >>> user = await User.get(100)  # does not exist
         >>> user
         None
         """
@@ -670,15 +670,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join()` method for
+            IMPORTANT: See the documentation of ``join()`` method for
             details.
         subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery()` method
+            IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema()` method
+            IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
 
         Returns
@@ -708,7 +708,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.get_or_fail(1)
         >>> user
         User(id=1)
-        >>> user = await User.get_or_fail(100)  # Does not exist
+        >>> user = await User.get_or_fail(100)  # does not exist
         Traceback (most recent call last):
             ...
         sqlalchemy.exc.NoResultFound: User with id '100' was not found
@@ -794,7 +794,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Row[tuple[Any, ...]]
             The row if found.
         None
-            `If no result is found.
+            If no result is found.
 
         Examples
         --------
@@ -819,7 +819,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.select(User.name, User.age).first()
         >>> user
         'Bob Williams'
-        >>> user = await User.select(User.name, User.age).first(scalar=False)
+        >>> user = await User.select(User.name, User.age)
+        ...                  .first(scalar=False)
         >>> user
         ('Bob Williams', 30)
         """
@@ -936,7 +937,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def one_or_none(cls, scalar: bool = True):
-        """Fetches one row or `None` if no results are found.
+        """Fetches one row or ``None`` if no results are found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
@@ -956,7 +957,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Row[tuple[Any, ...]]
             The row if found.
         None
-            `If no result is found.
+            If no result is found.
 
         Raises
         ------
@@ -978,7 +979,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.where(name='John Doe').one_or_none()
         >>> user
         User(id=1)
-        >>> user = await User.where(name='John Doe').one_or_none(scalar=False)
+        >>> user = await User.where(name='John Doe')
+        ...                  .one_or_none(scalar=False)
         >>> user
         (User(id=1),)
         >>> user = await User.where(name='Unknown').one_or_none()
@@ -1066,7 +1068,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.select(User.name, User.age).all()
         >>> users
         ['John Doe', 'Jane Doe', ...]
-        >>> users = await User.select(User.name, User.age).all(scalars=False)
+        >>> users = await User.select(User.name, User.age)
+        ...                   .all(scalars=False)
         >>> users
         [('John Doe', 30), ('Jane Doe', 32), ...]
         """
@@ -1451,7 +1454,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...     age: Mapped[int] = mapped_column()
 
         Joined eager loading:
-        >>> users = await User.options(joinedload(User.posts)).unique_all()
+        >>> users = await User.options(joinedload(User.posts))
+        ...                   .unique_all()  # required for joinedload()
         >>> users
         [User(id=1), User(id=2), ...]
         >>> users[0].posts
@@ -1486,23 +1490,55 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
-        Example using Django-like syntax:
-        >>> users = await User.where(name__like='%John%').all()
+        Parameters
+        ----------
+        *criteria : _ColumnExpressionArgument[bool]
+            SQLAlchemy style filter expressions.
+        **filters : Any
+            Django-style filters.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Using Django-like syntax:
+        >>> users = await User.where(age__gte=18).all()
         >>> users
-        # [User(id=1), User(id=2), ...]
+        [User(id=1), User(id=2), ...]
         >>> users = await User.where(name__like='%John%', age=30).all()
         >>> users
-        # [User(id=2)]
+        [User(id=2)]
 
-        Example using SQLAlchemy syntax:
-        >>> users = await User.where(User.name == 'John Doe').all()
+        Using SQLAlchemy syntax:
+        >>> users = await User.where(User.age >= 18).all()
         >>> users
-        # [User(id=2)]
+        [User(id=1), User(id=2), ...]
+        >>> users = await User.where(
+        ...     User.name == 'John Doe',
+        ...     User.age == 30
+        ... ).all()
+        >>> users
+        [User(id=2)]
 
-        Example using both:
-        >>> users = await User.where(User.age == 30, name__like='%John%').all()
+        Using both syntaxes:
+        >>> users = await User.where(
+        ...     User.age == 30,
+        ...     name__like='%John%'
+        ... ).all()
         >>> users
-        # [User(id=2)]
+        [User(id=2)]
         """
         async_query = cls.get_async_query()
         return async_query.where(*criteria, **filters)
@@ -1511,14 +1547,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def filter(
         cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
     ) -> AsyncQuery[Self]:
-        """Synonym for `where()`."""
+        """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
 
     @classmethod
     def find(
         cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
     ) -> AsyncQuery[Self]:
-        """Synonym for `where()`."""
+        """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
 
     @classmethod
@@ -1529,9 +1565,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     ) -> AsyncQuery[Self]:
         """Applies a search filter to the query.
 
-        Searches for `search_term` in the searchable columns of
-        the model. If `columns` are provided, searches only in
-        these columns.
+        Searches for ``search_term`` in the searchable columns of
+        the model. If ``columns`` are provided, searches only these
+        columns.
 
         Parameters
         ----------
@@ -1540,16 +1576,48 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         columns : Sequence[str | InstrumentedAttribute] | None, optional
             Columns to search in, by default None.
 
-        Example:
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> users = await User.search(search_term='John').all()
         >>> users
-        # [User(id=1), User(id=2), ...]
+        [User(id=2), User(id=6)]
         >>> users[0].name
-        # John Doe
+        'John Doe'
+        >>> users[0].username
+        'John321'
         >>> users[1].name
-        # Diana Johnson
+        'Diana Johnson'
         >>> users[1].username
-        # Diana84
+        'Diana84'
+
+        Searching specific columns:
+        >>> users = await User.search(
+        ...     search_term='John',
+        ...     columns=[User.name, User.username]
+        ... ).all()
+        >>> users
+        [User(id=2), User(id=6)]
+        >>> users = await User.search(
+        ...     search_term='John',
+        ...     columns=[User.username]  # or 'username'
+        ... ).all()
+        >>> users
+        [User(id=2)]
         """
         async_query = cls.get_async_query()
         return async_query.search(search_term=search_term, columns=columns)
@@ -1562,21 +1630,53 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
-        Example using Django-like syntax:
+        Parameters
+        ----------
+        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+            Django-like or SQLAlchemy sort expressions.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Using Django-like syntax:
         >>> users = await User.order_by('-created_at').all()
         >>> users
-        # [User(id=100), User(id=99), ...]
+        [User(id=100), User(id=99), ...]
         >>> posts = await Post.order_by('-rating', 'user___name').all()
         >>> posts
-        # [Post(id=1), Post(id=4), ...]
+        [Post(id=1), Post(id=4), ...]
 
-        Example using SQLAlchemy syntax:
+        Using SQLAlchemy syntax:
         >>> users = await User.order_by(User.created_at.desc()).all()
         >>> users
-        # [User(id=100), User(id=99), ...]
+        [User(id=100), User(id=99), ...]
         >>> posts = await Post.order_by(desc(Post.rating)).all()
         >>> posts
-        # [Post(id=1), Post(id=4), ...]
+        [Post(id=1), Post(id=4), ...]
+
+        Using both syntaxes:
+        >>> users = await User.order_by('-username', User.name.asc())
+        ...                   .all()
+        >>> users
+        [User(id=78), User(id=62), ...]
+        >>> posts = await Post.order_by(
+        ...     desc(Post.rating), 'user___name'
+        ... ).all()
+        >>> posts
+        [Post(id=1), Post(id=4), ...]
         """
         async_query = cls.get_async_query()
         return async_query.order_by(*columns)
@@ -1585,7 +1685,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def sort(
         cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]
     ) -> AsyncQuery[Self]:
-        """Synonym for `order_by()`."""
+        """Synonym for ``order_by()``."""
         return cls.order_by(*columns)
 
     @classmethod
@@ -1599,22 +1699,65 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         It supports both Django-like syntax and SQLAlchemy syntax.
 
         It is recommended to select specific columns. You can use
-        the `select_columns` parameter to select specific columns.
+        the ``select_columns`` parameter to select specific columns.
 
-        Example:
+        Parameters
+        ----------
+        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+            Django-like or SQLAlchemy columns.
+        select_columns : Sequence[_ColumnsClauseArgument[Any]] | None, optional
+            Columns to be selected (recommended), by default None.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume two models ``User`` and ``Post``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        >>> class Post(ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     rating: Mapped[int] = mapped_column()
+        ...     title: Mapped[str] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+
+        Usage:
         >>> from sqlalchemy.sql.functions import func
         >>> columns = (User.age, func.count(User.name))
-        >>> async_query = User.group_by(User.age, select_columns=columns)
+        >>> async_query = User.group_by(
+        ...     User.age, select_columns=columns
+        ... )
         >>> rows = await async_query.all(scalars=False)
-        # [(30, 2), (32, 1), ...]
+        [(30, 2), (32, 1), ...]
 
-        You can also call `select()` before calling `group_by()`:
-        >>> from sqlalchemy.sql import text
-        >>> async_query = Post.select(Post.rating, text('users_1.name'), func.count(Post.title))
+        You can also call ``select()`` before calling ``group_by()``:
+        >>> from sqlalchemy.sql import text, func
+        >>> async_query = Post.select(
+        ...     Post.rating,
+        ...     text('users_1.name'),
+        ...     func.count(Post.title)
+        ... )
         >>> async_query = async_query.group_by('rating', 'user___name')
         >>> rows = async_query.all(scalars=False)
         >>> rows
-        # [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+        [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
         async_query = cls.get_async_query()
         return async_query.group_by(*columns, select_columns=select_columns)
@@ -1626,24 +1769,43 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Parameters
         ----------
         offset : int
-            Offset.
+            Number of rows to skip.
 
-        Example:
-        >>> users = await User.offset(10).all()
-        >>> users
-        # [User(id=11), User(id=12), ...]
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
 
         Raises
         ------
         ValueError
-            If offset is negative.
+            If ``offset`` is negative.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> users = await User.all()
+        >>> users
+        [User(id=1), User(id=2), ...]
+        >>> users = await User.offset(10).all()
+        >>> users
+        [User(id=11), User(id=12), ...]
         """
         async_query = cls.get_async_query()
         return async_query.offset(offset)
 
     @classmethod
     def skip(cls, skip: int) -> AsyncQuery[Self]:
-        """Synonym for `offset()`."""
+        """Synonym for ``offset()``."""
         return cls.offset(skip)
 
     @classmethod
@@ -1653,29 +1815,48 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Parameters
         ----------
         limit : int
-            Limit.
+            Maximum number of rows to return.
 
-        Example:
-        >>> users = await User.limit(2).all()
-        >>> users
-        # [User(id=1), User(id=2)]
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
 
         Raises
         ------
         ValueError
-            If limit is negative.
+            If ``limit`` is negative.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> users = await User.all()
+        >>> users
+        [User(id=1), User(id=2), ...]
+        >>> users = await User.limit(2).all()
+        >>> users
+        [User(id=1), User(id=2)]
         """
         async_query = cls.get_async_query()
         return async_query.limit(limit)
 
     @classmethod
     def take(cls, take: int) -> AsyncQuery[Self]:
-        """Synonym for `limit()`."""
+        """Synonym for ``limit()``."""
         return cls.limit(take)
 
     @classmethod
     def top(cls, top: int) -> AsyncQuery[Self]:
-        """Synonym for `limit()`."""
+        """Synonym for ``limit()``."""
         return cls.limit(top)
 
     @classmethod
@@ -1685,28 +1866,58 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
-        if `True`, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
+        if ``True``, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
 
-        NOTE: Only direct relationships can be loaded.
-
-        Example:
-        >>> comment = await Comment.join(Comment.user, (Comment.post, True)).first()
-        >>> comment
-        # Comment(id=1)
-        >>> comment.user # LEFT OUTER JOIN
-        # User(id=1)
-        >>> comment.post # INNER JOIN
-        # Post(id=1)
+        .. note::
+            Only direct relationships can be loaded.
 
         Parameters
         ----------
         paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
-            Paths to eager load.
+            Relationship attributes to join.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
 
         Raises
         ------
         ValueError
             If the second element of tuple is not boolean.
+
+        Examples
+        --------
+        Assume a model ``Comment``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Comment(ActiveRecordBaseModel):
+        ...     __tablename__ = 'comments'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     body: Mapped[str] = mapped_column(nullable=False)
+        ...     post_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('posts.id')
+        ...     )
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     post: Mapped['Post'] = relationship(
+        ...         back_populates='comments'
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='comments'
+        ...     )
+
+        Usage:
+        >>> comment = await Comment.join(
+        ...     Comment.user,         # LEFT OUTER JOIN
+        ...     (Comment.post, True)  # True = INNER JOIN
+        ... ).first()
+        >>> comment
+        Comment(id=1)
+        >>> comment.user
+        User(id=1)
+        >>> comment.post
+        Post(id=1)
         """
         async_query = cls.get_async_query()
         return async_query.join(*paths, model=cls)
@@ -1717,80 +1928,109 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     ) -> AsyncQuery[Self]:
         """Subqueryload or Selectinload eager loading.
 
-        Emits a second `SELECT` statement (Subqueryload) for each
+        Emits a second SELECT statement (Subqueryload) for each
         relationship to be loaded, across all result objects at once.
 
         When a tuple is passed, the second element must be boolean.
-        If it is `True`, the eager loading strategy is `SELECT IN`
-        (Selectinload), otherwise `SELECT JOIN` (Subqueryload).
+        If it is ``True``, the eager loading strategy is SELECT IN
+        (Selectinload), otherwise SELECT JOIN (Subqueryload).
 
-        ### IMPORTANT
-        A query which makes use of `subqueryload()` in conjunction with
-        a limiting modifier such as `Query.limit()` or `Query.offset()`
-        should always include `Query.order_by()` against unique
-        column(s) such as the primary key, so that the additional
-        queries emitted by `subqueryload()` include the same ordering
-        as used by the parent query. Without it, there is a chance that
-        the inner query could return the wrong rows, as specified in
-        `The importance of ordering <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering>`_.
+        .. warning::
+            A query which makes use of ``subqueryload()`` in
+            conjunction with a limiting modifier such as
+            ``Query.limit()`` or ``Query.offset()`` should always
+            include ``Query.order_by()`` against unique column(s)
+            such as the primary key, so that the additional queries
+            emitted by ``subqueryload()`` include the same ordering
+            as used by the parent query. Without it, there is a chance
+            that the inner query could return the wrong rows, as
+            specified in `The importance of ordering <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering>`_.
 
-        ```python
-            # incorrect, no ORDER BY
-            User.options(subqueryload(User.addresses)).first()
+            Incorrect, LIMIT without ORDER BY::
 
-            # incorrect if User.name is not unique
-            User.options(subqueryload(User.addresses)).order_by(User.name).first()
+                User.options(subqueryload(User.posts))
+                    .first()
 
-            # correct
-            User.options(subqueryload(User.addresses)).order_by(
-                User.name, User.id
-            ).first()
-        ```
+            Incorrect if User.name is not unique::
 
-        To get more information about `SELECT IN` and `SELECT JOIN`
-        strategies, see the `loading relationships docs <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html>`_.
+                User.options(subqueryload(User.posts))
+                    .order_by(User.name)
+                    .first()
 
-        Example:
-        >>> users = await User.with_subquery(User.posts, (User.comments, True)).all()
-        >>> users[0]
-        # User(id=1)
-        >>> users[0].posts  # Loaded in a separate query using SELECT JOIN
-        # [Post(id=1), Post(id=2), ...]
-        >>> users[0].posts[0].comments  # Loaded in a separate query using SELECT IN
-        # [Comment(id=1), Comment(id=2), ...]
+            Correct::
 
-        Example using a limiting modifier:
-        >>> users = await User.with_subquery(User.posts, (User.comments, True))
-        ... .limit(1)  # Limiting modifier
-        ... .sort('id')  # Sorting modifier (Important!!!)
-        ... .all()
-        >>> users[0]
-        # User(id=1)
-        >>> users[0].posts  # Loaded in a separate query using SELECT JOIN
-        # [Post(id=1), Post(id=2), ...]
-        >>> users[0].posts[0].comments  # Loaded in a separate query using SELECT IN
-        # [Comment(id=1), Comment(id=2), ...]
+                User.options(subqueryload(User.posts))
+                    .order_by(User.name, User.id)
+                    .first()
 
-        Example using `first()`:
-        >>> user = await User.with_subquery(User.posts, (User.comments, True))
-        ... .first()  # No recommended because it calls `limit(1)`
-        ...           # and does not sort by any primary key.
-        ...           # Use `limit(1).sort('id').first()` instead:
-        >>> user = await User.with_subquery(User.posts, (User.comments, True))
-        ... .limit(1)
-        ... .sort('id')  # Sorting modifier (This is the correct way)
-        ... .first()
-        >>> user
-        # User(id=1)
-        >>> user.posts  # Loaded in a separate query using SELECT JOIN
-        # [Post(id=1), Post(id=2), ...]
-        >>> user.posts[0].comments  # Loaded in a separate query using SELECT IN
-        # [Comment(id=1), Comment(id=2), ...]
+            To get more information about SELECT IN and SELECT JOIN
+            strategies, see the `loading relationships docs <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html>`_.
+
+        .. note::
+            Only direct relationships can be loaded.
 
         Parameters
         ----------
-        paths : *List[QueryableAttribute | tuple[QueryableAttribute, bool]]
-            Paths to eager load.
+        paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
+            Relationship attributes to load.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Raises
+        ------
+        ValueError
+            If the second element of tuple is not boolean.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
+
+        Usage:
+        >>> users = await User.with_subquery(
+        ...     User.posts,            # SELECT JOIN
+        ...     (User.comments, True)  # True = SELECT IN
+        ... ).all()
+        >>> users[0]
+        User(id=1)
+        >>> users[0].posts              # loaded using SELECT JOIN
+        [Post(id=1), Post(id=2), ...]
+        >>> users[0].posts[0].comments  # loaded using SELECT IN
+        [Comment(id=1), Comment(id=2), ...]
+
+        Using a limiting modifier:
+        >>> user = await User.with_subquery(
+        ...     User.posts,            # SELECT JOIN
+        ...     (User.comments, True)  # True = SELECT IN
+        ... ).sort('id')  # sorting modifier (Important!!!)
+        ...  .first()     # limiting modifier
+        >>> user = await User.with_subquery(
+        ...     User.posts,            # SELECT JOIN
+        ...     (User.comments, True)  # True = SELECT IN
+        ... ).limit(1)    # limiting modifier
+        ...  .sort('id')  # sorting modifier (Important!!!)
+        ...  .all()[0]
+        >>> user
+        User(id=1)
+        >>> user.posts              # loaded using SELECT JOIN
+        [Post(id=1), Post(id=2), ...]
+        >>> user.posts[0].comments  # loaded using SELECT IN
+        [Comment(id=1), Comment(id=2), ...]
         """
         async_query = cls.get_async_query()
         return async_query.with_subquery(*paths, model=cls)
@@ -1808,28 +2048,83 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Useful for complex cases where you need to load
         nested relationships in separate queries.
 
-        Example:
-        >>> from sqlactive import JOINED, SUBQUERY
-        >>> schema = {
-        ...     User.posts: JOINED,  # joinedload user
-        ...     User.comments: (SUBQUERY, { # load comments in separate query
-        ...         Comment.user: JOINED  # but, in this separate query, join user
-        ...     })
-        ... }
-        >>> user = await User.with_schema(schema).first()
-        >>> user
-        # User(id=1)
-        >>> user.posts
-        # [Post(id=1), Post(id=2), ...]
-        >>> user.posts[0].comments
-        # [Comment(id=1), Comment(id=2), ...]
-        >>> user.posts[0].comments[0].user
-        # User(id=1)
+        .. warning::
+            A query which makes use of ``subqueryload()`` in
+            conjunction with a limiting modifier such as
+            ``Query.limit()`` or ``Query.offset()`` should always
+            include ``Query.order_by()`` against unique column(s)
+            such as the primary key, so that the additional queries
+            emitted by ``subqueryload()`` include the same ordering
+            as used by the parent query. Without it, there is a chance
+            that the inner query could return the wrong rows, as
+            specified in `The importance of ordering <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering>`_.
+
+            Incorrect, LIMIT without ORDER BY::
+
+                User.options(subqueryload(User.posts))
+                    .first()
+
+            Incorrect if User.name is not unique::
+
+                User.options(subqueryload(User.posts))
+                    .order_by(User.name)
+                    .first()
+
+            Correct::
+
+                User.options(subqueryload(User.posts))
+                    .order_by(User.name, User.id)
+                    .first()
+
+            To get more information about SELECT IN and SELECT JOIN
+            strategies, see the `loading relationships docs <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html>`_.
 
         Parameters
         ----------
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
-            Schema for the eager loading.
+            Dictionary defining the loading strategy.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
+
+        Usage:
+        >>> from sqlactive import JOINED, SUBQUERY
+        >>> schema = {
+        ...     User.posts: JOINED,          # joinedload user
+        ...     User.comments: (SUBQUERY, {  # load comments in separate query
+        ...         Comment.user: JOINED     # but, in this separate query, join user
+        ...     })
+        ... }
+        >>> user = await User.with_schema(schema)
+        ...                  .order_by(User.id)  # important when limiting
+        ...                  .first()            # limiting modifier
+        >>> user
+        User(id=1)
+        >>> user.posts
+        [Post(id=1), Post(id=2), ...]
+        >>> user.posts[0].comments
+        [Comment(id=1), Comment(id=2), ...]
+        >>> user.posts[0].comments[0].user
+        User(id=1)
         """
         async_query = cls.get_async_query()
         return async_query.with_schema(schema)
@@ -1877,16 +2172,39 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def get_async_query(
         cls, query: Select[tuple[Any, ...]] | None = None
     ) -> AsyncQuery[Self]:
-        """Returns an `AsyncQuery` instance with
-        the provided `sqlalchemy.sql.Select` instance.
+        """Returns an ``AsyncQuery`` instance with
+        the provided ``sqlalchemy.sql.Select`` instance.
 
-        If no `sqlalchemy.sql.Select` instance is provided,
-        it uses the `query` property of the model.
+        If no ``sqlalchemy.sql.Select`` instance is provided,
+        it uses the ``query`` property of the model.
 
         Parameters
         ----------
         query : Select[tuple[Any, ...]] | None, optional
             SQLAlchemy query, by default None.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance.
+
+        Examples
+        --------
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> async_query = User.get_async_query()
+        >>> bob = await async_query.where(name__like='Bob%').first()
+        >>> bob.name
+        'Bob Williams'
+        >>> bob.age
+        30
         """
         if query is None:
             return AsyncQuery[cls](cls.query)
@@ -1894,15 +2212,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     @deprecated(
-        'Deprecated since version 0.2: Use `primary_key_name` property instead.',
+        "Deprecated since version 0.2: "
+        "Use 'primary_key_name' property instead.",
         stacklevel=2,
     )
     def get_primary_key_name(cls) -> str:
         """Gets the primary key name of the model.
 
         .. deprecated:: 0.2.0
-            This method will be removed in SQLActive 1.0.0.
-            Use `primary_key_name` property instead.
+            This method will be removed in future versions.
+            Use ``primary_key_name`` property instead.
 
         .. warning::
             This method can only be used if the model has a single
@@ -1918,6 +2237,21 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ------
         CompositePrimaryKeyError
             If the model has a composite primary key.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
+        >>> User.get_primary_key_name()
+        'id'
         """
         return cls.primary_key_name
 

@@ -170,7 +170,7 @@ class InspectionMixin(DeclarativeBase):
         >>> Sell.primary_key_name
         Traceback (most recent call last):
         ...
-        CompositePrimaryKeyError: model `Sell` has a composite primary key
+        CompositePrimaryKeyError: model 'Sell' has a composite primary key
         """
         if len(cls.primary_keys) > 1:
             raise CompositePrimaryKeyError(cls.__name__)

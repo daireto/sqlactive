@@ -22,7 +22,7 @@ from .smart_query import SmartQueryMixin
 _T = TypeVar('_T')
 
 
-class AsyncQuery(SmartQueryMixin, SessionMixin, Generic[_T]):
+class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     """Async wrapper for `sqlalchemy.sql.Select`.
 
     Provides a set of helper methods for asynchronously executing the query.
