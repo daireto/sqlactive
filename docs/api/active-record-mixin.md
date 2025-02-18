@@ -1228,27 +1228,31 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 
 > ???+ warning
 >
->     Quoting from [SQLAlchemy docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
+>     Quoting from the [joined eager loading docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
 >
 >         When including `joinedload()` in reference to a one-to-many or
->         many-to-many collection, the `Result.unique()` method or related
->         (i.e. `unique_all()`) must be applied to the returned result, which
->         will make the incoming rows unique by primary key that otherwise are
->         multiplied out by the join.
->         SQLAlchemy will raise an error if this is not present.
+>         many-to-many collection, the `Result.unique()` method must be
+>         applied to the returned result, which will uniquify the incoming
+>         rows by primary key that otherwise are multiplied out by the join.
+>         The ORM will raise an error if this is not present.
 >
 >         This is not automatic in modern SQLAlchemy, as it changes the behavior
 >         of the result set to return fewer ORM objects than the statement would
 >         normally return in terms of number of rows. Therefore SQLAlchemy keeps
->         the use of Result.unique() explicit, so there is no ambiguity that the
->         returned objects are made unique on primary key.
+>         the use of `Result.unique()` explicit, so there is no ambiguity that
+>         the returned objects are being uniquified on primary key.
 >
->     To learn more about options, see
->     [`sqlalchemy.orm.Query.options`](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options) docs.
+>     This is, when fetching many rows and using joined eager loading,
+>     the `unique()` method or related (i.e. `unique_all()`) must be
+>     called to ensure that the rows are unique on primary key
+>     (see the examples below).
+>
+>     To learn more about options, see the
+>     [Query.options docs](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options).
 
 > **Parameters**
 
-> - `args`: Mapper options.
+> - `args`: The options to apply.
 
 > **Returns**
 
@@ -1256,10 +1260,35 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 
 > **Examples**
 
+> Joined eager loading:
 > ```python
-> users = await User.options(joinedload(User.posts)).unique_all()
-> user = await User.options(joinedload(User.posts)).first()
-> users = await User.options(subqueryload(User.posts)).all()
+> >>> users = await User.options(joinedload(User.posts)).unique_all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users[0].posts
+> [Post(id=1), Post(id=2), ...]
+> >>> user = await User.options(joinedload(User.posts)).first()
+> >>> user
+> User(id=1)
+> >>> users.posts
+> [Post(id=1), Post(id=2), ...]
+> ```
+
+> Subquery eager loading:
+> ```python
+> >>> users = await User.options(subqueryload(User.posts)).all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users[0].posts
+> [Post(id=1), Post(id=2), ...]
+> ```
+
+> Eager loading without calling unique() before all():
+> ```python
+> >>> users = await User.options(joinedload(User.posts)).all()
+> Traceback (most recent call last):
+>     ...
+> InvalidRequestError: The unique() method must be invoked on this Result...
 > ```
 
 #### where

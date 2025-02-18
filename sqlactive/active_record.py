@@ -27,8 +27,9 @@ from .utils import classproperty
 class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     """Mixin for Active Record style models.
 
-    Provides a set of ActiveRecord-like helper methods for SQLAlchemy models,
-    allowing for more intuitive and chainable database operations with async/await support.
+    Provides a set of ActiveRecord-like helper methods for SQLAlchemy
+    models, allowing for more intuitive and chainable database
+    operations with async/await support.
 
     Define a base model class that inherits from this class:
     >>> from sqlalchemy import String
@@ -37,9 +38,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     >>> class BaseModel(ActiveRecordMixin):
     ...     __abstract__ = True
 
-    You can also make your base inherit from the ``ActiveRecordBaseModel``
-    class which is a combination of ``ActiveRecordMixin``, ``SerializationMixin``
-    and ``TimestampMixin`` (this is the recommended way to use this library):
+    You can also make your base inherit from the
+    ``ActiveRecordBaseModel`` class which is a combination of
+    ``ActiveRecordMixin``, ``SerializationMixin`` and
+    ``TimestampMixin``. This is the recommended way to use this library:
     >>> from sqlactive import ActiveRecordBaseModel
     >>> class BaseModel(ActiveRecordBaseModel):
     ...     __abstract__ = True
@@ -72,19 +74,24 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     [User(id=2), User(id=3), User(id=4), User(id=5), User(id=6)]
 
     .. warning::
-        All relations used in filtering/sorting/grouping should be explicitly set,
-        not just being a `backref`. This is because SQLActive does not know the
-        relation direction and cannot infer it. So, when defining a relationship like::
+        All relations used in filtering/sorting/grouping should be
+        explicitly set, not just being a `backref`. This is because
+        SQLActive does not know the relation direction and cannot infer
+        it. So, when defining a relationship like::
 
             class User(BaseModel):
                 # ...
-                posts: Mapped[list['Post']] = relationship(back_populates='user')
+                posts: Mapped[list['Post']] = relationship(
+                    back_populates='user'
+                )
 
         It is required to define the reverse relationship::
 
             class Post(BaseModel):
                 # ...
-                user: Mapped['User'] = relationship(back_populates='posts')
+                user: Mapped['User'] = relationship(
+                    back_populates='posts'
+                )
 
     Visit the `API Reference <https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference>`_
     for the full list of available methods.
@@ -151,7 +158,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         for name in kwargs.keys():
             if not hasattr(self, name):
-                raise AttributeError(f"no such attribute: '{name}' in model '{self.__class__.__name__}'")
+                raise AttributeError(
+                    f"no such attribute: '{name}' in model "
+                    f"'{self.__class__.__name__}'"
+                )
             if name in self.settable_attributes:
                 setattr(self, name, kwargs[name])
             else:
@@ -235,10 +245,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Deletes the current row.
 
         .. warning::
-            This is not a soft delete method. It will permanently delete the row from
-            the database. So, if you want to keep the row in the database, you can implement
-            a custom soft delete method, i.e. using `save()` method to update the row with a
-            flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+            This is not a soft delete method. It will permanently delete
+            the row from the database. So, if you want to keep the row
+            in the database, you can implement a custom soft delete
+            method, i.e. using `save()` method to update the row with a
+            flag indicating if the row is deleted or not (i.e. a boolean
+            `is_deleted` column).
 
         Examples
         --------
@@ -304,24 +316,29 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.insert(**kwargs)
 
     @classmethod
-    async def save_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
+    async def save_all(
+        cls, rows: Sequence[Self], refresh: bool = False
+    ) -> None:
         """Saves multiple rows in a single transaction.
 
-        When using this method to update existing rows, instances are not refreshed after
-        commit by default. Accessing the attributes of the updated rows without refreshing
-        them after commit will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
+        When using this method to update existing rows, instances are
+        not refreshed after commit by default. Accessing the attributes
+        of the updated rows without refreshing them after commit will
+        raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
 
-        To access the attributes of updated rows, the ``refresh`` flag must be set to
-        ``True`` in order to refresh them after commit.
+        To access the attributes of updated rows, the ``refresh`` flag
+        must be set to ``True`` in order to refresh them after commit.
 
         .. warning::
             Refreshing multiple instances may be expensive,
-            which may lead to a higher latency due to additional database queries.
+            which may lead to a higher latency due to additional
+            database queries.
 
         .. note::
-            When inserting new rows, refreshing the instances after commit is not necessary.
-            The instances are already available after commit, but you still can use the
-            ``refresh`` flag to refresh them if needed.
+            When inserting new rows, refreshing the instances after
+            commit is not necessary. The instances are already available
+            after commit, but you still can use the ``refresh`` flag to
+            refresh them if needed.
 
         Parameters
         ----------
@@ -385,34 +402,43 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise error
 
     @classmethod
-    async def insert_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
+    async def insert_all(
+        cls, rows: Sequence[Self], refresh: bool = False
+    ) -> None:
         """Inserts multiple rows in a single transaction.
 
-        This is mostly a shortcut for ``save_all()`` when inserting new rows.
+        This is mostly a shortcut for ``save_all()``
+        when inserting new rows.
 
         .. note::
-            When inserting new rows, refreshing the instances after commit is not necessary.
-            The instances are already available after commit, but you still can use the
-            ``refresh`` flag to refresh them if needed.
+            When inserting new rows, refreshing the instances after
+            commit is not necessary. The instances are already available
+            after commit, but you still can use the ``refresh`` flag to
+            refresh them if needed.
 
         See the ``save_all()`` method for more details.
         """
         return await cls.save_all(rows, refresh)
 
     @classmethod
-    async def update_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
+    async def update_all(
+        cls, rows: Sequence[Self], refresh: bool = False
+    ) -> None:
         """Updates multiple rows in a single transaction.
 
-        This is mostly a shortcut for ``save_all()`` when updating existing rows.
+        This is mostly a shortcut for ``save_all()``
+        when updating existing rows.
 
-        If you are planning to access the attributes of the updated instances after commit,
-        you must set the ``refresh`` flag to ``True`` in order to refresh them. Accessing
-        the attributes of the updated instances without refreshing them after commit
+        If you are planning to access the attributes of the updated
+        instances after commit, you must set the ``refresh`` flag to
+        ``True`` in order to refresh them. Accessing the attributes of
+        the updated instances without refreshing them after commit
         will raise an ``sqlalchemy.orm.exc.DetachedInstanceError``.
 
         .. warning::
             Refreshing multiple instances may be expensive,
-            which may lead to a higher latency due to additional database queries.
+            which may lead to a higher latency due to additional
+            database queries.
 
         See the ``save_all()`` method for more details.
         """
@@ -423,10 +449,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Deletes multiple rows in a single transaction.
 
         .. warning::
-            This is not a soft delete method. It will permanently delete the row from
-            the database. So, if you want to keep the row in the database, you can implement
-            a custom soft delete method, i.e. using `save()` method to update the row with a
-            flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+            This is not a soft delete method. It will permanently delete
+            the row from the database. So, if you want to keep the row
+            in the database, you can implement a custom soft delete
+            method, i.e. using `save()` method to update the row with a
+            flag indicating if the row is deleted or not (i.e. a boolean
+            `is_deleted` column).
 
         Parameters
         ----------
@@ -465,14 +493,17 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def destroy(cls, *ids: object) -> None:
         """Deletes multiple rows by their primary key.
 
-        This method can only be used if the model has a single primary key.
-        Otherwise, it will raise a ``CompositePrimaryKeyError`` exception.
+        This method can only be used if the model has a single primary
+        key. Otherwise, it will raise a ``CompositePrimaryKeyError``
+        exception.
 
         .. warning::
-            This is not a soft delete method. It will permanently delete the row from
-            the database. So, if you want to keep the row in the database, you can implement
-            a custom soft delete method, i.e. using `save()` method to update the row with a
-            flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+            This is not a soft delete method. It will permanently delete
+            the row from the database. So, if you want to keep the row
+            in the database, you can implement a custom soft delete
+            method, i.e. using `save()` method to update the row with a
+            flag indicating if the row is deleted or not (i.e. a boolean
+            `is_deleted` column).
 
         Parameters
         ----------
@@ -505,7 +536,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         async with cls.AsyncSession() as session:
             try:
-                query = cls.smart_query(filters={f'{cls.primary_key_name}__in': ids}).query
+                query = cls.smart_query(
+                    filters={f'{cls.primary_key_name}__in': ids}
+                ).query
                 rows = (await session.execute(query)).scalars().all()
                 for row in rows:
                     await session.delete(row)
@@ -518,27 +551,44 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def get(
         cls,
         pk: object,
-        join: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        subquery: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+        join: (
+            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            | None
+        ) = None,
+        subquery: (
+            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            | None
+        ) = None,
+        schema: (
+            dict[
+                InstrumentedAttribute,
+                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            ]
+            | None
+        ) = None,
     ) -> Self | None:
         """Fetches a row by primary key or `None` if no result is found.
 
-        If multiple results are found, it will raise a ``sqlalchemy.exc.MultipleResultsFound`` exception.
+        If multiple results are found, it will raise a
+        ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
         Parameters
         ----------
         pk : object
-            Primary key value. It can also be a dict of composite primary key values.
+            Primary key value. It can also be a dict of composite
+            primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join()` method for details.
+            IMPORTANT: See the documentation of `join()` method for
+            details.
         subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery()` method for details.
+            IMPORTANT: See the documentation of `with_subquery()` method
+            for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema()` method for details.
+            IMPORTANT: See the documentation of `with_schema()` method
+            for details.
 
         Returns
         -------
@@ -590,28 +640,46 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def get_or_fail(
         cls,
         pk: object,
-        join: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        subquery: Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+        join: (
+            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            | None
+        ) = None,
+        subquery: (
+            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            | None
+        ) = None,
+        schema: (
+            dict[
+                InstrumentedAttribute,
+                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            ]
+            | None
+        ) = None,
     ) -> Self:
-        """Fetches a row by primary key or raises a ``sqlalchemy.exc.NoResultFound`` exception
+        """Fetches a row by primary key or raises a
+        ``sqlalchemy.exc.NoResultFound`` exception
         if no result is found.
 
-        If multiple results are found, it will raise a ``sqlalchemy.exc.MultipleResultsFound`` exception.
+        If multiple results are found, it will raise a
+        ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
         Parameters
         ----------
         pk : object
-            Primary key value. It can also be a dict of composite primary key values.
+            Primary key value. It can also be a dict of composite
+            primary key values.
         join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to join eager load, by default None.
-            IMPORTANT: See the documentation of `join()` method for details.
+            IMPORTANT: See the documentation of `join()` method for
+            details.
         subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
             Paths to subquery eager load, by default None.
-            IMPORTANT: See the documentation of `with_subquery()` method for details.
+            IMPORTANT: See the documentation of `with_subquery()` method
+            for details.
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
             Schema for the eager loading, by default None.
-            IMPORTANT: See the documentation of `with_schema()` method for details.
+            IMPORTANT: See the documentation of `with_schema()` method
+            for details.
 
         Returns
         -------
@@ -697,11 +765,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def first(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def first(
+        cls, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     @classmethod
-    async def first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def first(
+        cls, scalar: bool
+    ) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def first(cls, scalar: bool = True):
@@ -772,11 +844,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def one(cls, scalar: bool = True):
-        """Fetches one row or raises a ``sqlalchemy.exc.NoResultFound`` exception
-        if no results are found.
+        """Fetches one row or raises a ``sqlalchemy.exc.NoResultFound``
+        exception if no results are found.
 
-        If multiple results are found, it will raise a ``sqlalchemy.exc.MultipleResultsFound``
-        exception.
+        If multiple results are found, it will raise a
+        ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
         If ``scalar`` is ``True``, returns a scalar value (default).
 
@@ -852,18 +924,22 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def one_or_none(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(
+        cls, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     @classmethod
-    async def one_or_none(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(
+        cls, scalar: bool
+    ) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def one_or_none(cls, scalar: bool = True):
         """Fetches one row or `None` if no results are found.
 
-        If multiple results are found, it will raise a ``sqlalchemy.exc.MultipleResultsFound``
-        exception.
+        If multiple results are found, it will raise a
+        ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
         If ``scalar`` is ``True``, returns a scalar value (default).
 
@@ -938,11 +1014,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def all(cls, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(
+        cls, scalars: Literal[False]
+    ) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
     @classmethod
-    async def all(cls, scalars: bool) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(
+        cls, scalars: bool
+    ) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
 
     @classmethod
     async def all(cls, scalars: bool = True):
@@ -1022,31 +1102,37 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique(cls, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
+    async def unique(
+        cls, scalars: Literal[False]
+    ) -> Result[tuple[Any, ...]]: ...
 
     @overload
     @classmethod
-    async def unique(cls, scalars: bool) -> ScalarResult[Self] | Result[tuple[Any, ...]]: ...
+    async def unique(
+        cls, scalars: bool
+    ) -> ScalarResult[Self] | Result[tuple[Any, ...]]: ...
 
     @classmethod
     async def unique(cls, scalars: bool = True):
-        """Similar to ``scalars()`` but applies unique filtering to the objects
-        returned in the result instance.
+        """Similar to ``scalars()`` but applies unique filtering
+        to the objects returned in the result instance.
 
-        If ``scalars`` is ``False``, returns a ``sqlalchemy.engine.Result`` instance
-        instead of a ``sqlalchemy.engine.ScalarResult`` instance.
+        If ``scalars`` is ``False``, returns
+        a ``sqlalchemy.engine.Result`` instance instead of
+        a ``sqlalchemy.engine.ScalarResult`` instance.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         Parameters
         ----------
         scalars : bool, optional
-            If ``True``, returns a ``sqlalchemy.engine.ScalarResult`` instance (default).
-            If ``False``, returns a ``sqlalchemy.engine.Result`` instance.
+            If ``True``, returns a ``sqlalchemy.engine.ScalarResult``
+            instance (default). If ``False``, returns a
+            ``sqlalchemy.engine.Result`` instance.
 
         Returns
         -------
@@ -1087,23 +1173,28 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_first(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def unique_first(
+        cls, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     @classmethod
-    async def unique_first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def unique_first(
+        cls, scalar: bool
+    ) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def unique_first(cls, scalar: bool = True):
-        """Similar to ``first()`` but applies unique filtering to the objects returned
-        by either ``sqlalchemy.engine.ScalarResult`` or ``sqlalchemy.engine.Result``
-        depending on the value of ``scalar``
+        """Similar to ``first()`` but applies unique filtering to the
+        objects returned by either ``sqlalchemy.engine.ScalarResult``
+        or ``sqlalchemy.engine.Result`` depending on the value
+        of ``scalar``.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         See ``unique()`` and ``first()`` for more details.
         """
@@ -1120,7 +1211,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_one(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+    async def unique_one(
+        cls, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]]: ...
 
     @overload
     @classmethod
@@ -1128,15 +1221,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def unique_one(cls, scalar: bool = True):
-        """Similar to ``one()`` but applies unique filtering to the objects returned
-        by either ``sqlalchemy.engine.ScalarResult`` or ``sqlalchemy.engine.Result``
-        depending on the value of ``scalar``
+        """Similar to ``one()`` but applies unique filtering to the
+        objects returned by either ``sqlalchemy.engine.ScalarResult``
+        or ``sqlalchemy.engine.Result`` depending on the value
+        of ``scalar``.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         See ``unique()`` and ``one()`` for more details.
         """
@@ -1149,27 +1243,35 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_one_or_none(cls, scalar: Literal[True]) -> Self | None: ...
+    async def unique_one_or_none(
+        cls, scalar: Literal[True]
+    ) -> Self | None: ...
 
     @overload
     @classmethod
-    async def unique_one_or_none(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def unique_one_or_none(
+        cls, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     @classmethod
-    async def unique_one_or_none(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def unique_one_or_none(
+        cls, scalar: bool
+    ) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def unique_one_or_none(cls, scalar: bool = True):
-        """Similar to ``one_or_none()`` but applies unique filtering to the objects returned
-        by either ``sqlalchemy.engine.ScalarResult`` or ``sqlalchemy.engine.Result``
-        depending on the value of ``scalar``
+        """Similar to ``one_or_none()`` but applies
+        unique filtering to the objects returned by either
+        ``sqlalchemy.engine.ScalarResult`` or
+        ``sqlalchemy.engine.Result`` depending on the value
+        of ``scalar``.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         See ``unique()`` and ``one_or_none()`` for more details.
         """
@@ -1186,23 +1288,28 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_all(cls, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def unique_all(
+        cls, scalars: Literal[False]
+    ) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
     @classmethod
-    async def unique_all(cls, scalars: bool) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
+    async def unique_all(
+        cls, scalars: bool
+    ) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]: ...
 
     @classmethod
     async def unique_all(cls, scalars: bool = True):
-        """Similar to ``all()`` but applies unique filtering to the objects returned
-        by either ``sqlalchemy.engine.ScalarResult`` or ``sqlalchemy.engine.Result``
-        depending on the value of ``scalar``
+        """Similar to ``all()`` but applies unique filtering to the
+        objects returned by either ``sqlalchemy.engine.ScalarResult``
+        or ``sqlalchemy.engine.Result`` depending on the value
+        of ``scalar``.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         See ``unique()`` and ``all()`` for more details.
         """
@@ -1211,15 +1318,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def unique_count(cls) -> int:
-        """Similar to ``count()`` but applies unique filtering to the objects returned
-        by either ``sqlalchemy.engine.ScalarResult`` or ``sqlalchemy.engine.Result``
-        depending on the value of ``scalar``
+        """Similar to ``count()`` but applies unique filtering to the
+        objects returned by either ``sqlalchemy.engine.ScalarResult``
+        or ``sqlalchemy.engine.Result`` depending on the value
+        of ``scalar``.
 
         .. note::
-            This method is different from ``distinct()`` in that it applies unique
-            filtering to the objects returned in the result instance. If you need
-            to apply unique filtering on the query (a DISTINCT clause), use
-            ``distinct()`` instead.
+            This method is different from ``distinct()`` in that it
+            applies unique filtering to the objects returned in the
+            result instance. If you need to apply unique filtering on
+            the query (a DISTINCT clause), use ``distinct()`` instead.
 
         See ``unique()`` and ``count()`` for more details.
         """
@@ -1238,8 +1346,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def select(cls, *entities: _ColumnsClauseArgument[Any]):
         """Replaces the columns clause with the given entities.
 
-        The existing set of FROMs are maintained, including those implied by
-        the current columns clause.
+        The existing set of FROMs are maintained, including those
+        implied by the current columns clause.
 
         Parameters
         ----------
@@ -1296,56 +1404,86 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def options(cls, *args: ExecutableOption) -> AsyncQuery[Self]:
         """Applies the given list of mapper options.
 
-        Quoting from https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading:
+        .. warning::
+            Quoting from the `joined eager loading docs <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading>`_:
 
-            When including `joinedload()` in reference to a one-to-many or
-            many-to-many collection, the `Result.unique()` method or related
-            (i.e. `unique_all()`) must be applied to the returned result, which
-            will make the incoming rows unique by primary key that otherwise are
-            multiplied out by the join.
-            SQLAlchemy will raise an error if this is not present.
+                When including ``joinedload()`` in reference
+                to a one-to-many or many-to-many collection,
+                the ``Result.unique()`` method must be applied
+                to the returned result, which will uniquify the
+                incoming rows by primary key that otherwise are
+                multiplied out by the join. The ORM will raise
+                an error if this is not present.
 
-            This is not automatic in modern SQLAlchemy, as it changes the behavior
-            of the result set to return fewer ORM objects than the statement would
-            normally return in terms of number of rows. Therefore SQLAlchemy keeps
-            the use of Result.unique() explicit, so there is no ambiguity that the
-            returned objects are made unique on primary key.
+                This is not automatic in modern SQLAlchemy, as it
+                changes the behavior of the result set to return
+                fewer ORM objects than the statement would normally
+                return in terms of number of rows. Therefore SQLAlchemy
+                keeps the use of ``Result.unique()`` explicit,
+                so there is no ambiguity that the returned objects
+                are being uniquified on primary key.
 
-            To learn more about options, see
-            https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options
+            This is, when fetching many rows and using joined eager
+            loading, the ``unique()`` method or related
+            (i.e. ``unique_all()``) must be called to ensure that
+            the rows are unique on primary key (see the examples below).
 
-        Example 1:
-        >>> users = await User.options(joinedload(User.posts)).unique()
+            To learn more about options, see the
+            `Query.options docs <https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options>`_.
+
+        Parameters
+        ----------
+        *args : ExecutableOption
+            The options to apply.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Joined eager loading:
+        >>> users = await User.options(joinedload(User.posts)).unique_all()
         >>> users
-        # [User(id=1), User(id=2), ...]
+        [User(id=1), User(id=2), ...]
         >>> users[0].posts
-        # [Post(id=1), Post(id=2), ...]
-
-        Example 2:
+        [Post(id=1), Post(id=2), ...]
         >>> user = await User.options(joinedload(User.posts)).first()
         >>> user
-        # User(id=1)
+        User(id=1)
         >>> users.posts
-        # [Post(id=1), Post(id=2), ...]
+        [Post(id=1), Post(id=2), ...]
 
-        Example 3:
+        Subquery eager loading:
         >>> users = await User.options(subqueryload(User.posts)).all()
         >>> users
-        # [User(id=1), User(id=2), ...]
+        [User(id=1), User(id=2), ...]
         >>> users[0].posts
-        # [Post(id=1), Post(id=2), ...]
+        [Post(id=1), Post(id=2), ...]
 
-        Example 4:
+        Eager loading without calling unique() before all():
         >>> users = await User.options(joinedload(User.posts)).all()
-        # Traceback (most recent call last):
-        #     ...
-        # InvalidRequestError: 'The unique() method must be invoked...'
+        Traceback (most recent call last):
+            ...
+        InvalidRequestError: The unique() method must be invoked on this Result...
         """
         async_query = cls.get_async_query()
         return async_query.options(*args)
 
     @classmethod
-    def where(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]:
+    def where(
+        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> AsyncQuery[Self]:
         """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -1372,12 +1510,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.where(*criteria, **filters)
 
     @classmethod
-    def filter(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]:
+    def filter(
+        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> AsyncQuery[Self]:
         """Synonym for `where()`."""
         return cls.where(*criteria, **filters)
 
     @classmethod
-    def find(cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]:
+    def find(
+        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> AsyncQuery[Self]:
         """Synonym for `where()`."""
         return cls.where(*criteria, **filters)
 
@@ -1389,8 +1531,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     ) -> AsyncQuery[Self]:
         """Applies a search filter to the query.
 
-        Searches for `search_term` in the searchable columns of the model.
-        If `columns` are provided, searches only these columns.
+        Searches for `search_term` in the searchable columns of
+        the model. If `columns` are provided, searches only in
+        these columns.
 
         Parameters
         ----------
@@ -1414,7 +1557,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.search(search_term=search_term, columns=columns)
 
     @classmethod
-    def order_by(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]:
+    def order_by(
+        cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]
+    ) -> AsyncQuery[Self]:
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -1439,7 +1584,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.order_by(*columns)
 
     @classmethod
-    def sort(cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]:
+    def sort(
+        cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]
+    ) -> AsyncQuery[Self]:
         """Synonym for `order_by()`."""
         return cls.order_by(*columns)
 
@@ -1534,7 +1681,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.limit(top)
 
     @classmethod
-    def join(cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]:
+    def join(
+        cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]
+    ) -> AsyncQuery[Self]:
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
@@ -1565,24 +1714,27 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.join(*paths, model=cls)
 
     @classmethod
-    def with_subquery(cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]:
+    def with_subquery(
+        cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]
+    ) -> AsyncQuery[Self]:
         """Subqueryload or Selectinload eager loading.
 
-        Emits a second `SELECT` statement (Subqueryload) for each relationship
-        to be loaded, across all result objects at once.
+        Emits a second `SELECT` statement (Subqueryload) for each
+        relationship to be loaded, across all result objects at once.
 
         When a tuple is passed, the second element must be boolean.
-        If it is `True`, the eager loading strategy is `SELECT IN` (Selectinload),
-        otherwise `SELECT JOIN` (Subqueryload).
+        If it is `True`, the eager loading strategy is `SELECT IN`
+        (Selectinload), otherwise `SELECT JOIN` (Subqueryload).
 
         ### IMPORTANT
-        A query which makes use of `subqueryload()` in conjunction with a limiting
-        modifier such as `Query.limit()` or `Query.offset()` should always include
-        `Query.order_by()` against unique column(s) such as the primary key,
-        so that the additional queries emitted by `subqueryload()` include the same
-        ordering as used by the parent query. Without it, there is a chance that
+        A query which makes use of `subqueryload()` in conjunction with
+        a limiting modifier such as `Query.limit()` or `Query.offset()`
+        should always include `Query.order_by()` against unique
+        column(s) such as the primary key, so that the additional
+        queries emitted by `subqueryload()` include the same ordering
+        as used by the parent query. Without it, there is a chance that
         the inner query could return the wrong rows, as specified in
-        https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering
+        `The importance of ordering <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering>`_.
 
         ```python
             # incorrect, no ORDER BY
@@ -1596,6 +1748,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 User.name, User.id
             ).first()
         ```
+
+        To get more information about `SELECT IN` and `SELECT JOIN`
+        strategies, see the `loading relationships docs <https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html>`_.
 
         Example:
         >>> users = await User.with_subquery(User.posts, (User.comments, True)).all()
@@ -1634,9 +1789,6 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user.posts[0].comments  # Loaded in a separate query using SELECT IN
         # [Comment(id=1), Comment(id=2), ...]
 
-        To get more information about `SELECT IN` and `SELECT JOIN` strategies,
-        see https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html
-
         Parameters
         ----------
         paths : *List[QueryableAttribute | tuple[QueryableAttribute, bool]]
@@ -1647,7 +1799,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def with_schema(
-        cls, schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+        cls,
+        schema: dict[
+            InstrumentedAttribute,
+            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+        ],
     ) -> AsyncQuery[Self]:
         """Joined, subqueryload and selectinload eager loading.
 
@@ -1685,13 +1841,27 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         cls,
         criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
         filters: (
-            dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
+            dict[str, Any]
+            | dict[OperatorType, Any]
+            | list[dict[str, Any]]
+            | list[dict[OperatorType, Any]]
+            | None
         ) = None,
-        sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        sort_columns: (
+            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+        ) = None,
         sort_attrs: Sequence[str] | None = None,
-        group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+        group_columns: (
+            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+        ) = None,
         group_attrs: Sequence[str] | None = None,
-        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+        schema: (
+            dict[
+                InstrumentedAttribute,
+                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            ]
+            | None
+        ) = None,
     ) -> AsyncQuery[Self]:
         smart_query = super().smart_query(
             query=cls.query,
@@ -1706,7 +1876,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.get_async_query(smart_query)
 
     @classmethod
-    def get_async_query(cls, query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery[Self]:
+    def get_async_query(
+        cls, query: Select[tuple[Any, ...]] | None = None
+    ) -> AsyncQuery[Self]:
         """Returns an `AsyncQuery` instance with
         the provided `sqlalchemy.sql.Select` instance.
 
@@ -1735,8 +1907,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Use `primary_key_name` property instead.
 
         .. warning::
-            This method can only be used if the model has a single primary key.
-            If the model has a composite primary key, an ``CompositePrimaryKeyError`` is raised.
+            This method can only be used if the model has a single
+            primary key. If the model has a composite primary key,
+            an ``CompositePrimaryKeyError`` is raised.
 
         Returns
         -------
