@@ -1303,7 +1303,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """Similar to ``all()`` but applies unique filtering to the
         objects returned by either ``sqlalchemy.engine.ScalarResult``
         or ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalar``.
+        of ``scalars``.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -1319,9 +1319,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     @classmethod
     async def unique_count(cls) -> int:
         """Similar to ``count()`` but applies unique filtering to the
-        objects returned by either ``sqlalchemy.engine.ScalarResult``
-        or ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalar``.
+        objects returned by ``sqlalchemy.engine.ScalarResult``.
 
         .. note::
             This method is different from ``distinct()`` in that it

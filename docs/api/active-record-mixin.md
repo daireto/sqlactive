@@ -4,7 +4,8 @@ The `ActiveRecordMixin` class provides a set of ActiveRecord-like helper methods
 for SQLAlchemy models, allowing for more intuitive and chainable database
 operations with async/await support.
 
-It implements the functionality of both [`Session`](session-mixin.md) and [`Smart Queries`](smart-query-mixin.md) mixins.
+It implements the functionality of both [`Session`](session-mixin.md) and
+[`Smart Queries`](smart-query-mixin.md) mixins.
 
 ???+ info
 
@@ -119,7 +120,8 @@ class User(BaseModel):
 
     All relations used in filtering/sorting/grouping should be explicitly set,
     not just being a `backref`. This is because SQLActive does not know the
-    relation direction and cannot infer it. So, when defining a relationship like:
+    relation direction and cannot infer it. So, when defining a relationship
+    like:
 
     ```python
     class User(BaseModel):
@@ -448,9 +450,10 @@ async def delete() -> None
 > ???+ danger
 >
 >     This is not a soft delete method. It will permanently delete the row from
->     the database. So, if you want to keep the row in the database, you can implement
->     a custom soft delete method, i.e. using `save()` method to update the row with a
->     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+>     the database. So, if you want to keep the row in the database, you can
+>     implement a custom soft delete method, i.e. using `save()` method to
+>     update the row with a flag indicating if the row is deleted or not
+>     (i.e. a boolean `is_deleted` column).
 
 > **Examples**
 
@@ -512,9 +515,10 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > Saves multiple rows in a single transaction.
 
-> When using this method to update existing rows, instances are not refreshed after
-> commit by default. Accessing the attributes of the updated rows without refreshing
-> them after commit will raise an `sqlalchemy.orm.exc.DetachedInstanceError`.
+> When using this method to update existing rows, instances are not
+> refreshed after commit by default. Accessing the attributes of the
+> updated rows without refreshing them after commit will raise an
+> `sqlalchemy.orm.exc.DetachedInstanceError`.
 
 > To access the attributes of updated rows, the `refresh` flag must be set to
 > `True` in order to refresh them after commit.
@@ -526,9 +530,9 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > ???+ note
 >
->     When inserting new rows, refreshing the instances after commit is not necessary.
->     The instances are already available after commit, but you still can use the
->     `refresh` flag to refresh them if needed.
+>     When inserting new rows, refreshing the instances after commit is no
+>     necessary. The instances are already available after commit, but you
+>     still can use the `refresh` flag to refresh them if needed.
 
 > **Parameters**
 
@@ -583,13 +587,14 @@ async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > Inserts multiple rows in a single transaction.
 
-> This is mostly a shortcut for [`save_all()`](#save_all) when inserting new rows.
+> This is mostly a shortcut for [`save_all()`](#save_all)
+> when inserting new rows.
 
 > ???+ note
 >
->     When inserting new rows, refreshing the instances after commit is not necessary.
->     The instances are already available after commit, but you still can use the
->     `refresh` flag to refresh them if needed.
+>     When inserting new rows, refreshing the instances after commit is not
+>     necessary. The instances are already available after commit, but you
+>     still can use the `refresh` flag to refresh them if needed.
 
 > See the [`save_all()`](#save_all) method for more details.
 
@@ -601,12 +606,13 @@ async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > Updates multiple rows in a single transaction.
 
-> This is mostly a shortcut for [`save_all()`](#save_all) when updating existing rows.
+> This is mostly a shortcut for [`save_all()`](#save_all)
+> when updating existing rows.
 
-> If you are planning to access the attributes of the updated instances after commit,
-> you must set the `refresh` flag to `True` in order to refresh them. Accessing
-> the attributes of the updated instances without refreshing them after commit
-> will raise an `sqlalchemy.orm.exc.DetachedInstanceError`.
+> If you are planning to access the attributes of the updated instances after
+> commit, you must set the `refresh` flag to `True` in order to refresh them.
+> Accessing the attributes of the updated instances without refreshing them
+> after commit will raise an `sqlalchemy.orm.exc.DetachedInstanceError`.
 
 > ???+ warning
 >
@@ -626,9 +632,10 @@ async def delete_all(rows: Sequence[Self]) -> None
 > ???+ danger
 >
 >     This is not a soft delete method. It will permanently delete the row from
->     the database. So, if you want to keep the row in the database, you can implement
->     a custom soft delete method, i.e. using `save()` method to update the row with a
->     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+>     the database. So, if you want to keep the row in the database, you can
+>     implement a custom soft delete method, i.e. using `save()` method to
+>     update the row with a flag indicating if the row is deleted or not
+>     (i.e. a boolean `is_deleted` column).
 
 > **Parameters**
 
@@ -659,9 +666,10 @@ async def destroy(*ids: object) -> None
 > ???+ danger
 >
 >     This is not a soft delete method. It will permanently delete the row from
->     the database. So, if you want to keep the row in the database, you can implement
->     a custom soft delete method, i.e. using `save()` method to update the row with a
->     flag indicating if the row is deleted or not (i.e. a boolean `is_deleted` column).
+>     the database. So, if you want to keep the row in the database, you can
+>     implement a custom soft delete method, i.e. using `save()` method to
+>     update the row with a flag indicating if the row is deleted or not
+>     (i.e. a boolean `is_deleted` column).
 
 > **Parameters**
 
@@ -695,18 +703,21 @@ async def get(
 
 > Fetches a row by primary key or `None` if no result is found.
 
-> If multiple results are found, it will raise a `sqlalchemy.exc.MultipleResultsFound`
-> exception.
+> If multiple results are found, it will raise a
+> `sqlalchemy.exc.MultipleResultsFound` exception.
 
 > **Parameters**
 
-> - `pk`: Primary key value. It can also be a dict of composite primary key values.
+> - `pk`: Primary key value. It can also be a dict of composite primary
+> key values.
 > - `join`: Paths to join eager load.
 > **IMPORTANT** See the docs of [`join`](#join) method for details.
 > - `subquery`: Paths to subquery eager load.
-> **IMPORTANT** See the docs of [`with_subquery`](#with_subquery) method for details.
+> **IMPORTANT** See the docs of [`with_subquery`](#with_subquery) method
+> for details.
 > - `schema`: Schema for the eager loading.
-> **IMPORTANT** See the docs of [`with_schema`](#with_schema) method for details.
+> **IMPORTANT** See the docs of [`with_schema`](#with_schema) method
+> for details.
 
 > **Returns**
 
@@ -739,21 +750,24 @@ async def get_or_fail(
 ) -> Self
 ```
 
-> Fetches a row by primary key or raises a `sqlalchemy.exc.NoResultFound` exception
-> if no result is found.
+> Fetches a row by primary key or raises a `sqlalchemy.exc.NoResultFound`
+> exception if no result is found.
 
-> If multiple results are found, it will raise a `sqlalchemy.exc.MultipleResultsFound`
-> exception.
+> If multiple results are found, it will raise a
+> `sqlalchemy.exc.MultipleResultsFound` exception.
 
 > **Parameters**
 
-> - `pk`: Primary key value. It can also be a dict of composite primary key values.
+> - `pk`: Primary key value. It can also be a dict of composite primary
+> key values.
 > - `join`: Paths to join eager load.
 > **IMPORTANT** See the docs of [`join`](#join) method for details.
 > - `subquery`: Paths to subquery eager load.
-> **IMPORTANT** See the docs of [`with_subquery`](#with_subquery) method for details.
+> **IMPORTANT** See the docs of [`with_subquery`](#with_subquery) method
+> for details.
 > - `schema`: Schema for the eager loading.
-> **IMPORTANT** See the docs of [`with_schema`](#with_schema) method for details.
+> **IMPORTANT** See the docs of [`with_schema`](#with_schema) method
+> for details.
 
 > **Returns**
 
@@ -786,7 +800,8 @@ async def scalars() -> ScalarResult[Self]
 
 > **Returns**
 
-> - `sqlalchemy.engine.ScalarResult[Self]`: Result instance containing all scalars.
+> - `sqlalchemy.engine.ScalarResult[Self]`: Result instance containing
+> all scalars.
 
 > **Examples**
 
@@ -855,8 +870,8 @@ async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 > Fetches one row or raises a `sqlalchemy.exc.NoResultFound` exception
 > if no results are found.
 
-> If multiple results are found, it will raise a `sqlalchemy.exc.MultipleResultsFound`
-> exception.
+> If multiple results are found, it will raise a
+> `sqlalchemy.exc.MultipleResultsFound` exception.
 
 > If `scalar` is `True`, returns a scalar value (default).
 
@@ -917,8 +932,8 @@ async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 
 > Fetches one row or `None` if no results are found.
 
-> If multiple results are found, it will raise a `sqlalchemy.exc.MultipleResultsFound`
-> exception.
+> If multiple results are found, it will raise a
+> `sqlalchemy.exc.MultipleResultsFound` exception.
 
 > If `scalar` is `True`, returns a scalar value (default).
 
@@ -1038,8 +1053,8 @@ async def count() -> int
 async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any, ...]]
 ```
 
-> Similar to `scalars()` but applies unique filtering to the objects
-> returned in the result instance.
+> Similar to [`scalars()`](#scalars) but applies unique filtering to
+> the objects returned in the result instance.
 
 > If `scalars` is `False`, returns a `sqlalchemy.engine.Result` instance
 > instead of a `sqlalchemy.engine.ScalarResult` instance.
@@ -1054,12 +1069,15 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 > **Parameters**
 
 > - `scalars`: If `True`, returns a `sqlalchemy.engine.ScalarResult`
-> instance. Otherwise, returns a `sqlalchemy.engine.Result` instance (default: `True`).
+> instance. Otherwise, returns a `sqlalchemy.engine.Result` instance
+> (default: `True`).
 
 > **Returns**
 
-> - `sqlalchemy.engine.ScalarResult[Self]`: Result instance containing all scalars.
-> - `sqlalchemy.engine.Result[tuple[Any, ...]]`: Result instance containing all rows.
+> - `sqlalchemy.engine.ScalarResult[Self]`: Result instance containing
+> all scalars.
+> - `sqlalchemy.engine.Result[tuple[Any, ...]]`: Result instance containing
+> all rows.
 
 > **Examples**
 
@@ -1078,9 +1096,9 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`first()`](#first) but applies unique filtering to the objects returned
-> by either `sqlalchemy.engine.ScalarResult` or `sqlalchemy.engine.Result`
-> depending on the value of `scalar`
+> Similar to [`first()`](#first) but applies unique filtering to
+> the objects returned by either `sqlalchemy.engine.ScalarResult`
+> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
 
 > ???+ note
 >
@@ -1097,9 +1115,9 @@ async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | Non
 async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 ```
 
-> Similar to [`one()`](#one) but applies unique filtering to the objects returned
-> by either `sqlalchemy.engine.ScalarResult` or `sqlalchemy.engine.Result`
-> depending on the value of `scalar`
+> Similar to [`one()`](#one) but applies unique filtering to
+> the objects returned by either `sqlalchemy.engine.ScalarResult`
+> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
 
 > ???+ note
 >
@@ -1116,9 +1134,9 @@ async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`one_or_none()`](#one_or_none) but applies unique filtering to the objects returned
-> by either `sqlalchemy.engine.ScalarResult` or `sqlalchemy.engine.Result`
-> depending on the value of `scalar`
+> Similar to [`one_or_none()`](#one_or_none) but applies unique filtering to
+> the objects returned by either `sqlalchemy.engine.ScalarResult`
+> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
 
 > ???+ note
 >
@@ -1127,7 +1145,8 @@ async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 >     to apply unique filtering on the query (a DISTINCT clause), use
 >     ``distinct()`` instead.
 
-> See [`unique()`](#unique) and [`one_or_none()`](#one_or_none) for more details.
+> See [`unique()`](#unique) and [`one_or_none()`](#one_or_none) for
+> more details.
 
 #### unique_all
 ```python
@@ -1135,9 +1154,9 @@ async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
 ```
 
-> Similar to [`all()`](#all) but applies unique filtering to the objects returned
-> by either `sqlalchemy.engine.ScalarResult` or `sqlalchemy.engine.Result`
-> depending on the value of `scalar`
+> Similar to [`all()`](#all) but applies unique filtering to
+> the objects returned by either `sqlalchemy.engine.ScalarResult`
+> or `sqlalchemy.engine.Result` depending on the value of `scalars`.
 
 > ???+ note
 >
@@ -1154,9 +1173,8 @@ async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tupl
 async def unique_count() -> int
 ```
 
-> Similar to [`count()`](#count) but applies unique filtering to the objects returned
-> by either `sqlalchemy.engine.ScalarResult` or `sqlalchemy.engine.Result`
-> depending on the value of `scalar`
+> Similar to [`count()`](#count) but applies unique filtering to
+> the objects returned by `sqlalchemy.engine.ScalarResult`.
 
 > ???+ note
 >
