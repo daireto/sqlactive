@@ -1,11 +1,13 @@
 # Inspection Mixin
 
-The `InspectionMixin` class provides attributes and properties inspection functionality for SQLAlchemy models.
+The `InspectionMixin` class provides attributes and properties inspection
+functionality for SQLAlchemy models.
 
 ???+ note
 
     This mixin is intended to extend the functionality of the
-    [`Smart Queries`](smart-query-mixin.md) and [`Serialization`](serialization-mixin.md) mixins.
+    [`Smart Queries`](smart-query-mixin.md) and
+    [`Serialization`](serialization-mixin.md) mixins.
     It is not intended to be used on its own.
 
 ???+ info
@@ -27,8 +29,12 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     class User(BaseModel):
         __tablename__ = 'users'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-        username: Mapped[str] = mapped_column(String(18), nullable=False, unique=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
+        username: Mapped[str] = mapped_column(
+            String(18), nullable=False, unique=True
+        )
         name: Mapped[str] = mapped_column(String(50), nullable=False)
         age: Mapped[int] = mapped_column(nullable=False)
 
@@ -47,7 +53,9 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     class Post(BaseModel):
         __tablename__ = 'posts'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         title: Mapped[str] = mapped_column(String(100), nullable=False)
         body: Mapped[str] = mapped_column(nullable=False)
         rating: Mapped[int] = mapped_column(nullable=False)
@@ -60,7 +68,9 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     class Comment(BaseModel):
         __tablename__ = 'comments'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         body: Mapped[str] = mapped_column(nullable=False)
         post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
         user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
@@ -72,19 +82,25 @@ The `InspectionMixin` class provides attributes and properties inspection functi
     class Product(BaseModel):
         __tablename__ = 'products'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         name: Mapped[str] = mapped_column(String(100), nullable=False)
         description: Mapped[str] = mapped_column(String(100), nullable=False)
         price: Mapped[float] = mapped_column(nullable=False)
 
-        sells: Mapped[list['Sell']] = relationship(back_populates='product', viewonly=True)
+        sells: Mapped[list['Sell']] = relationship(
+            back_populates='product', viewonly=True
+        )
 
 
     class Sell(BaseModel):
         __tablename__ = 'sells'
 
         id: Mapped[int] = mapped_column(primary_key=True)
-        product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+        product_id: Mapped[int] = mapped_column(
+            ForeignKey('products.id'), primary_key=True
+        )
         quantity: Mapped[int] = mapped_column(nullable=False)
 
         product: Mapped['Product'] = relationship(back_populates='sells')
@@ -102,7 +118,8 @@ def id_str() -> str
 
 > Returns a string representation of the primary key.
 
-> If the primary key is composite, returns a comma-separated list of key-value pairs.
+> If the primary key is composite, returns a comma-separated list of
+> key-value pairs.
 
 > **Examples**
 
@@ -188,7 +205,8 @@ def primary_key_name() -> str
 > ???+ warning
 >
 >     This property can only be used if the model has a single primary key.
->     If the model has a composite primary key, an `CompositePrimaryKeyError` is raised.
+>     If the model has a composite primary key, an `CompositePrimaryKeyError`
+>     is raised.
 
 > **Examples**
 

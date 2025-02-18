@@ -26,8 +26,12 @@ It implements the functionality of both [`Session`](session-mixin.md) and
     class User(BaseModel):
         __tablename__ = 'users'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-        username: Mapped[str] = mapped_column(String(18), nullable=False, unique=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
+        username: Mapped[str] = mapped_column(
+            String(18), nullable=False, unique=True
+        )
         name: Mapped[str] = mapped_column(String(50), nullable=False)
         age: Mapped[int] = mapped_column(nullable=False)
 
@@ -46,7 +50,9 @@ It implements the functionality of both [`Session`](session-mixin.md) and
     class Post(BaseModel):
         __tablename__ = 'posts'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         title: Mapped[str] = mapped_column(String(100), nullable=False)
         body: Mapped[str] = mapped_column(nullable=False)
         rating: Mapped[int] = mapped_column(nullable=False)
@@ -59,7 +65,9 @@ It implements the functionality of both [`Session`](session-mixin.md) and
     class Comment(BaseModel):
         __tablename__ = 'comments'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         body: Mapped[str] = mapped_column(nullable=False)
         post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
         user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
@@ -71,19 +79,25 @@ It implements the functionality of both [`Session`](session-mixin.md) and
     class Product(BaseModel):
         __tablename__ = 'products'
 
-        id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+        id: Mapped[int] = mapped_column(
+            primary_key=True, autoincrement=True, index=True
+        )
         name: Mapped[str] = mapped_column(String(100), nullable=False)
         description: Mapped[str] = mapped_column(String(100), nullable=False)
         price: Mapped[float] = mapped_column(nullable=False)
 
-        sells: Mapped[list['Sell']] = relationship(back_populates='product', viewonly=True)
+        sells: Mapped[list['Sell']] = relationship(
+            back_populates='product', viewonly=True
+        )
 
 
     class Sell(BaseModel):
         __tablename__ = 'sells'
 
         id: Mapped[int] = mapped_column(primary_key=True)
-        product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+        product_id: Mapped[int] = mapped_column(
+            ForeignKey('products.id'), primary_key=True
+        )
         quantity: Mapped[int] = mapped_column(nullable=False)
 
         product: Mapped['Product'] = relationship(back_populates='sells')
@@ -228,7 +242,7 @@ users = await User.order_by('name').all()                 # Ascending order
 users = await User.order_by('-created_at', 'name').all()  # Multiple columns
 
 # Sorting (SQLAlchemy syntax)
-users = await User.sort(User.created_at.desc()).all()     # Synonym for order_by()
+users = await User.sort(User.created_at.desc()).all()  # Synonym for order_by()
 users = await User.sort(asc(User.name)).all()
 
 # Sorting (mixed syntax)
@@ -260,7 +274,9 @@ users = await User.group_by(User.age, 'name').all()
 #### Join Loading
 
 ```python
-comment = await Comment.join(Comment.user, Comment.post).first()  # Left outer join
+comment = await Comment.join(
+    Comment.user, Comment.post  # Left outer join
+).first()
 
 comment = await Comment.join(
     Comment.user,
@@ -268,7 +284,7 @@ comment = await Comment.join(
 ).first()
 
 comments = await Comment.join(Comment.user, Comment.post)
-    .unique_all()  # important!
+    .unique_all()  # required for joinedload()
 ```
 
 #### Subquery Loading
@@ -325,9 +341,11 @@ users = await User.smart_query(
 
 ### Class Properties
 
-Most of class properties are inherited from [`InspectionMixin`](inspection-mixin.md).
+Most of class properties are inherited from
+[`InspectionMixin`](inspection-mixin.md).
 
 #### query
+
 ```python
 @classproperty
 def query() -> Select[tuple[Self]]
@@ -354,6 +372,7 @@ def query() -> Select[tuple[Self]]
 ### Instance Methods
 
 #### fill
+
 ```python
 def fill(**kwargs) -> Self
 ```
@@ -387,6 +406,7 @@ def fill(**kwargs) -> Self
 > ```
 
 #### save
+
 ```python
 async def save() -> Self
 ```
@@ -413,6 +433,7 @@ async def save() -> Self
 > ```
 
 #### update
+
 ```python
 async def update(**kwargs) -> Self
 ```
@@ -441,6 +462,7 @@ async def update(**kwargs) -> Self
 > ```
 
 #### delete
+
 ```python
 async def delete() -> None
 ```
@@ -467,6 +489,7 @@ async def delete() -> None
 > ```
 
 #### remove
+
 ```python
 async def remove() -> None
 ```
@@ -476,6 +499,7 @@ async def remove() -> None
 ### Class Methods
 
 #### insert
+
 ```python
 @classmethod
 async def insert(**kwargs) -> Self
@@ -500,6 +524,7 @@ async def insert(**kwargs) -> Self
 > ```
 
 #### create
+
 ```python
 @classmethod
 async def create(**kwargs) -> Self
@@ -508,6 +533,7 @@ async def create(**kwargs) -> Self
 > Synonym for [`insert()`](#insert).
 
 #### save_all
+
 ```python
 @classmethod
 async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
@@ -580,6 +606,7 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 > ```
 
 #### insert_all
+
 ```python
 @classmethod
 async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
@@ -599,6 +626,7 @@ async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
 > See the [`save_all()`](#save_all) method for more details.
 
 #### update_all
+
 ```python
 @classmethod
 async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
@@ -622,6 +650,7 @@ async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
 > See the [`save_all()`](#save_all) method for more details.
 
 #### delete_all
+
 ```python
 @classmethod
 async def delete_all(rows: Sequence[Self]) -> None
@@ -653,6 +682,7 @@ async def delete_all(rows: Sequence[Self]) -> None
 > ```
 
 #### destroy
+
 ```python
 @classmethod
 async def destroy(*ids: object) -> None
@@ -691,6 +721,7 @@ async def destroy(*ids: object) -> None
 > ```
 
 #### get
+
 ```python
 @classmethod
 async def get(
@@ -734,12 +765,13 @@ async def get(
 > >>> user = await User.get(1)
 > >>> user
 > User(id=1)
-> >>> user = await User.get(100)  # Does not exist
+> >>> user = await User.get(100)  # does not exist
 > >>> user
 > None
 > ```
 
 #### get_or_fail
+
 ```python
 @classmethod
 async def get_or_fail(
@@ -784,13 +816,14 @@ async def get_or_fail(
 > >>> user = await User.get_or_fail(1)
 > >>> user
 > User(id=1)
-> >>> user = await User.get_or_fail(100)  # Does not exist
+> >>> user = await User.get_or_fail(100)  # does not exist
 > Traceback (most recent call last):
 >     ...
 > NoResultFound: User with id '100' was not found
 > ```
 
 #### scalars
+
 ```python
 @classmethod
 async def scalars() -> ScalarResult[Self]
@@ -819,6 +852,7 @@ async def scalars() -> ScalarResult[Self]
 > ```
 
 #### first
+
 ```python
 @classmethod
 async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
@@ -862,6 +896,7 @@ async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > ```
 
 #### one
+
 ```python
 @classmethod
 async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
@@ -925,6 +960,7 @@ async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 > ```
 
 #### one_or_none
+
 ```python
 @classmethod
 async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
@@ -986,6 +1022,7 @@ async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > ```
 
 #### all
+
 ```python
 @classmethod
 async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
@@ -1028,6 +1065,7 @@ async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, 
 > ```
 
 #### count
+
 ```python
 @classmethod
 async def count() -> int
@@ -1048,6 +1086,7 @@ async def count() -> int
 > ```
 
 #### unique
+
 ```python
 @classmethod
 async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any, ...]]
@@ -1061,10 +1100,10 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > **Parameters**
 
@@ -1091,6 +1130,7 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 > ```
 
 #### unique_first
+
 ```python
 @classmethod
 async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
@@ -1102,14 +1142,15 @@ async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | Non
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > See [`unique()`](#unique) and [`first()`](#first) for more details.
 
 #### unique_one
+
 ```python
 @classmethod
 async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
@@ -1121,14 +1162,15 @@ async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > See [`unique()`](#unique) and [`one()`](#one) for more details.
 
 #### unique_one_or_none
+
 ```python
 @classmethod
 async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
@@ -1140,15 +1182,16 @@ async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > See [`unique()`](#unique) and [`one_or_none()`](#one_or_none) for
 > more details.
 
 #### unique_all
+
 ```python
 @classmethod
 async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
@@ -1160,14 +1203,15 @@ async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tupl
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > See [`unique()`](#unique) and [`all()`](#all) for more details.
 
 #### unique_count
+
 ```python
 @classmethod
 async def unique_count() -> int
@@ -1178,14 +1222,15 @@ async def unique_count() -> int
 
 > ???+ note
 >
->     This method is different from ``distinct()`` in that it applies unique
+>     This method is different from `distinct()` in that it applies unique
 >     filtering to the objects returned in the result instance. If you need
 >     to apply unique filtering on the query (a DISTINCT clause), use
->     ``distinct()`` instead.
+>     `distinct()` instead.
 
 > See [`unique()`](#unique) and [`count()`](#count) for more details.
 
 #### select
+
 ```python
 @classmethod
 def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery[Self]
@@ -1216,6 +1261,7 @@ def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery[Self]
 > ```
 
 #### distinct
+
 ```python
 @classmethod
 def distinct() -> AsyncQuery[Self]
@@ -1237,6 +1283,7 @@ def distinct() -> AsyncQuery[Self]
 > ```
 
 #### options
+
 ```python
 @classmethod
 def options(*args: ExecutableOption) -> AsyncQuery[Self]
@@ -1246,7 +1293,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 
 > ???+ warning
 >
->     Quoting from the [joined eager loading docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading):
+>     Quoting from the [joined eager loading docs](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading){:target="_blank"}:
 >
 >         When including `joinedload()` in reference to a one-to-many or
 >         many-to-many collection, the `Result.unique()` method must be
@@ -1266,7 +1313,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 >     (see the examples below).
 >
 >     To learn more about options, see the
->     [Query.options docs](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options).
+>     [Query.options docs](https://docs.sqlalchemy.org/en/14/orm/query.html#sqlalchemy.orm.Query.options){:target="_blank"}.
 
 > **Parameters**
 
@@ -1280,7 +1327,8 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 
 > Joined eager loading:
 > ```python
-> >>> users = await User.options(joinedload(User.posts)).unique_all()
+> >>> users = await User.options(joinedload(User.posts))
+> ...                   .unique_all()  # required for joinedload()
 > >>> users
 > [User(id=1), User(id=2), ...]
 > >>> users[0].posts
@@ -1310,6 +1358,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 > ```
 
 #### where
+
 ```python
 @classmethod
 def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
@@ -1330,34 +1379,53 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 
 > **Examples**
 
+> Using Django-like syntax:
 > ```python
-> # SQLAlchemy style
-> users = await User.where(User.age >= 18).all()
->
-> # Django style
-> users = await User.where(age__gte=18).all()
->
-> # Mixed
-> users = await User.where(User.age >= 18, name__like='%Bob%').all()
+> >>> users = await User.where(age__gte=18).all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users = await User.where(name__like='%John%', age=30).all()
+> >>> users
+> [User(id=2)]
+> ```
+
+> Using SQLAlchemy syntax:
+> ```python
+> >>> users = await User.where(User.age >= 18).all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users = await User.where(User.name == 'John Doe', User.age == 30).all()
+> >>> users
+> [User(id=2)]
+> ```
+
+> Using both syntaxes:
+> ```python
+> >>> users = await User.where(User.age == 30, name__like='%John%').all()
+> >>> users
+> [User(id=2)]
 > ```
 
 #### filter
+
 ```python
 @classmethod
 def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
-> Synonym for `where()`.
+> Synonym for [`where()`](#where).
 
 #### find
+
 ```python
 @classmethod
 def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
-> Synonym for `where()`.
+> Synonym for [`where()`](#where).
 
 #### search
+
 ```python
 @classmethod
 def search(
@@ -1368,8 +1436,9 @@ def search(
 
 > Applies a search filter to the query.
 
-> Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
-> of the model. If `columns` are provided, searches only these columns.
+> Searches for `search_term` in the
+> [searchable columns](inspection-mixin.md#searchable_attributes) of the model.
+> If `columns` are provided, searches only these columns.
 
 > **Parameters**
 
@@ -1382,14 +1451,39 @@ def search(
 
 > **Examples**
 
+> Usage:
 > ```python
-> users = await User.search('Bob').all()
-> users = await User.search('Bob', columns=(User.name,)).all()
-> users = await User.search('Bob', columns=(User.name, User.email)).all()
-> users = await User.search('Bob', columns=('name',)).all()
+> >>> users = await User.search(search_term='John').all()
+> >>> users
+> [User(id=2), User(id=6)]
+> >>> users[0].name
+> 'John Doe'
+> >>> users[0].username
+> 'John321'
+> >>> users[1].name
+> 'Diana Johnson'
+> >>> users[1].username
+> 'Diana84'
+> ```
+
+> Searching specific columns:
+> ```python
+> >>> users = await User.search(
+> ...     search_term='John',
+> ...     columns=[User.name, User.username]
+> ... ).all()
+> >>> users
+> [User(id=2), User(id=6)]
+> >>> users = await User.search(
+> ...     search_term='John',
+> ...     columns=[User.username]  # or 'username'
+> ... ).all()
+> >>> users
+> [User(id=2)]
 > ```
 
 #### order_by
+
 ```python
 @classmethod
 def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
@@ -1409,26 +1503,50 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[S
 
 > **Examples**
 
+> Using Django-like syntax:
 > ```python
-> # SQLAlchemy style
-> users = await User.order_by(User.created_at.desc(), User.name).all()
->
-> # Django style
-> users = await User.order_by('-created_at', 'name').all()
->
-> # Mixed
-> users = await User.order_by('-created_at', User.name.asc()).all()
+> >>> users = await User.order_by('-created_at').all()
+> >>> users
+> [User(id=100), User(id=99), ...]
+> >>> posts = await Post.order_by('-rating', 'user___name').all()
+> >>> posts
+> [Post(id=1), Post(id=4), ...]
+> ```
+
+> Using SQLAlchemy syntax:
+> ```python
+> >>> users = await User.order_by(User.created_at.desc()).all()
+> >>> users
+> [User(id=100), User(id=99), ...]
+> >>> posts = await Post.order_by(desc(Post.rating)).all()
+> >>> posts
+> [Post(id=1), Post(id=4), ...]
+> ```
+
+Using both syntaxes:
+> ```python
+> >>> users = await User.order_by('-username', User.name.asc())
+> ...                   .all()
+> >>> users
+> [User(id=78), User(id=62), ...]
+> >>> posts = await Post.order_by(
+> ...     desc(Post.rating), 'user___name'
+> ... ).all()
+> >>> posts
+> [Post(id=1), Post(id=4), ...]
 > ```
 
 #### sort
+
 ```python
 @classmethod
 def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
 ```
 
-> Synonym for `order_by()`.
+> Synonym for [`order_by()`](#order_by).
 
 #### group_by
+
 ```python
 @classmethod
 def group_by(
@@ -1447,7 +1565,7 @@ def group_by(
 > **Parameters**
 
 > - `columns`: Django-like or SQLAlchemy columns.
-> - `select_columns`: Columns to be selected.
+> - `select_columns`: Columns to be selected (recommended).
 
 > **Returns**
 
@@ -1455,22 +1573,33 @@ def group_by(
 
 > **Examples**
 
+> Usage:
 > ```python
-> from sqlalchemy.sql import text
-> from sqlalchemy.sql.functions import func
->
-> # Using the `select_columns` parameter
-> columns = (User.age, func.count(User.age))
-> async_query = User.group_by(User.age, select_columns=columns)
-> rows = await async_query.all(scalars=False)
->
-> # Calling `select()` before (and with relations)
-> async_query = Post.select(Post.rating, text('users_1.name'), func.count(Post.title))
-> async_query = async_query.group_by('rating', 'user___name')
-> rows = async_query.all(scalars=False)
+> >>> from sqlalchemy.sql.functions import func
+> >>> columns = (User.age, func.count(User.name))
+> >>> async_query = User.group_by(
+> ...     User.age, select_columns=columns
+> ... )
+> >>> rows = await async_query.all(scalars=False)
+> [(30, 2), (32, 1), ...]
+> ```
+
+> You can also call `select()` before calling `group_by()`:
+> ```python
+> >>> from sqlalchemy.sql import text, func
+> >>> async_query = Post.select(
+> ...     Post.rating,
+> ...     text('users_1.name'),
+> ...     func.count(Post.title)
+> ... )
+> >>> async_query = async_query.group_by('rating', 'user___name')
+> >>> rows = async_query.all(scalars=False)
+> >>> rows
+> [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
 > ```
 
 #### offset
+
 ```python
 @classmethod
 def offset(offset: int) -> AsyncQuery[Self]
@@ -1488,23 +1617,31 @@ def offset(offset: int) -> AsyncQuery[Self]
 
 > **Raises**
 
-> - `ValueError`: If offset is negative.
+> - `ValueError`: If `offset` is negative.
 
 > **Examples**
 
+> Usage:
 > ```python
-> users = await User.offset(10).all()
+> >>> users = await User.all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users = await User.offset(10).all()
+> >>> users
+> [User(id=11), User(id=12), ...]
 > ```
 
 #### skip
+
 ```python
 @classmethod
 def skip(skip: int) -> AsyncQuery[Self]
 ```
 
-> Synonym for `offset()`.
+> Synonym for [`offset()`](#offset).
 
 #### limit
+
 ```python
 @classmethod
 def limit(limit: int) -> AsyncQuery[Self]
@@ -1522,31 +1659,39 @@ def limit(limit: int) -> AsyncQuery[Self]
 
 > **Raises**
 
-> - `ValueError`: If limit is negative.
+> - `ValueError`: If `limit` is negative.
 
 > **Examples**
 
 > ```python
-> users = await User.limit(5).all()
+> >>> users = await User.all()
+> >>> users
+> [User(id=1), User(id=2), ...]
+> >>> users = await User.limit(2).all()
+> >>> users
+> [User(id=1), User(id=2)]
 > ```
 
 #### take
+
 ```python
 @classmethod
 def take(take: int) -> AsyncQuery[Self]
 ```
 
-> Synonym for `limit()`.
+> Synonym for [`limit()`](#limit).
 
 #### top
+
 ```python
 @classmethod
 def top(top: int) -> AsyncQuery[Self]
 ```
 
-> Synonym for `limit()`.
+> Synonym for [`limit()`](#limit).
 
 #### join
+
 ```python
 @classmethod
 def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]
@@ -1557,6 +1702,10 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQ
 > When a tuple is passed, the second element must be boolean, and
 > if `True`, the join is `INNER JOIN`, otherwise `LEFT OUTER JOIN`.
 
+> ???+ note
+>
+>     Only direct relationships can be loaded.
+
 > **Parameters**
 
 > - `paths`: Relationship attributes to join.
@@ -1565,16 +1714,28 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQ
 
 > - [`AsyncQuery[Self]`](async-query.md): Async query instance for chaining.
 
+> **Raises**
+
+> - `ValueError`: If the second element of tuple is not boolean.
+
 > **Examples**
 
+> Usage:
 > ```python
-> comments = await Comment.join(
->     Comment.user,
->     (Comment.post, True)  # True means INNER JOIN
-> ).all()
+> >>> comment = await Comment.join(
+> ...     Comment.user,         # LEFT OUTER JOIN
+> ...     (Comment.post, True)  # True = INNER JOIN
+> ... ).first()
+> >>> comment
+> Comment(id=1)
+> >>> comment.user
+> User(id=1)
+> >>> comment.post
+> Post(id=1)
 > ```
 
 #### with_subquery
+
 ```python
 @classmethod
 def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]
@@ -1582,33 +1743,44 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) 
 
 > Subqueryload or Selectinload eager loading.
 
-> Emits a second `SELECT` statement (Subqueryload) for each relationship
+> Emits a second SELECT statement (Subqueryload) for each relationship
 > to be loaded, across all result objects at once.
 
 > When a tuple is passed, the second element must be boolean.
-> If it is `True`, the eager loading strategy is `SELECT IN` (Selectinload),
-> otherwise `SELECT JOIN` (Subqueryload).
+> If it is `True`, the eager loading strategy is SELECT IN (Selectinload),
+> otherwise SELECT JOIN (Subqueryload).
 
 > ???+ warning
 >
 >     A query which makes use of `subqueryload()` in conjunction with a limiting
 >     modifier such as `Query.limit()` or `Query.offset()` should always include
 >     `Query.order_by()` against unique column(s) such as the primary key,
->     so that the additional queries emitted by `subqueryload()` include the same
->     ordering as used by the parent query. Without it, there is a chance that
->     the inner query could return the wrong rows, as specified in
->     [SQLAlchemy docs](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering).
+>     so that the additional queries emitted by `subqueryload()` include the
+>     same ordering as used by the parent query. Without it, there is a chance
+>     that the inner query could return the wrong rows, as specified in
+>     [The importance of ordering](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering){:target="_blank"}.
 >
+>     Incorrect, LIMIT without ORDER BY:
 >     ```python
->     # incorrect, no ORDER BY
->     User.options(subqueryload(User.addresses)).first()
->     # incorrect if User.name is not unique
->     User.options(subqueryload(User.addresses)).order_by(User.name).first()
->     # correct
->     User.options(subqueryload(User.addresses)).order_by(
->         User.name, User.id
->     ).first()
+>     User.options(subqueryload(User.posts)).first()
 >     ```
+>
+>     Incorrect if User.name is not unique:
+>     ```python
+>     User.options(subqueryload(User.posts)).order_by(User.name).first()
+>     ```
+>
+>     Correct:
+>     ```python
+>     User.options(subqueryload(User.posts)).order_by(User.name, User.id).first()
+>     ```
+>
+>     To get more information about SELECT IN and SELECT JOIN strategies,
+>     , see the [`loading relationships docs`](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html){:target="_blank"}.
+
+> ???+ note
+>
+>     Only direct relationships can be loaded.
 
 > **Parameters**
 
@@ -1618,16 +1790,49 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) 
 
 > - [`AsyncQuery[Self]`](async-query.md): Async query instance for chaining.
 
+> **Raises**
+
+> - `ValueError`: If the second element of tuple is not boolean.
+
 > **Examples**
 
+> Usage:
 > ```python
-> users = await User.with_subquery(
->     User.posts,
->     (User.comments, True)  # True means selectin loading
-> ).all()
+> >>> users = await User.with_subquery(
+> ...     User.posts,            # SELECT JOIN
+> ...     (User.comments, True)  # True = SELECT IN
+> ... ).all()
+> >>> users[0]
+> User(id=1)
+> >>> users[0].posts              # loaded using SELECT JOIN
+> [Post(id=1), Post(id=2), ...]
+> >>> users[0].posts[0].comments  # loaded using SELECT IN
+> [Comment(id=1), Comment(id=2), ...]
+> ```
+
+> Using a limiting modifier:
+> ```python
+> >>> user = await User.with_subquery(
+> ...     User.posts,            # SELECT JOIN
+> ...     (User.comments, True)  # True = SELECT IN
+> ... ).sort('id')  # sorting modifier (Important!!!)
+> ...  .first()     # limiting modifier
+> >>> user = await User.with_subquery(
+> ...     User.posts,            # SELECT JOIN
+> ...     (User.comments, True)  # True = SELECT IN
+> ... ).limit(1)    # limiting modifier
+> ...  .sort('id')  # sorting modifier (Important!!!)
+> ...  .all()[0]
+> >>> user
+> User(id=1)
+> >>> user.posts              # loaded using SELECT JOIN
+> [Post(id=1), Post(id=2), ...]
+> >>> user.posts[0].comments  # loaded using SELECT IN
+> [Comment(id=1), Comment(id=2), ...]
 > ```
 
 #### with_schema
+
 ```python
 @classmethod
 def with_schema(
@@ -1640,6 +1845,34 @@ def with_schema(
 > Useful for complex cases where you need to load nested relationships in
 > separate queries.
 
+> ???+ warning
+>
+>     A query which makes use of `subqueryload()` in conjunction with a limiting
+>     modifier such as `Query.limit()` or `Query.offset()` should always include
+>     `Query.order_by()` against unique column(s) such as the primary key,
+>     so that the additional queries emitted by `subqueryload()` include the
+>     same ordering as used by the parent query. Without it, there is a chance
+>     that the inner query could return the wrong rows, as specified in
+>     [The importance of ordering](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html#the-importance-of-ordering){:target="_blank"}.
+>
+>     Incorrect, LIMIT without ORDER BY:
+>     ```python
+>     User.options(subqueryload(User.posts)).first()
+>     ```
+>
+>     Incorrect if User.name is not unique:
+>     ```python
+>     User.options(subqueryload(User.posts)).order_by(User.name).first()
+>     ```
+>
+>     Correct:
+>     ```python
+>     User.options(subqueryload(User.posts)).order_by(User.name, User.id).first()
+>     ```
+>
+>     To get more information about SELECT IN and SELECT JOIN strategies,
+>     , see the [`loading relationships docs`](https://docs.sqlalchemy.org/en/14/orm/loading_relationships.html){:target="_blank"}.
+
 > **Parameters**
 
 > - `schema`: Dictionary defining the loading strategy.
@@ -1649,18 +1882,28 @@ def with_schema(
 > - [`AsyncQuery[Self]`](async-query.md): Async query instance for chaining.
 
 > ```python
-> from sqlactive import JOINED, SUBQUERY
->
-> schema = {
->     User.posts: JOINED,
->     User.comments: (SUBQUERY, {
->         Comment.user: JOINED
->     })
-> }
-> users = await User.with_schema(schema).all()
+> >>> from sqlactive import JOINED, SUBQUERY
+> >>> schema = {
+> ...     User.posts: JOINED,          # joinedload user
+> ...     User.comments: (SUBQUERY, {  # load comments in separate query
+> ...         Comment.user: JOINED     # but, in this separate query, join user
+> ...     })
+> ... }
+> >>> user = await User.with_schema(schema)
+> ...                  .order_by(User.id)  # important when limiting
+> ...                  .first()            # limiting modifier
+> >>> user
+> User(id=1)
+> >>> user.posts
+> [Post(id=1), Post(id=2), ...]
+> >>> user.posts[0].comments
+> [Comment(id=1), Comment(id=2), ...]
+> >>> user.posts[0].comments[0].user
+> User(id=1)
 > ```
 
 #### smart_query
+
 ```python
 @classmethod
 def smart_query(
@@ -1677,60 +1920,14 @@ def smart_query(
 ```
 
 > Creates a query combining filtering, sorting, grouping and eager loading.
+> Then, wraps the query into an [`AsyncQuery`](async-query.md) instance and
+> returns it.
 
-> Does magic Django-like joins like `post___user___name__startswith='Bob'`
-> (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
-
-> Does filtering, sorting and eager loading at the same time.
-> And if, say, filters, sorting and grouping need the same join,
-> it will be done only once.
-
-> It also supports SQLAlchemy syntax filter expressions like
-> ```python
-> db.query(User).filter(User.id == 1, User.name == 'Bob')
-> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
-> ```
-
-> ???+ note
->
->     To get more information about the usage, see the documentation of
->     [`filter_expr`](smart-query-mixin.md#filter_expr),
->     [`order_expr`](smart-query-mixin.md#order_expr),
->     [`columns_expr`](smart-query-mixin.md#columns_expr) and
->     [`eager_expr`](smart-query-mixin.md#eager_expr) methods of the
->     [`Smart Query Mixin`](smart-query-mixin.md).
-
-> **Parameters**
-
-> - `criteria`: SQLAlchemy syntax filter expressions.
-> - `filters`: Django-like filter expressions.
-> - `sort_columns`: Standalone sort columns.
-> - `sort_attrs`: Django-like sort expressions.
-> - `group_columns`: Standalone group columns.
-> - `group_attrs`: Django-like group expressions.
-> - `schema`: Schema for the eager loading.
-
-> **Returns**
-
-> - [`AsyncQuery[Self]`](async-query.md): Async query instance for chaining.
-
-> **Examples**
-
-> ```python
-> from sqlactive import JOINED
->
-> users = await User.smart_query(
->     criterion=(User.age >= 18,),
->     filters={'name__like': '%John%'},
->     sort_columns=(User.username,),
->     sort_attrs=['-created_at'],
->     group_columns=(User.username,),
->     group_attrs=['age'],
->     schema={User.posts: JOINED}
-> ).all()
-> ```
+> See [`smart_query() from SmartQueryMixin`](smart-query-mixin.md#smart_query)
+> for details.
 
 #### get_async_query
+
 ```python
 @classmethod
 def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery[Self]
@@ -1753,38 +1950,47 @@ def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery[
 > **Examples**
 
 > ```python
-> async_query = User.get_async_query()
-> first_bob = await async_query.where(name__startswith='Bob').first()
-> first_bob.name  # 'Bob Williams'
-> first_bob.age   # 30
+> >>> async_query = User.get_async_query()
+> >>> bob = await async_query.where(name__like='Bob%').first()
+> >>> bob.name
+> 'Bob Williams'
+> >>> bob.age
+> 30
 > ```
 
 #### get_primary_key_name
+
 ```python
 @classmethod
 def get_primary_key_name() -> str
 ```
 
-> ???+ warning
->
->     _Deprecated since version 0.2: Use `primary_key_name` property instead._
+!!! warning "Deprecated"
+
+    This function is deprecated since version 0.2 and will be removed in future versions.
+    Use [`primary_key_name`](inspection-mixin.md#primary_key_name) property instead.
 
 > Gets the primary key name of the model.
 
-> This method can only be used if the model has a single primary key.
+> ???+ warning
+>
+>     This method can only be used if the model has a single primary key.
+>     If the model has a composite primary key, an `CompositePrimaryKeyError`
+>     is raised.
 
 > **Returns**
 
-> - `str`: Primary key name.
+> - `str`: The name of the primary key.
 
 > **Raises**
 
-> - `InvalidRequestError`: If the model has a composite primary key.
+> - `CompositePrimaryKeyError`: If the model has a composite primary key.
 
 > **Examples**
 
 > ```python
-> User.get_primary_key_name()  # 'id'
+> >>> User.get_primary_key_name()
+> 'id'
 > ```
 
 ## Important Notes
