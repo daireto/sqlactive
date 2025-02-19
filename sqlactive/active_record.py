@@ -627,13 +627,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             criteria = {cls.primary_key_name: pk}
 
         async_query = cls.get_async_query()
-        async_query = async_query.where(**criteria)
+        async_query.where(**criteria)
         if join:
-            async_query = async_query.join(*join)
+            async_query.join(*join)
         if subquery:
-            async_query = async_query.with_subquery(*subquery)
+            async_query.with_subquery(*subquery)
         if schema:
-            async_query = async_query.with_schema(schema)
+            async_query.with_schema(schema)
         return await async_query.unique_one_or_none()
 
     @classmethod
@@ -741,14 +741,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...     age: Mapped[int] = mapped_column()
 
         Usage:
-        >>> scalar_result = await User.scalars()
-        >>> scalar_result
+        >>> result = await User.scalars()
+        >>> result
         <sqlalchemy.engine.result.ScalarResult object at 0x...>
-        >>> users = scalar_result.all()
+        >>> users = result.all()
         >>> users
         [User(id=1), User(id=2), ...]
-        >>> scalar_result = await User.where(name='John Doe').scalars()
-        >>> users = scalar_result.all()
+        >>> result = await User.where(name='John Doe').scalars()
+        >>> users = result.all()
         >>> users
         [User(id=2)]
         """
@@ -1041,9 +1041,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Returns
         -------
         Sequence[Self]
-            The instances if found.
+            Instances (scalars).
         Sequence[Row[tuple[Any, ...]]]
-            The rows if found.
+            Rows.
 
         Examples
         --------
@@ -1393,6 +1393,16 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Examples
         --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+
+        Usage:
         >>> User.query
         'SELECT users.id, users.username, users.name, ... FROM users'
         >>> User.distinct()
@@ -1642,38 +1652,37 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Examples
         --------
-        Assume a model ``User``:
+        Assume a model ``Post``:
         >>> from sqlactive import ActiveRecordBaseModel
-        >>> class User(ActiveRecordBaseModel):
-        ...     __tablename__ = 'users'
+        >>> class (ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
-        ...     username: Mapped[str] = mapped_column()
-        ...     name: Mapped[str] = mapped_column()
-        ...     age: Mapped[int] = mapped_column()
+        ...     title: Mapped[str] = mapped_column()
+        ...     rating: Mapped[int] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='post'
+        ...     )
 
         Using Django-like syntax:
-        >>> users = await User.order_by('-created_at').all()
-        >>> users
-        [User(id=100), User(id=99), ...]
         >>> posts = await Post.order_by('-rating', 'user___name').all()
         >>> posts
         [Post(id=1), Post(id=4), ...]
 
         Using SQLAlchemy syntax:
-        >>> users = await User.order_by(User.created_at.desc()).all()
-        >>> users
-        [User(id=100), User(id=99), ...]
-        >>> posts = await Post.order_by(desc(Post.rating)).all()
+        >>> posts = await Post.order_by(Post.rating.desc()).all()
         >>> posts
         [Post(id=1), Post(id=4), ...]
 
         Using both syntaxes:
-        >>> users = await User.order_by('-username', User.name.asc())
-        ...                   .all()
-        >>> users
-        [User(id=78), User(id=62), ...]
         >>> posts = await Post.order_by(
-        ...     desc(Post.rating), 'user___name'
+        ...     Post.rating.desc(),
+        ...     'user___name'
         ... ).all()
         >>> posts
         [Post(id=1), Post(id=4), ...]
@@ -1754,7 +1763,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...     text('users_1.name'),
         ...     func.count(Post.title)
         ... )
-        >>> async_query = async_query.group_by('rating', 'user___name')
+        >>> async_query.group_by('rating', 'user___name')
         >>> rows = async_query.all(scalars=False)
         >>> rows
         [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
@@ -1799,6 +1808,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.offset(10).all()
         >>> users
         [User(id=11), User(id=12), ...]
+        >>> User.offset(-1)
+        Traceback (most recent call last) -> Self:
+            ...
+        ValueError: offset must be >= 0
         """
         async_query = cls.get_async_query()
         return async_query.offset(offset)
@@ -1845,6 +1858,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.limit(2).all()
         >>> users
         [User(id=1), User(id=2)]
+        >>> User.limit(-1)
+        Traceback (most recent call last) -> Self:
+            ...
+        ValueError: limit must be >= 0
         """
         async_query = cls.get_async_query()
         return async_query.limit(limit)
@@ -1918,6 +1935,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         User(id=1)
         >>> comment.post
         Post(id=1)
+        >>> Comment.join(
+        ...     Comment.user,
+        ...     (Comment.post, 'inner')  # invalid argument
+        ... )
+        Traceback (most recent call last):
+            ...
+        ValueError: expected boolean for second element of tuple, got str: 'inner'
         """
         async_query = cls.get_async_query()
         return async_query.join(*paths, model=cls)
@@ -2012,6 +2036,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         [Post(id=1), Post(id=2), ...]
         >>> users[0].posts[0].comments  # loaded using SELECT IN
         [Comment(id=1), Comment(id=2), ...]
+        >>> User.with_subquery(
+        ...     User.posts,
+        ...     (User.comments, 'selectin')  # invalid argument
+        ... )
+        Traceback (most recent call last):
+            ...
+        ValueError: expected boolean for second element of tuple, got str: 'selectin'
 
         Using a limiting modifier:
         >>> user = await User.with_subquery(
