@@ -1,4 +1,4 @@
-"""This module defines `SessionMixin` class."""
+"""This module defines ``SessionMixin`` class."""
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 
@@ -33,13 +33,11 @@ class SessionMixin:
     def AsyncSession(cls) -> async_scoped_session[AsyncSession]:
         """Async session factory.
 
-        Usage:
+        Usage::
 
-        ```python
             async with SaActiveRecord.AsyncSession() as session:
                 session.add(model)
                 await session.commit()
-        ```
 
         Raises
         ------

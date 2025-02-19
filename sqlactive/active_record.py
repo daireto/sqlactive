@@ -18,7 +18,7 @@ from sqlalchemy.sql.operators import OperatorType
 from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery
-from .exceptions import NoSettableError
+from .exceptions import ModelAttributeError, NoSettableError
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 from .utils import classproperty
@@ -130,8 +130,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        AttributeError
-            If attribute does not exist.
+        ModelAttributeError
+            If attribute does not exist in the model.
         NoSettableError
             If attribute is not settable.
 
@@ -158,14 +158,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         for name in kwargs.keys():
             if not hasattr(self, name):
-                raise AttributeError(
-                    f"no such attribute: '{name}' in model "
-                    f"'{self.__class__.__name__}'"
-                )
+                raise ModelAttributeError(name, self.__class__.__name__)
+
             if name in self.settable_attributes:
                 setattr(self, name, kwargs[name])
             else:
-                raise NoSettableError(self.__class__.__name__, name)
+                raise NoSettableError(name, self.__class__.__name__)
 
         return self
 
@@ -1809,7 +1807,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users
         [User(id=11), User(id=12), ...]
         >>> User.offset(-1)
-        Traceback (most recent call last) -> Self:
+        Traceback (most recent call last):
             ...
         ValueError: offset must be >= 0
         """
@@ -1859,7 +1857,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users
         [User(id=1), User(id=2)]
         >>> User.limit(-1)
-        Traceback (most recent call last) -> Self:
+        Traceback (most recent call last):
             ...
         ValueError: limit must be >= 0
         """

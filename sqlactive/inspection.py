@@ -23,7 +23,8 @@ class InspectionMixin(DeclarativeBase):
     def id_str(self) -> str:
         """Returns a string representation of the primary key.
 
-        If the primary key is composite, returns a comma-separated list of key-value pairs.
+        If the primary key is composite, returns a comma-separated
+        list of key-value pairs.
 
         Examples
         --------
@@ -36,7 +37,9 @@ class InspectionMixin(DeclarativeBase):
         >>> class Sell(ActiveRecordBaseModel):
         ...     __tablename__ = 'sells'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
-        ...     product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+        ...     product_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('products.id'), primary_key=True
+        ...     )
 
         Usage:
         >>> user = User.insert(name='Bob')
@@ -49,7 +52,11 @@ class InspectionMixin(DeclarativeBase):
         mapped = []
         for pk in self.primary_keys_full:
             value = getattr(self, pk.key)
-            mapped.append(f'{pk.key}={value}' if isinstance(value, Number) or value is None else f'{pk.key}="{value}"')
+            mapped.append(
+                f'{pk.key}={value}'
+                if isinstance(value, Number) or value is None
+                else f'{pk.key}="{value}"'
+            )
         return ', '.join(mapped)
 
     @classproperty
@@ -92,7 +99,9 @@ class InspectionMixin(DeclarativeBase):
         >>> User.string_columns
         ['username', 'name']
         """
-        return [c.key for c in cls.__table__.columns if c.type.python_type is str]
+        return [
+            c.key for c in cls.__table__.columns if c.type.python_type is str
+        ]
 
     @classproperty
     def primary_keys_full(cls) -> tuple[Column[Any], ...]:
@@ -137,8 +146,9 @@ class InspectionMixin(DeclarativeBase):
         """Returns the primary key name of the model.
 
         .. warning::
-            This property can only be used if the model has a single primary key.
-            If the model has a composite primary key, an ``CompositePrimaryKeyError`` is raised.
+            This property can only be used if the model has a single
+            primary key. If the model has a composite primary key,
+            an ``CompositePrimaryKeyError`` is raised.
 
         Raises
         ------
@@ -189,14 +199,22 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
 
         Usage:
         >>> User.relations
         ['posts', 'comments']
         """
-        return [c.key for c in cls.__mapper__.attrs if isinstance(c, RelationshipProperty)]
+        return [
+            c.key
+            for c in cls.__mapper__.attrs
+            if isinstance(c, RelationshipProperty)
+        ]
 
     @classproperty
     def settable_relations(cls) -> list[str]:
@@ -210,8 +228,12 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
 
         Usage:
         >>> User.settable_relations
@@ -232,7 +254,9 @@ class InspectionMixin(DeclarativeBase):
         >>> Product.settable_relations
         []
         """
-        return [r for r in cls.relations if not getattr(cls, r).property.viewonly]
+        return [
+            r for r in cls.relations if not getattr(cls, r).property.viewonly
+        ]
 
     @classproperty
     def hybrid_properties(cls) -> list[str]:
@@ -246,8 +270,12 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_property
         ...     def is_adult(self):
         ...         return self.age > 18
@@ -257,7 +285,11 @@ class InspectionMixin(DeclarativeBase):
         ['is_adult']
         """
         items = cls.__mapper__.all_orm_descriptors
-        return [item.__name__ for item in items if isinstance(item, hybrid_property)]
+        return [
+            item.__name__
+            for item in items
+            if isinstance(item, hybrid_property)
+        ]
 
     @classproperty
     def hybrid_methods_full(cls) -> dict[str, hybrid_method[..., Any]]:
@@ -271,8 +303,12 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_method
         ...     def older_than(self, other: 'User'):
         ...         return self.age > other.age
@@ -282,7 +318,11 @@ class InspectionMixin(DeclarativeBase):
         {'older_than': hybrid_method(...)}
         """
         items = cls.__mapper__.all_orm_descriptors
-        return {item.func.__name__: item for item in items if type(item) is hybrid_method}
+        return {
+            item.func.__name__: item
+            for item in items
+            if type(item) is hybrid_method
+        }
 
     @classproperty
     def hybrid_methods(cls) -> list[str]:
@@ -296,8 +336,12 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_method
         ...     def older_than(self, other: 'User'):
         ...         return self.age > other.age
@@ -312,7 +356,8 @@ class InspectionMixin(DeclarativeBase):
     def filterable_attributes(cls) -> list[str]:
         """Returns a list of filterable attributes.
 
-        These are all columns, relations, hybrid properties and hybrid methods.
+        These are all columns, relations, hybrid properties
+        and hybrid methods.
 
         Examples
         --------
@@ -324,8 +369,12 @@ class InspectionMixin(DeclarativeBase):
         ...     username: Mapped[str] = mapped_column()
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_property
         ...     def is_adult(self):
         ...         return self.age > 18
@@ -337,7 +386,12 @@ class InspectionMixin(DeclarativeBase):
         >>> User.filterable_attributes
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult', 'older_than']
         """
-        return cls.columns + cls.relations + cls.hybrid_properties + cls.hybrid_methods
+        return (
+            cls.columns
+            + cls.relations
+            + cls.hybrid_properties
+            + cls.hybrid_methods
+        )
 
     @classproperty
     def sortable_attributes(cls) -> list[str]:
@@ -355,8 +409,12 @@ class InspectionMixin(DeclarativeBase):
         ...     username: Mapped[str] = mapped_column()
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_property
         ...     def is_adult(self):
         ...         return self.age > 18
@@ -383,8 +441,12 @@ class InspectionMixin(DeclarativeBase):
         ...     username: Mapped[str] = mapped_column()
         ...     name: Mapped[str] = mapped_column()
         ...     age: Mapped[int] = mapped_column()
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
         ...     @hybrid_property
         ...     def is_adult(self):
         ...         return self.age > 18
@@ -440,8 +502,12 @@ class InspectionMixin(DeclarativeBase):
         ...     __tablename__ = 'users'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     # other columns
-        ...     posts: Mapped[list['Post']] = relationship(back_populates='user')
-        ...     comments: Mapped[list['Comment']] = relationship(back_populates='user')
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
 
         Usage:
         >>> User.get_class_of_relation('posts')
@@ -456,12 +522,13 @@ class InspectionMixin(DeclarativeBase):
         try:
             return cls.__mapper__.relationships[relation_name].mapper.class_
         except KeyError:
-            raise RelationError(cls.__name__, relation_name)
+            raise RelationError(relation_name, cls.__name__)
 
     def __repr__(self) -> str:
         """Returns a string representation of the model.
 
-        Representation format is ``ClassName(pk1=value1, pk2=value2, ...)``
+        Representation format is
+        ``ClassName(pk1=value1, pk2=value2, ...)``
 
         Examples
         --------

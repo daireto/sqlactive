@@ -16,6 +16,7 @@ from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.functions import func
 from typing_extensions import Self
 
+from .exceptions import RelationError
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 
@@ -158,10 +159,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def first(self, scalar: Literal[True]) -> _T | None: ...
 
     @overload
-    async def first(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def first(
+        self, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def first(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+    async def first(
+        self, scalar: bool
+    ) -> _T | Row[tuple[Any, ...]] | None: ...
 
     async def first(self, scalar: bool = True):
         """Fetches the first row or ``None`` if no results are found.
@@ -313,10 +318,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def one_or_none(self, scalar: Literal[True]) -> _T | None: ...
 
     @overload
-    async def one_or_none(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(
+        self, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def one_or_none(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(
+        self, scalar: bool
+    ) -> _T | Row[tuple[Any, ...]] | None: ...
 
     async def one_or_none(self, scalar: bool = True):
         """Fetches one row or ``None`` if no results are found.
@@ -401,10 +410,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def all(self, scalars: Literal[True]) -> Sequence[_T]: ...
 
     @overload
-    async def all(self, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(
+        self, scalars: Literal[False]
+    ) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
-    async def all(self, scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(
+        self, scalars: bool
+    ) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
 
     async def all(self, scalars: bool = True):
         """Fetches all rows.
@@ -486,10 +499,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def unique(self, scalars: Literal[True]) -> ScalarResult[_T]: ...
 
     @overload
-    async def unique(self, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
+    async def unique(
+        self, scalars: Literal[False]
+    ) -> Result[tuple[Any, ...]]: ...
 
     @overload
-    async def unique(self, scalars: bool) -> ScalarResult[_T] | Result[tuple[Any, ...]]: ...
+    async def unique(
+        self, scalars: bool
+    ) -> ScalarResult[_T] | Result[tuple[Any, ...]]: ...
 
     async def unique(self, scalars: bool = True):
         """Similar to ``scalars()`` but applies unique filtering
@@ -552,10 +569,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def unique_first(self, scalar: Literal[True]) -> _T | None: ...
 
     @overload
-    async def unique_first(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def unique_first(
+        self, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def unique_first(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+    async def unique_first(
+        self, scalar: bool
+    ) -> _T | Row[tuple[Any, ...]] | None: ...
 
     async def unique_first(self, scalar: bool = True):
         """Similar to ``first()`` but applies unique filtering to the
@@ -580,7 +601,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def unique_one(self, scalar: Literal[True]) -> _T: ...
 
     @overload
-    async def unique_one(self, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
+    async def unique_one(
+        self, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]]: ...
 
     @overload
     async def unique_one(self, scalar: bool) -> _T | Row[tuple[Any, ...]]: ...
@@ -608,10 +631,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def unique_one_or_none(self, scalar: Literal[True]) -> _T | None: ...
 
     @overload
-    async def unique_one_or_none(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
+    async def unique_one_or_none(
+        self, scalar: Literal[False]
+    ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def unique_one_or_none(self, scalar: bool) -> _T | Row[tuple[Any, ...]] | None: ...
+    async def unique_one_or_none(
+        self, scalar: bool
+    ) -> _T | Row[tuple[Any, ...]] | None: ...
 
     async def unique_one_or_none(self, scalar: bool = True):
         """Similar to ``one_or_none()`` but applies
@@ -637,10 +664,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     async def unique_all(self, scalars: Literal[True]) -> Sequence[_T]: ...
 
     @overload
-    async def unique_all(self, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def unique_all(
+        self, scalars: Literal[False]
+    ) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
-    async def unique_all(self, scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
+    async def unique_all(
+        self, scalars: bool
+    ) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]: ...
 
     async def unique_all(self, scalars: bool = True):
         """Similar to ``all()`` but applies unique filtering to the
@@ -713,7 +744,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         if not entities:
             return self
 
-        self.query = self.query.with_only_columns(*entities, maintain_column_froms=True)
+        self.query = self.query.with_only_columns(
+            *entities, maintain_column_froms=True
+        )
         return self
 
     def distinct(self) -> Self:
@@ -828,7 +861,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         self.query = self.query.options(*args)
         return self
 
-    def where(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
+    def where(
+        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> Self:
         """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -888,14 +923,20 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         >>> users
         [User(id=2)]
         """
-        self.query = self.smart_query(query=self.query, criteria=criteria, filters=filters)
+        self.query = self.smart_query(
+            query=self.query, criteria=criteria, filters=filters
+        )
         return self
 
-    def filter(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
+    def filter(
+        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> Self:
         """Synonym for ``where()``."""
         return self.where(*criteria, **filters)
 
-    def find(self, *criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self:
+    def find(
+        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+    ) -> Self:
         """Synonym for ``where()``."""
         return self.where(*criteria, **filters)
 
@@ -962,10 +1003,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         >>> users
         [User(id=2)]
         """
-        self.query = self.apply_search_filter(query=self.query, search_term=search_term, columns=columns)
+        self.query = self.apply_search_filter(
+            query=self.query, search_term=search_term, columns=columns
+        )
         return self
 
-    def order_by(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self:
+    def order_by(
+        self, *columns: _ColumnExpressionOrStrLabelArgument[Any]
+    ) -> Self:
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -1020,7 +1065,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         [Post(id=1), Post(id=4), ...]
         """
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
-        self.query = self.smart_query(query=self.query, sort_columns=sort_columns, sort_attrs=sort_attrs)
+        self.query = self.smart_query(
+            query=self.query, sort_columns=sort_columns, sort_attrs=sort_attrs
+        )
         return self
 
     def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self:
@@ -1105,7 +1152,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
             self.query = select(*select_columns)
 
         group_columns, group_attrs = self._split_columns_and_attrs(columns)
-        self.query = self.smart_query(query=self.query, group_columns=group_columns, group_attrs=group_attrs)
+        self.query = self.smart_query(
+            query=self.query,
+            group_columns=group_columns,
+            group_attrs=group_attrs,
+        )
         return self
 
     def offset(self, offset: int) -> Self:
@@ -1147,7 +1198,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         >>> users
         [User(id=11), User(id=12), ...]
         >>> async_query.offset(-1)
-        Traceback (most recent call last) -> Self:
+        Traceback (most recent call last):
             ...
         ValueError: offset must be >= 0
         """
@@ -1200,7 +1251,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         >>> users
         [User(id=1), User(id=2)]
         >>> async_query.limit(-1)
-        Traceback (most recent call last) -> Self:
+        Traceback (most recent call last):
             ...
         ValueError: limit must be >= 0
         """
@@ -1218,7 +1269,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         """Synonym for ``limit()``."""
         return self.limit(top)
 
-    def join(self, *paths: QueryableAttribute | tuple[QueryableAttribute, bool], model: type[_T] | None = None) -> Self:
+    def join(
+        self,
+        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        model: type[_T] | None = None,
+    ) -> Self:
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
@@ -1229,8 +1284,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
+        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
             Relationship attributes to join.
+        model : type[_T] | None, optional
+            If given, checks that each path belongs to this model,
+            by default None.
 
         Returns
         -------
@@ -1284,27 +1342,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
             ...
         ValueError: expected boolean for second element of tuple, got str: 'inner'
         """
-        options = []
-        for path in paths:
-            if isinstance(path, tuple):
-                if not isinstance(path[1], bool):
-                    raise ValueError(
-                        f"expected boolean for second element of tuple, got "
-                        f"{type(path[1])}: '{path[1]}'"
-                    )
-                if model and path[0].class_ != model:
-                    raise KeyError(
-                        f'Incorrect path ``{path[0]}``: {model.__name__} does not have ``{path[0].key}`` relationship.'
-                    )
-                options.append(joinedload(path[0], innerjoin=path[1]))
-            else:
-                if model and path.class_ != model:
-                    raise KeyError(
-                        f'Incorrect path ``{path}``: {model.__name__} does not have ``{path.key}`` relationship.'
-                    )
-                options.append(joinedload(path))
-
-        return self.options(*options)
+        return self._apply_eager_loading_options(
+            *paths, joined=True, model=model
+        )
 
     def with_subquery(
         self,
@@ -1356,8 +1396,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
+        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
             Relationship attributes to load.
+        model : type[_T] | None, optional
+            If given, checks that each path belongs to this model,
+            by default None.
 
         Returns
         -------
@@ -1426,31 +1469,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         >>> user.posts[0].comments  # loaded using SELECT IN
         [Comment(id=1), Comment(id=2), ...]
         """
-        options = []
-        for path in paths:
-            if isinstance(path, tuple):
-                if not isinstance(path[1], bool):
-                    raise ValueError(
-                        f"expected boolean for second element of tuple, got "
-                        f"{type(path[1])}: '{path[1]}'"
-                    )
-                if model and path[0].class_ != model:
-                    raise KeyError(
-                        f'Incorrect path ``{path[0]}``: {model.__name__} does not have ``{path[0].key}`` relationship.'
-                    )
-                options.append(selectinload(path[0]) if path[1] else subqueryload(path[0]))
-            else:
-                if model and path.class_ != model:
-                    raise KeyError(
-                        f'Incorrect path ``{path}``: {model.__name__} does not have ``{path.key}`` relationship.'
-                    )
-                options.append(subqueryload(path))
-
-        return self.options(*options)
+        return self._apply_eager_loading_options(*paths, model=model)
 
     def with_schema(
         self,
-        schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict],
+        schema: dict[
+            InstrumentedAttribute,
+            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+        ],
     ) -> Self:
         """Joined, subqueryload and selectinload eager loading.
 
@@ -1573,6 +1599,84 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         return columns, attrs
 
+    def _apply_eager_loading_options(
+        self,
+        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        joined: bool = False,
+        model: type[_T] | None = None,
+    ) -> Self:
+        """Applies the eager loading options from the given paths.
+
+        Takes paths like::
+
+            (User.posts, (User.comments, True))
+
+        and applies options like::
+
+            (subqueryload(User.posts), selectinload(User.comments))
+
+        The ``joined`` flag is used for joined eager loading.
+
+        Parameters
+        ----------
+        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
+            Eager loading paths.
+        joined : bool, optional
+            Whether to use joined eager loading, by default False.
+        model : type[_T] | None, optional
+            If given, checks that each path belongs to this model,
+            by default None.
+
+        Returns
+        -------
+        Self
+            The instance itself for method chaining.
+
+        Raises
+        ------
+        TypeError
+            If the second element of tuple is not boolean.
+        RelationError
+            If relationship does not exist.
+        """
+        options = []
+        for path in paths:
+            # if path is like (User.comments, True)
+            if isinstance(path, tuple):
+                if not isinstance(path[1], bool):
+                    raise TypeError(
+                        f"expected boolean for second element of tuple, "
+                        f"got {type(path[1])}: '{path[1]}'"
+                    )
+
+                # raise error if, i.e., model is User
+                # and path is Post.comments
+                if model and path[0].class_ != model:
+                    raise RelationError(path[0].key, model.__name__)
+
+                if joined:
+                    options.append(joinedload(path[0], innerjoin=path[1]))
+                    continue
+
+                options.append(
+                    selectinload(path[0]) if path[1] else subqueryload(path[0])
+                )
+
+            # simple paths like User.posts, User.comments
+            else:
+                if model and path.class_ != model:
+                    raise RelationError(path.key, model.__name__)
+
+                if joined:
+                    options.append(joinedload(path))
+                    continue
+
+                options.append(subqueryload(path))
+
+        return self.options(*options)
+
     def _set_count_query(self) -> None:
         """Sets the count aggregate function to the query."""
-        self.query = self.query.with_only_columns(func.count(), maintain_column_froms=True).order_by(None)
+        self.query = self.query.with_only_columns(
+            func.count(), maintain_column_froms=True
+        ).order_by(None)
