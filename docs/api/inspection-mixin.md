@@ -111,6 +111,7 @@ functionality for SQLAlchemy models.
 ### Properties
 
 #### id_str
+
 ```python
 @property
 def id_str() -> str
@@ -123,18 +124,19 @@ def id_str() -> str
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> bob = User.insert(name='Bob')
 > >>> bob.id_str
-> 'id=1'
+> id=1
 > >>> sell = Sell(id=1, product_id=1)
 > >>> sell.id_str
-> 'id=1, product_id=1'
+> id=1, product_id=1
 > ```
 
 ### Class Properties
 
 #### columns
+
 ```python
 @classproperty
 def columns() -> list[str]
@@ -144,12 +146,13 @@ def columns() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.columns
 > ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
 > ```
 
 #### string_columns
+
 ```python
 @classproperty
 def string_columns() -> list[str]
@@ -159,12 +162,13 @@ def string_columns() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.string_columns
 > ['username', 'name']
 > ```
 
 #### primary_keys_full
+
 ```python
 @classproperty
 def primary_keys_full() -> tuple[Column[Any], ...]
@@ -174,12 +178,13 @@ def primary_keys_full() -> tuple[Column[Any], ...]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.primary_keys_full
 > (Column('id', Integer(), table=<users>, primary_key=True, nullable=False),)
 > ```
 
 #### primary_keys
+
 ```python
 @classproperty
 def primary_keys() -> list[str]
@@ -189,12 +194,13 @@ def primary_keys() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.primary_keys
 > ['id']
 > ```
 
 #### primary_key_name
+
 ```python
 @classproperty
 def primary_key_name() -> str
@@ -208,11 +214,15 @@ def primary_key_name() -> str
 >     If the model has a composite primary key, an `CompositePrimaryKeyError`
 >     is raised.
 
+> **Raises**
+
+> - `CompositePrimaryKeyError`: If the model has a composite primary key.
+
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.primary_key_name
-> 'id'
+> id
 > >>> Sell.primary_key_name
 > Traceback (most recent call last):
 > ...
@@ -220,6 +230,7 @@ def primary_key_name() -> str
 > ```
 
 #### relations
+
 ```python
 @classproperty
 def relations() -> list[str]
@@ -229,12 +240,13 @@ def relations() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.relations
 > ['posts', 'comments']
 > ```
 
 #### settable_relations
+
 ```python
 @classproperty
 def settable_relations() -> list[str]
@@ -244,7 +256,7 @@ def settable_relations() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.settable_relations
 > ['posts', 'comments']
 > >>> Product.settable_relations
@@ -252,6 +264,7 @@ def settable_relations() -> list[str]
 > ```
 
 #### hybrid_properties
+
 ```python
 @classproperty
 def hybrid_properties() -> list[str]
@@ -261,12 +274,13 @@ def hybrid_properties() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.hybrid_properties
 > ['is_adult']
 > ```
 
 #### hybrid_methods_full
+
 ```python
 @classproperty
 def hybrid_methods_full() -> dict[str, hybrid_method[..., Any]]
@@ -276,12 +290,13 @@ def hybrid_methods_full() -> dict[str, hybrid_method[..., Any]]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.hybrid_methods_full
 > {'older_than': hybrid_method(...)}
 > ```
 
 #### hybrid_methods
+
 ```python
 @classproperty
 def hybrid_methods() -> list[str]
@@ -291,12 +306,13 @@ def hybrid_methods() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.hybrid_methods
 > ['older_than']
 > ```
 
 #### filterable_attributes
+
 ```python
 @classproperty
 def filterable_attributes() -> list[str]
@@ -308,12 +324,13 @@ def filterable_attributes() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.filterable_attributes
 > >>> ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult', 'older_than']
 > ```
 
 #### sortable_attributes
+
 ```python
 @classproperty
 def sortable_attributes() -> list[str]
@@ -325,12 +342,13 @@ def sortable_attributes() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.sortable_attributes
 > ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
 > ```
 
 #### settable_attributes
+
 ```python
 @classproperty
 def settable_attributes() -> list[str]
@@ -342,12 +360,13 @@ def settable_attributes() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.settable_attributes
 > ['username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
 > ```
 
 #### searchable_attributes
+
 ```python
 @classproperty
 def searchable_attributes() -> list[str]
@@ -359,7 +378,7 @@ def searchable_attributes() -> list[str]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.searchable_attributes
 > ['username', 'name']
 > ```
@@ -367,6 +386,7 @@ def searchable_attributes() -> list[str]
 ### Instance Methods
 
 #### __repr__
+
 ```python
 def __repr__() -> str
 ```
@@ -377,7 +397,7 @@ def __repr__() -> str
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = await User.get(id=1)
 > >>> user
 > User(id=1)
@@ -389,6 +409,7 @@ def __repr__() -> str
 ### Class Methods
 
 #### get_class_of_relation
+
 ```python
 @classmethod
 def get_class_of_relation(relation_name: str) -> type[Self]
@@ -410,7 +431,7 @@ def get_class_of_relation(relation_name: str) -> type[Self]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.get_class_of_relation('posts')
 > <class 'Post'>
 > >>> User.get_class_of_relation('comments')

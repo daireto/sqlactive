@@ -10,6 +10,7 @@ It uses the functionality of the [`Inspection Mixin`](inspection-mixin.md).
 ### Serialization
 
 #### to_dict
+
 ```python
 @classmethod
 def to_dict(
@@ -24,9 +25,12 @@ def to_dict(
 
 > **Parameters**
 
-> - `nested`: Set to `True` to include nested relationships' data (default: `False`).
-> - `hybrid_attributes`: Set to `True` to include hybrid attributes (default: `False`).
+> - `nested`: Set to `True` to include nested relationships (default: `False`).
+> - `hybrid_attributes`: Set to `True` to include hybrid attributes
+> (default: `False`).
 > - `exclude`: Exclude specific attributes from the result (default: `None`).
+> - `nested_exclude`: Exclude specific attributes from nested relationships
+> (default: `None`).
 
 > **Returns**
 
@@ -34,19 +38,20 @@ def to_dict(
 
 > **Examples**
 
-> ```python
-> user = await User.get(id=1)
-> user.to_dict()
-> # {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, ...}
-> user.to_dict(nested=True)
-> # {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts': [...], ...}
-> user.to_dict(hybrid_attributes=True)
-> # {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts_count': 3, ...}
-> user.to_dict(exclude=['id', 'username'])
-> # {'name': 'John', 'age': 30, ...}
+> ```pycon
+> >>> user = await User.get(id=1)
+> >>> user.to_dict()
+> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, ...}
+> >>> user.to_dict(nested=True)
+> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts': [...], ...}
+> >>> user.to_dict(hybrid_attributes=True)
+> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts_count': 3, ...}
+> >>> user.to_dict(exclude=['id', 'username'])
+> {'name': 'John', 'age': 30, ...}
 > ```
 
 #### to_json
+
 ```python
 @classmethod
 def to_json(
@@ -62,15 +67,23 @@ def to_json(
 
 > Serializes the model to JSON.
 
-> Calls the `Self.to_dict` method and dumps it with `json.dumps`.
+> Calls the [`to_dict()`](#to_dict) method and dumps it to JSON.
 
 > **Parameters**
 
-> - `nested`: Set to `True` to include nested relationships' data (default: `False`).
-> - `hybrid_attributes`: Set to `True` to include hybrid attributes (default: `False`).
+> - `nested`: Set to `True` to include nested relationships (default: `False`).
+> - `hybrid_attributes`: Set to `True` to include hybrid attributes
+> (default: `False`).
 > - `exclude`: Exclude specific attributes from the result (default: `None`).
-> - `ensure_ascii`: If False, then the return value can contain non-ASCII characters if they appear in strings contained in obj. Otherwise, all such characters are escaped in JSON strings (default: `False`).
-> - `indent`: If indent is a non-negative integer, then JSON array elements and object members will be pretty-printed with that indent level. An indent level of 0 will only insert newlines. `None` is the most compact representation (default: `None`).
+> - `nested_exclude`: Exclude specific attributes from nested relationships
+> (default: `None`).
+> - `ensure_ascii`: If False, then the return value can contain non-ASCII
+> characters if they appear in strings contained in obj. Otherwise, all
+> such characters are escaped in JSON strings (default: `False`).
+> - `indent`: If indent is a non-negative integer, then JSON array elements
+> and object members will be pretty-printed with that indent level. An indent
+> level of 0 will only insert newlines. `None` is the most compact
+> representation (default: `None`).
 > - `sort_keys`: Sort dictionary keys (default: `False`).
 
 > **Returns**
@@ -79,21 +92,22 @@ def to_json(
 
 > **Examples**
 
-> ```python
-> user = await User.get(id=1)
-> user.to_json()
-> # {"id": 1, "username": "user1", "name": "John", "age": 30, ...}
-> user.to_json(nested=True)
-> # {"id": 1, "username": "user1", "name": "John", "age": 30, "posts": [...], ...}
-> user.to_json(hybrid_attributes=True)
-> # {"id": 1, "username": "user1", "name": "John", "age": 30, "posts_count": 3, ...}
-> user.to_json(exclude=['id', 'username'])
-> # {"name": "John", "age": 30, ...}
+> ```pycon
+> >>> user = await User.get(id=1)
+> >>> user.to_json()
+> {"id": 1, "username": "user1", "name": "John", "age": 30, ...}
+> >>> user.to_json(nested=True)
+> {"id": 1, "username": "user1", "name": "John", "age": 30, "posts": [...], ...}
+> >>> user.to_json(hybrid_attributes=True)
+> {"id": 1, "username": "user1", "name": "John", "age": 30, "posts_count": 3, ...}
+> >>> user.to_json(exclude=['id', 'username'])
+> {"name": "John", "age": 30, ...}
 > ```
 
 ### Deserialization
 
 #### from_dict
+
 ```python
 @classmethod
 def from_dict(
@@ -111,65 +125,75 @@ def from_dict(
 
 > - `data`: Data to deserialize.
 > - `exclude`: Exclude specific keys from the dictionary (default: `None`).
+> - `nested_exclude`: Exclude specific attributes from nested relationships
+> (default: `None`).
 
 > **Returns**
 
-> - `Self | list[Self]`: Deserialized model or models.
+> - `Self`: Deserialized model.
+> - `list[Self]`: Deserialized models.
 
 > **Raises**
 
-> - `KeyError`: If attribute doesn't exist.
+> - `ModelAttributeError`: If attribute does not exist.
 
 > **Examples**
 
-> ```python
-> user = await User.from_dict({'name': 'John', 'age': 30})
-> user.to_dict()
-> # {'name': 'John', 'age': 30, ...}
-> users = await User.from_dict([{'name': 'John', 'age': 30}, {'name': 'Jane', 'age': 25}])
-> users[0].to_dict()
-> # {'name': 'John', 'age': 30, ...}
-> users[1].to_dict()
-> # {'name': 'Jane', 'age': 25, ...}
+> ```pycon
+> >>> user = await User.from_dict({'name': 'John', 'age': 30})
+> >>> user.to_dict()
+> {'name': 'John', 'age': 30, ...}
+> >>> users = await User.from_dict(
+> ...     [{'name': 'John', 'age': 30}, {'name': 'Jane', 'age': 25}]
+> ... )
+> >>> users[0].to_dict()
+> {'name': 'John', 'age': 30, ...}
+> >>> users[1].to_dict()
+> {'name': 'Jane', 'age': 25, ...}
 > ```
 
 #### from_json
+
 ```python
 @classmethod
 def from_json(
     json_string: str,
     exclude: list[str] | None = None,
     nested_exclude: list[str] | None = None
-) -> Self | list[Self]
+) -> Any
 ```
 
 > Deserializes a JSON string to the model.
 
-> Calls the `json.loads` method and sets the attributes of the model
-> with the values of the JSON object using the `from_dict` method.
+> Loads the JSON string and sets the attributes of the model with the values
+> of the JSON object using the `from_dict` method.
 
 > **Parameters**
 
 > - `json_string`: JSON string.
 > - `exclude`: Exclude specific keys from the dictionary (default: `None`).
+> - `nested_exclude`: Exclude specific attributes from nested relationships
+> (default: `None`).
 
 > **Returns**
 
-> - `Self | list[Self]`: Deserialized model or models.
+> - `Any`: Deserialized model or models.
 
 > **Raises**
 
-> - `KeyError`: If attribute doesn't exist.
+> - `ModelAttributeError`: If attribute does not exist.
 
 > **Examples**
 
-> ```python
-> user = await User.from_json('{"name": "John", "age": 30}')
-> user.to_dict()
-> # {'name': 'John', 'age': 30, ...}
-> users = await User.from_json('[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]')
-> users[0].to_dict()
-> # {'name': 'John', 'age': 30, ...}
-> users[1].to_dict()
-> # {'name': 'Jane', 'age': 25, ...}
+> ```pycon
+> >>> user = await User.from_json('{"name": "John", "age": 30}')
+> >>> user.to_dict()
+> {'name': 'John', 'age': 30, ...}
+> >>> users = await User.from_json(
+> ...     '[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]'
+> ... )
+> >>> users[0].to_dict()
+> {'name': 'John', 'age': 30, ...}
+> >>> users[1].to_dict()
+> {'name': 'Jane', 'age': 25, ...}
 > ```

@@ -357,16 +357,16 @@ def query() -> Select[tuple[Self]]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.query
-> 'SELECT * FROM users'
+> SELECT * FROM users
 > ```
 
 > Is equivalent to:
-> ```python
+> ```pycon
 > >>> from sqlalchemy import select
 > >>> select(User)
-> 'SELECT * FROM users'
+> SELECT * FROM users
 > ```
 
 ### Instance Methods
@@ -394,13 +394,13 @@ def fill(**kwargs) -> Self
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = User(name='Bob')
 > >>> user.name
-> 'Bob'
+> Bob
 > >>> user.fill(name='Bob Williams', age=30)
 > >>> user.name
-> 'Bob Williams'
+> Bob Williams
 > >>> user.age
 > 30
 > ```
@@ -427,7 +427,7 @@ async def save() -> Self
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = User(name='Bob Williams', age=30)
 > >>> await user.save()
 > ```
@@ -452,13 +452,13 @@ async def update(**kwargs) -> Self
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = User(name='Bob', age=30)
 > >>> user.name
-> 'Bob'
+> Bob
 > >>> await user.update(name='Bob Williams', age=31)
 > >>> user.name
-> 'Bob Williams'
+> Bob Williams
 > ```
 
 #### delete
@@ -479,10 +479,10 @@ async def delete() -> None
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = await User.find(username='Bob324').one_or_none()
 > >>> user.name
-> 'Bob Williams'
+> Bob Williams
 > >>> await user.delete()
 > >>> await User.find(username='Bob324').one_or_none()
 > None
@@ -517,10 +517,10 @@ async def insert(**kwargs) -> Self
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = await User.insert(name='Bob Williams', age=30)
 > >>> user.name
-> 'Bob Williams'
+> Bob Williams
 > ```
 
 #### create
@@ -568,7 +568,7 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 > **Examples**
 
 > Inserting new rows:
-> ```python
+> ```pycon
 > >>> users = [
 > ...     User(name='Bob Williams', age=30),
 > ...     User(name='Jane Doe', age=31),
@@ -576,25 +576,25 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 > ... ]
 > >>> await User.save_all(users)
 > >>> users[0].name
-> 'Bob Williams'
+> Bob Williams
 > >>> users[1].age
 > 31
 > ```
 
 > Updating existing rows (with refreshing after commit):
-> ```python
+> ```pycon
 > >>> users = User.where(name__endswith='Doe').all()
 > >>> for user in users:
 > ...     user.name = user.name.replace('Doe', 'Smith')
 > >>> await User.save_all(users, refresh=True)
 > >>> users[0].name
-> 'Jane Smith'
+> Jane Smith
 > >>> users[1].name
-> 'John Smith'
+> John Smith
 > ```
 
 > Updating existing rows (without refreshing after commit):
-> ```python
+> ```pycon
 > >>> users = User.where(name__endswith='Doe').all()
 > >>> for user in users:
 > ...     user.name = user.name.replace('Doe', 'Smith')
@@ -672,7 +672,7 @@ async def delete_all(rows: Sequence[Self]) -> None
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> users = await User.where(name__endswith='Doe').all()
 > >>> users
 > [User(id=1), User(id=2)]
@@ -711,7 +711,7 @@ async def destroy(*ids: object) -> None
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> users = await User.where(name__endswith='Doe').all()
 > >>> [user.id for user in users]
 > [1, 2]
@@ -761,7 +761,7 @@ async def get(
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = await User.get(1)
 > >>> user
 > User(id=1)
@@ -812,7 +812,7 @@ async def get_or_fail(
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> user = await User.get_or_fail(1)
 > >>> user
 > User(id=1)
@@ -838,15 +838,15 @@ async def scalars() -> ScalarResult[Self]
 
 > **Examples**
 
-> ```python
-> >>> scalar_result = await User.scalars()
-> >>> scalar_result
+> ```pycon
+> >>> result = await User.scalars()
+> >>> result
 > <sqlalchemy.engine.result.ScalarResult object at 0x...>
-> >>> users = scalar_result.all()
+> >>> users = result.all()
 > >>> users
 > [User(id=1), User(id=2), ...]
-> >>> scalar_result = await User.where(name='John Doe').scalars()
-> >>> users = scalar_result.all()
+> >>> result = await User.where(name='John Doe').scalars()
+> >>> users = result.all()
 > >>> users
 > [User(id=2)]
 > ```
@@ -876,7 +876,7 @@ async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> user = await User.first()
 > >>> user
 > User(id=1)
@@ -886,10 +886,10 @@ async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > ```
 
 > Selecting specific columns:
-> ```python
+> ```pycon
 > >>> user = await User.select(User.name, User.age).first()
 > >>> user
-> 'Bob Williams'
+> Bob Williams
 > >>> user = await User.select(User.name, User.age).first(scalar=False)
 > >>> user
 > ('Bob Williams', 30)
@@ -928,7 +928,7 @@ async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> user = await User.where(name='John Doe').one()
 > >>> user
 > User(id=1)
@@ -946,12 +946,12 @@ async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 > ```
 
 > Selecting specific columns:
-> ```python
+> ```pycon
 > >>> user = await User.where(name='John Doe')
 > ...                  .select(User.name, User.age)
 > ...                  .one()
 > >>> user
-> 'John Doe'
+> John Doe
 > >>> user = await User.where(name='John Doe')
 > ...                  .select(User.name, User.age)
 > ...                  .one(scalar=False)
@@ -991,7 +991,7 @@ async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> user = await User.where(name='John Doe').one_or_none()
 > >>> user
 > User(id=1)
@@ -1008,12 +1008,12 @@ async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 > ```
 
 > Selecting specific columns:
-> ```python
+> ```pycon
 > >>> user = await User.where(name='John Doe')
 > ...                  .select(User.name, User.age)
 > ...                  .one_or_none()
 > >>> user
-> 'John Doe'
+> John Doe
 > >>> user = await User.where(name='John Doe')
 > ...                  .select(User.name, User.age)
 > ...                  .one_or_none(scalar=False)
@@ -1039,13 +1039,13 @@ async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, 
 
 > **Returns**
 
-> - `Sequence[Self]`: Sequence of instances (scalars).
-> - `Sequence[sqlalchemy.engine.Row[tuple[Any, ...]]]`: Sequence of rows.
+> - `Sequence[Self]`: Instances (scalars).
+> - `Sequence[sqlalchemy.engine.Row[tuple[Any, ...]]]`: Rows.
 
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> users = await User.all()
 > >>> users
 > [User(id=1), User(id=2), ...]
@@ -1055,7 +1055,7 @@ async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, 
 > ```
 
 > Selecting specific columns:
-> ```python
+> ```pycon
 > >>> users = await User.select(User.name, User.age).all()
 > >>> users
 > [('John Doe', 30), ('Jane Doe', 25), ...]
@@ -1079,7 +1079,7 @@ async def count() -> int
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> count = await User.count()
 > >>> count
 > 34
@@ -1120,7 +1120,7 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> users = await User.unique()
 > >>> users
 > <sqlalchemy.engine.result.ScalarResult object at 0x...>
@@ -1251,13 +1251,13 @@ def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery[Self]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> async_query = User.order_by('-created_at')
 > >>> async_query
-> 'SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC'
+> SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC
 > >>> async_query.select(User.name, User.age)
 > >>> async_query
-> 'SELECT users.name, users.age FROM users ORDER BY users.created_at DESC'
+> SELECT users.name, users.age FROM users ORDER BY users.created_at DESC
 > ```
 
 #### distinct
@@ -1275,11 +1275,11 @@ def distinct() -> AsyncQuery[Self]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.query
-> 'SELECT users.id, users.username, users.name, ... FROM users'
+> SELECT users.id, users.username, users.name, ... FROM users
 > >>> User.distinct()
-> 'SELECT DISTINCT users.id, users.username, users.name, ... FROM users'
+> SELECT DISTINCT users.id, users.username, users.name, ... FROM users
 > ```
 
 #### options
@@ -1326,7 +1326,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 > **Examples**
 
 > Joined eager loading:
-> ```python
+> ```pycon
 > >>> users = await User.options(joinedload(User.posts))
 > ...                   .unique_all()  # required for joinedload()
 > >>> users
@@ -1341,7 +1341,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 > ```
 
 > Subquery eager loading:
-> ```python
+> ```pycon
 > >>> users = await User.options(subqueryload(User.posts)).all()
 > >>> users
 > [User(id=1), User(id=2), ...]
@@ -1350,7 +1350,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 > ```
 
 > Eager loading without calling unique() before all():
-> ```python
+> ```pycon
 > >>> users = await User.options(joinedload(User.posts)).all()
 > Traceback (most recent call last):
 >     ...
@@ -1380,7 +1380,7 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 > **Examples**
 
 > Using Django-like syntax:
-> ```python
+> ```pycon
 > >>> users = await User.where(age__gte=18).all()
 > >>> users
 > [User(id=1), User(id=2), ...]
@@ -1390,7 +1390,7 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 > ```
 
 > Using SQLAlchemy syntax:
-> ```python
+> ```pycon
 > >>> users = await User.where(User.age >= 18).all()
 > >>> users
 > [User(id=1), User(id=2), ...]
@@ -1400,7 +1400,7 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 > ```
 
 > Using both syntaxes:
-> ```python
+> ```pycon
 > >>> users = await User.where(User.age == 30, name__like='%John%').all()
 > >>> users
 > [User(id=2)]
@@ -1452,22 +1452,22 @@ def search(
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> users = await User.search(search_term='John').all()
 > >>> users
 > [User(id=2), User(id=6)]
 > >>> users[0].name
-> 'John Doe'
+> John Doe
 > >>> users[0].username
-> 'John321'
+> John321
 > >>> users[1].name
-> 'Diana Johnson'
+> Diana Johnson
 > >>> users[1].username
-> 'Diana84'
+> Diana84
 > ```
 
 > Searching specific columns:
-> ```python
+> ```pycon
 > >>> users = await User.search(
 > ...     search_term='John',
 > ...     columns=[User.name, User.username]
@@ -1504,33 +1504,24 @@ def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[S
 > **Examples**
 
 > Using Django-like syntax:
-> ```python
-> >>> users = await User.order_by('-created_at').all()
-> >>> users
-> [User(id=100), User(id=99), ...]
+> ```pycon
 > >>> posts = await Post.order_by('-rating', 'user___name').all()
 > >>> posts
 > [Post(id=1), Post(id=4), ...]
 > ```
 
 > Using SQLAlchemy syntax:
-> ```python
-> >>> users = await User.order_by(User.created_at.desc()).all()
-> >>> users
-> [User(id=100), User(id=99), ...]
-> >>> posts = await Post.order_by(desc(Post.rating)).all()
+> ```pycon
+> >>> posts = await Post.order_by(Post.rating.desc()).all()
 > >>> posts
 > [Post(id=1), Post(id=4), ...]
 > ```
 
 Using both syntaxes:
-> ```python
-> >>> users = await User.order_by('-username', User.name.asc())
-> ...                   .all()
-> >>> users
-> [User(id=78), User(id=62), ...]
+> ```pycon
 > >>> posts = await Post.order_by(
-> ...     desc(Post.rating), 'user___name'
+> ...     Post.rating.desc(),
+> ...     'user___name'
 > ... ).all()
 > >>> posts
 > [Post(id=1), Post(id=4), ...]
@@ -1574,7 +1565,7 @@ def group_by(
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> from sqlalchemy.sql.functions import func
 > >>> columns = (User.age, func.count(User.name))
 > >>> async_query = User.group_by(
@@ -1585,14 +1576,14 @@ def group_by(
 > ```
 
 > You can also call `select()` before calling `group_by()`:
-> ```python
+> ```pycon
 > >>> from sqlalchemy.sql import text, func
 > >>> async_query = Post.select(
 > ...     Post.rating,
 > ...     text('users_1.name'),
 > ...     func.count(Post.title)
 > ... )
-> >>> async_query = async_query.group_by('rating', 'user___name')
+> >>> async_query.group_by('rating', 'user___name')
 > >>> rows = async_query.all(scalars=False)
 > >>> rows
 > [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
@@ -1622,13 +1613,17 @@ def offset(offset: int) -> AsyncQuery[Self]
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> users = await User.all()
 > >>> users
 > [User(id=1), User(id=2), ...]
 > >>> users = await User.offset(10).all()
 > >>> users
 > [User(id=11), User(id=12), ...]
+> >>> User.offset(-1)
+> Traceback (most recent call last):
+>     ...
+> ValueError: offset must be >= 0
 > ```
 
 #### skip
@@ -1663,13 +1658,17 @@ def limit(limit: int) -> AsyncQuery[Self]
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> users = await User.all()
 > >>> users
 > [User(id=1), User(id=2), ...]
 > >>> users = await User.limit(2).all()
 > >>> users
 > [User(id=1), User(id=2)]
+> >>> User.limit(-1)
+> Traceback (most recent call last):
+>     ...
+> ValueError: limit must be >= 0
 > ```
 
 #### take
@@ -1721,7 +1720,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQ
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> comment = await Comment.join(
 > ...     Comment.user,         # LEFT OUTER JOIN
 > ...     (Comment.post, True)  # True = INNER JOIN
@@ -1732,6 +1731,13 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQ
 > User(id=1)
 > >>> comment.post
 > Post(id=1)
+> >>> Comment.join(
+> ...     Comment.user,
+> ...     (Comment.post, 'inner')  # invalid argument
+> ... )
+> Traceback (most recent call last):
+>     ...
+> ValueError: expected boolean for second element of tuple, got str: 'inner'
 > ```
 
 #### with_subquery
@@ -1797,7 +1803,7 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) 
 > **Examples**
 
 > Usage:
-> ```python
+> ```pycon
 > >>> users = await User.with_subquery(
 > ...     User.posts,            # SELECT JOIN
 > ...     (User.comments, True)  # True = SELECT IN
@@ -1808,10 +1814,17 @@ def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) 
 > [Post(id=1), Post(id=2), ...]
 > >>> users[0].posts[0].comments  # loaded using SELECT IN
 > [Comment(id=1), Comment(id=2), ...]
+> >>> User.with_subquery(
+> ...     User.posts,
+> ...     (User.comments, 'selectin')  # invalid argument
+> ... )
+> Traceback (most recent call last):
+>     ...
+> ValueError: expected boolean for second element of tuple, got str: 'selectin'
 > ```
 
 > Using a limiting modifier:
-> ```python
+> ```pycon
 > >>> user = await User.with_subquery(
 > ...     User.posts,            # SELECT JOIN
 > ...     (User.comments, True)  # True = SELECT IN
@@ -1881,7 +1894,7 @@ def with_schema(
 
 > - [`AsyncQuery[Self]`](async-query.md): Async query instance for chaining.
 
-> ```python
+> ```pycon
 > >>> from sqlactive import JOINED, SUBQUERY
 > >>> schema = {
 > ...     User.posts: JOINED,          # joinedload user
@@ -1949,11 +1962,11 @@ def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery[
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> async_query = User.get_async_query()
 > >>> bob = await async_query.where(name__like='Bob%').first()
 > >>> bob.name
-> 'Bob Williams'
+> Bob Williams
 > >>> bob.age
 > 30
 > ```
@@ -1988,9 +2001,9 @@ def get_primary_key_name() -> str
 
 > **Examples**
 
-> ```python
+> ```pycon
 > >>> User.get_primary_key_name()
-> 'id'
+> id
 > ```
 
 ## Important Notes
