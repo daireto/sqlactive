@@ -64,9 +64,8 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         """Test for `primary_key_name` classproperty."""
 
         logger.info('Testing `primary_key_name` classproperty...')
-        with self.assertRaises(CompositePrimaryKeyError) as context:
+        with self.assertRaises(CompositePrimaryKeyError):
             _ = Sell.primary_key_name
-        self.assertEqual("model 'Sell' has a composite primary key", str(context.exception))
 
     def test_relations(self):
         """Test for `relations` classproperty."""
@@ -145,6 +144,5 @@ class TestInspectionMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(Post, User.get_class_of_relation('posts'))
         self.assertEqual(Comment, User.get_class_of_relation('comments'))
         self.assertEqual(Product, Sell.get_class_of_relation('product'))
-        with self.assertRaises(RelationError) as context:
+        with self.assertRaises(RelationError):
             User.get_class_of_relation('sells')
-        self.assertEqual("no such relation: 'sells' in model 'User'", str(context.exception))

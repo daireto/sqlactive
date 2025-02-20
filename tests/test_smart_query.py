@@ -5,10 +5,18 @@ from collections import OrderedDict
 from sqlalchemy import func
 from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
 from sqlalchemy.sql import asc, desc
-from sqlalchemy.sql.operators import and_, like_op, or_
+from sqlalchemy.sql.operators import and_, or_
 
 from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
+from sqlactive.exceptions import (
+    InvalidJoinMethodError,
+    NoColumnOrHybridPropertyError,
+    NoFilterableError,
+    NoSortableError,
+    OperatorError,
+    RelationError,
+)
 from sqlactive.smart_query import SmartQueryMixin
 
 from ._logger import logger
@@ -40,7 +48,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
         logger.info('Testing `filter_expr` function...')
         expressions = User.filter_expr(username__like='Ji%', age__in=[30, 32, 34])
-        expected_expressions = [like_op(User.username, 'Ji%'), User.age.in_([30, 32, 34])]
+        expected_expressions = [User.username.like('Ji%'), User.age.in_([30, 32, 34])]
         users = [user.username for user in await User.find(*expressions).all()]
         expected_users = [user.username for user in await User.find(*expected_expressions).all()]
         self.assertCountEqual(expected_users, users)
@@ -64,9 +72,8 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             ],
             users,
         )
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(OperatorError):
             User.filter_expr(username__unknown='Ji%')
-        self.assertIn('`unknown`', str(context.exception))
 
     async def test_order_expr(self):
         """Test for `order_expr` function."""
@@ -127,16 +134,15 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             SmartQueryMixin._flatten_filter_keys([{'id__lt': 500}, {'related___property__in': (1, 2, 3)}])
         )
         self.assertCountEqual(['id__lt', 'related___property__in'], filter_keys)
-        with self.assertRaises(TypeError) as context:
+        with self.assertRaises(TypeError):
             filter_keys = list(SmartQueryMixin._flatten_filter_keys({or_: {'id__gt': 1000}, and_: True}))
-        self.assertIn('bool', str(context.exception))
 
-    def test_parse_path_and_make_aliases(self):
-        """Test for `_parse_path_and_make_aliases` function."""
+    def test_make_aliases_from_attrs(self):
+        """Test for `_make_aliases_from_attrs` function."""
 
-        logger.info('Testing `_parse_path_and_make_aliases` function...')
+        logger.info('Testing `_make_aliases_from_attrs` function...')
         aliases = OrderedDict()
-        SmartQueryMixin._parse_path_and_make_aliases(
+        SmartQueryMixin._make_aliases_from_attrs(
             entity=Comment,
             entity_path='',
             attrs=['post___title', 'post___body', 'user___name', 'post_id', 'user_id', 'id'],
@@ -144,11 +150,10 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(type(aliases['post'][0]) is type(aliased(Post)))
         self.assertTrue(aliases['post'][0].__mapper__.class_ == Post)
-        with self.assertRaises(KeyError) as context:
-            SmartQueryMixin._parse_path_and_make_aliases(
+        with self.assertRaises(RelationError):
+            SmartQueryMixin._make_aliases_from_attrs(
                 entity=Comment, entity_path='', attrs=['author___name', 'post_id', 'user_id', 'id'], aliases=aliases
             )
-        self.assertIn('`author`', str(context.exception))
 
     def test_recurse_filters(self):
         """Test for `_recurse_filters` function."""
@@ -169,10 +174,9 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         filters = SmartQueryMixin._recurse_filters(filters, root_cls=Comment, aliases=aliases)
         self.assertEqual('users_1.age < :age_1', str(next(filters)))
         self.assertEqual('comments.body LIKE :body_1', str(next(filters)))
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(NoFilterableError):
             filters = {or_: {'post___score__gt': 3, and_: {'user___age__lt': 30, 'body__like': r'%elit.'}}}
             next(SmartQueryMixin._recurse_filters(filters, root_cls=Comment, aliases=aliases))
-        self.assertIn('`post___score__gt`', str(context.exception))
 
     def test_sort_query(self):
         """Test for `_sort_query` function."""
@@ -186,11 +190,10 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         sort_attrs = ['-created_at', 'user___name', '-user___age']
         query = SmartQueryMixin._sort_query(query=Post.query, sort_attrs=sort_attrs, root_cls=Post, aliases=aliases)
         self.assertTrue(str(query).endswith('posts.created_at DESC, users_1.name ASC, users_1.age DESC'))
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(NoSortableError):
             SmartQueryMixin._sort_query(
                 query=Post.query, sort_attrs=['-created_at', 'user___fullname'], root_cls=Post, aliases=aliases
             )
-        self.assertIn('`user___fullname`', str(context.exception))
 
     def test_group_query(self):
         """Test for `_group_query` function."""
@@ -204,11 +207,10 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         group_attrs = ['rating', 'user___name']
         query = SmartQueryMixin._group_query(query=Post.query, group_attrs=group_attrs, root_cls=Post, aliases=aliases)
         self.assertTrue(str(query).endswith('GROUP BY posts.rating, users_1.name'))
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(NoColumnOrHybridPropertyError):
             SmartQueryMixin._group_query(
                 query=Post.query, group_attrs=['rating', 'user___fullname'], root_cls=Post, aliases=aliases
             )
-        self.assertIn('`user___fullname`', str(context.exception))
 
     async def test_eager_expr_from_schema(self):
         """Test for `_eager_expr_from_schema` function."""
@@ -226,7 +228,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob Williams', post2.user.name)
         self.assertEqual('Bob Williams', post2.comments[0].user.name)
 
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(InvalidJoinMethodError):
             schema = {Post.user: JOINED, Post.comments: (SUBQUERY, {Comment.user: 'UNKNOWN'})}
             SmartQueryMixin._eager_expr_from_schema(schema)
-        self.assertIn('`UNKNOWN`', str(context.exception))

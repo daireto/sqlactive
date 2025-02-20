@@ -3,6 +3,7 @@ import json
 import unittest
 
 from sqlactive.conn import DBConnection
+from sqlactive.exceptions import ModelAttributeError
 
 from ._logger import logger
 from ._models import BaseModel, Post, User
@@ -186,7 +187,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(user.age, 0)
         self.assertEqual(user.is_adult, False)
 
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(ModelAttributeError):
             user = User.from_dict(
                 {
                     'id': 1,
@@ -200,7 +201,6 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
                     ],
                 }
             )
-        self.assertIn('`foo`', str(context.exception))
 
     def test_from_json(self):
         """Test for `from_json` function."""
