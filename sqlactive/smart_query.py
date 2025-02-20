@@ -20,6 +20,7 @@ from typing_extensions import Self
 from .definitions import JOINED, SELECT_IN, SUBQUERY
 from .exceptions import (
     InvalidJoinMethodError,
+    NoColumnOrHybridPropertyError,
     NoFilterableError,
     NoSearchableError,
     NoSortableError,
@@ -85,68 +86,72 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def filter_expr(cls, **filters: object) -> list:
-        """Takes keyword arguments like
-        ```python
-            {'age_from': 5, 'subject_ids__in': [1,2]}
-        ```
-        and returns list of expressions like
-        ```python
-            [Product.age_from == 5, Product.subject_ids.in_([1,2])]
-        ```
+        """Transform Django-style filters into
+        SQLAlchemy expressions.
 
-        Example 1:
-        ```python
-            db.query(Product).filter(
-                *Product.filter_expr(age_from=5, subject_ids__in=[1, 2]))
-            # will compile to WHERE age_from = 5 AND subject_ids IN [1, 2]
-        ```
+        Takes keyword arguments like::
 
-        Example 2:
-        ```python
-            filters = {'age_from': 5, 'subject_ids__in': [1,2]}
-            db.query(Product).filter(*Product.filter_expr(**filters))
-            # will compile to WHERE age_from = 5 AND subject_ids IN [1, 2]
-        ```
+            {'rating': 5, 'user_id__in': [1,2]}
 
-        ### About alias:
-        When using alias, for example:
-            >>> alias = aliased(Product) # table name will be ``product_1``
-        the query cannot be executed like
-            >>> db.query(alias).filter(*Product.filter_expr(age_from=5))
-        because it will be compiled to
-            >>> SELECT * FROM product_1 WHERE product.age_from=5
-        which is wrong.
-        The select is made from ``product_1`` but filter is based on ``product``.
-        Such filter will not work.
+        and returns list of expressions like::
 
-        A correct way to execute such query is
-            >>> SELECT * FROM product_1 WHERE product_1.age_from=5
-        For such case, ``filter_expr`` can be called ON ALIAS:
-            >>> alias = aliased(Product)
-            >>> db.query(alias).filter(*alias.filter_expr(age_from=5))
+            [Post.rating == 5, Post.user_id.in_([1,2])]
 
-        Alias realization details:
-          * This method can be called either ON ALIAS (say, ``alias.filter_expr()``)
-            or on class (Product.filter_expr())
-          * When method is called on alias, it is necessary to generate SQL using
-            aliased table (say, ``product_1``), but it is also necessary to have a
-            real class to call methods on (say, ``Product.relations``).
-          * So, there will be a ``mapper`` variable that holds table name
-            and a ``_class`` variable that holds real class
+        **About alias**
 
-            When this method is called ON ALIAS, ``mapper`` and ``_class`` will be:
-            ```txt
-                mapper = <product_1 table>
-                _class = <Product>
-            ```
-            When this method is called ON CLASS, ``mapper`` and ``_class`` will be:
-            ```txt
-                mapper = <Product> (it is the same as <Product>.__mapper__.
-                                    This is because when <Product>.getattr
-                                    is called, SA will magically call
-                                    <Product>.__mapper__.getattr())
-                _class = <Product>
-            ```
+        When using alias, for example::
+
+            alias = aliased(Post) # table name will be ``post_1``
+
+        the query cannot be executed like::
+
+            db.query(alias).filter(*Post.filter_expr(rating=5))
+
+        because it will be compiled to::
+
+            SELECT * FROM post_1 WHERE post.rating=5
+
+        which is wrong. The select is made from ``post_1`` but
+        filter is based on ``post``. Such filter will not work.
+
+        A correct way to execute such query is::
+
+            SELECT * FROM post_1 WHERE post_1.rating=5
+
+        For such case, ``filter_expr`` (and other methods like
+        ``order_expr`` and ``columns_expr``) can be called ON ALIAS::
+
+            alias = aliased(Post)
+            db.query(alias).filter(*alias.filter_expr(rating=5))
+
+        *Alias realization details:*
+
+        When method is called on alias, it is necessary to
+        generate SQL using aliased table (say, ``post_1``),
+        but it is also necessary to have a real class to call
+        methods on (say, ``Post.relations``). So, there will
+        be a ``mapper`` variable that holds table name and a
+        ``_class`` variable that holds real class.
+
+        When this method is called ON ALIAS,
+        ``mapper`` and ``_class`` will be::
+
+            mapper = <post_1 table>
+            _class = <Post>
+
+        When this method is called ON CLASS,
+        ``mapper`` and ``_class`` will be::
+
+            mapper = <Post> # it is the same as <Post>.__mapper__.
+                            # This is because when <Post>.getattr
+                            # is called, SA will magically call
+                            # <Post>.__mapper__.getattr()
+            _class = <Post>
+
+        .. note::
+            This is a very low-level method. It is intended for more
+            flexibility. It does not do magic Django-like joins.
+            Use the high-level ``smart_query()`` method for that.
 
         Returns
         -------
@@ -159,8 +164,51 @@ class SmartQueryMixin(InspectionMixin):
             If operator is not found.
         NoFilterableError
             If attribute is not filterable.
-        """
 
+        Examples
+        --------
+        Assume a model ``Post``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Post(ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     title: Mapped[str] = mapped_column()
+        ...     rating: Mapped[int] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='post'
+        ...     )
+
+        Usage:
+        >>> Post.filter_expr(rating=5)
+        [Post.rating == 5]
+        >>> db.query(Post).filter(*Post.filter_expr(rating=5))
+        'SELECT * FROM posts WHERE post.rating=5'
+        >>> Post.filter_expr(rating=5, user_id__in=[1,2])
+        [Post.rating == 5, Post.user_id.in_([1,2])]
+        >>> db.query(Post).filter(
+        ...     *Post.filter_expr(rating=5, user_id__in=[1,2])
+        ... )
+        'SELECT * FROM posts WHERE post.rating=5 AND post.user_id IN [1, 2]'
+
+        Using alias:
+        >>> alias = aliased(Post)
+        >>> alias.filter_expr(rating=5)
+        [Post.rating == 5]
+        >>> db.query(alias).filter(*alias.filter_expr(rating=5))
+        'SELECT * FROM post_1 WHERE post_1.rating=5'
+        >>> alias.filter_expr(rating=5, user_id__in=[1,2])
+        [Post.rating == 5, Post.user_id.in_([1,2])]
+        >>> db.query(alias).filter(
+        ...     *alias.filter_expr(rating=5, user_id__in=[1,2])
+        ... )
+        'SELECT * FROM post_1 WHERE post_1.rating=5 AND post_1.user_id IN [1, 2]'
+        """
         if isinstance(cls, AliasedClass):
             mapper, _class = cls, cls.__mapper__.class_
         else:
@@ -173,7 +221,9 @@ class SmartQueryMixin(InspectionMixin):
             if attr in _class.hybrid_methods:
                 method = getattr(_class, attr)
                 expressions.append(method(value))
-            # else just add simple condition (== for scalars or IN for lists)
+
+            # else just add simple condition
+            # (== for scalars or IN for lists)
             else:
                 # determine attribute name and operator
                 # if they are explicitly set (say, id__between), take them
@@ -188,6 +238,7 @@ class SmartQueryMixin(InspectionMixin):
                         raise exc
 
                     op = cls._operators[op_name]
+
                 # assume equality operator for other cases (say, id=1)
                 else:
                     attr_name, op = attr, operators.eq
@@ -207,30 +258,27 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def order_expr(cls, *columns: str) -> list[UnaryExpression]:
-        """Takes list of columns to order by like
-        ```python
-            ['-first_name', 'phone']
-        ```
-        and returns list of expressions like
-        ```python
-            [desc(User.first_name), asc(User.phone)]
-        ```
+        """Transforms Django-style order expressions into
+        SQLAlchemy expressions.
 
-        Example for 1 column:
-        ```python
-            db.query(User).order_by(*User.order_expr('-first_name'))
-            # will compile to ORDER BY user.first_name DESC
-        ```
+        Takes list of columns to order by like::
 
-        Example for multiple columns:
-        ```python
-            columns = ['-first_name', 'phone']
-            db.query(User).order_by(*User.order_expr(*columns))
-            # will compile to ORDER BY user.first_name DESC, user.phone ASC
-        ```
+            ['-rating', 'title']
 
-        NOTE: To get more information about ``cls``, ``mapper`` and ``_class``, see
-        ``filter_expr`` method documentation.
+        and returns list of expressions like::
+
+            [desc(Post.rating), asc(Post.title)]
+
+        **About alias**
+
+        See the `filter_expr() method documentation <https://daireto.github.io/sqlactive/api/smart-query-mixin/#filter_expr>`_
+        for more information about using alias. It also explains
+        the ``cls``, ``mapper`` and ``_class`` variables used here.
+
+        .. note::
+            This is a very low-level method. It is intended for more
+            flexibility. It does not do magic Django-like joins.
+            Use the high-level ``smart_query()`` method for that.
 
         Returns
         -------
@@ -241,8 +289,49 @@ class SmartQueryMixin(InspectionMixin):
         ------
         NoSortableError
             If attribute is not sortable.
-        """
 
+        Examples
+        --------
+        Assume a model ``Post``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Post(ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     title: Mapped[str] = mapped_column()
+        ...     rating: Mapped[int] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='post'
+        ...     )
+
+        Usage:
+        >>> Post.order_expr('-rating')
+        [desc(Post.rating)]
+        >>> db.query(Post).order_by(*Post.order_expr('-rating'))
+        'SELECT * FROM posts ORDER BY posts.rating DESC'
+        >>> Post.order_expr('-rating', 'title')
+        [desc(Post.rating), asc(Post.title)]
+        >>> db.query(Post).order_by(
+        ...     *Post.order_expr('-rating', 'title')
+        ... )
+        'SELECT * FROM posts ORDER BY posts.rating DESC, posts.title ASC'
+
+        Using alias:
+        >>> alias = aliased(Post)
+        >>> alias.order_expr('-rating')
+        [desc(Post.rating)]
+        >>> db.query(alias).order_by(*alias.order_expr('-rating'))
+        'SELECT * FROM posts_1 ORDER BY posts_1.rating DESC'
+        >>> alias.order_expr('-rating', 'title')
+        [desc(Post.rating), asc(Post.title)]
+        >>> db.query(alias).order_by(*alias.order_expr('-rating', 'title'))
+        'SELECT * FROM posts_1 ORDER BY posts_1.rating DESC, posts_1.title ASC'
+        """
         if isinstance(cls, AliasedClass):
             mapper, _class = cls, cls.__mapper__.class_
         else:
@@ -265,42 +354,89 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def columns_expr(cls, *columns: str) -> list[UnaryExpression]:
-        """Takes list of columns like
-        ```python
-            ['first_name', 'age']
-        ```
-        and returns list of expressions like
-        ```python
-            [User.first_name, User.age]
-        ```
+        """Transforms column names into
+        SQLAlchemy model attributes.
 
-        Example grouping by 1 column:
-        ```python
-            db.query(User).group_by(*User.columns_expr('first_name'))
-            # will compile to GROUP BY user.first_name
-        ```
+        Takes list of column names like::
 
-        Example grouping by multiple columns:
-        ```python
-            columns = ['first_name', 'age']
-            db.query(User).group_by(*User.columns_expr(*columns))
-            # will compile to GROUP BY user.first_name, user.age
-        ```
+            ['user_id', 'rating']
 
-        NOTE: To get more information about ``cls``, ``mapper`` and ``_class``, see
-        ``filter_expr`` method documentation.
+        and returns list of model attributes like::
+
+            [Post.user_id, Post.rating]
+
+        This method mostly used for grouping.
+
+        **About alias**
+
+        See the `filter_expr() method documentation <https://daireto.github.io/sqlactive/api/smart-query-mixin/#filter_expr>`_
+        for more information about using alias. It also explains
+        the ``cls``, ``mapper`` and ``_class`` variables used here.
+
+        .. note::
+            This is a very low-level method. It is intended for more
+            flexibility. It does not do magic Django-like joins.
+            Use the high-level ``smart_query()`` method for that.
 
         Returns
         -------
         list[UnaryExpression]
-            List of expressions.
+            List of model attributes.
 
         Raises
         ------
-        NoSortableError
+        NoColumnOrHybridPropertyError
             If attribute is neither a column nor a hybrid property.
-        """
 
+        Examples
+        --------
+        Assume a model ``Post``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Post(ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     title: Mapped[str] = mapped_column()
+        ...     rating: Mapped[int] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='post'
+        ...     )
+
+        Usage:
+        >>> Post.columns_expr('user_id')
+        [Post.user_id]
+        >>> Post.columns_expr('user_id', 'rating')
+        [Post.user_id, Post.rating]
+
+        Grouping:
+        >>> from sqlalchemy.sql import func
+        >>> db.query(Post.user_id, func.max(Post.rating))
+        ...   .group_by(*Post.columns_expr('user_id'))
+        'SELECT posts.user_id, max(posts.rating) FROM posts GROUP BY posts.user_id'
+        >>> db.query(Post.user_id, Post.rating)
+        ...   .group_by(*Post.columns_expr('user_id', 'rating'))
+        'SELECT posts.user_id, posts.rating FROM posts GROUP BY posts.user_id, posts.rating'
+
+        Using alias:
+        >>> alias = aliased(Post)
+        >>> alias.columns_expr('user_id')
+        [Post.user_id]
+        >>> alias.columns_expr('user_id', 'rating')
+        [Post.user_id, Post.rating]
+
+        Grouping on alias:
+        >>> db.query(alias.user_id, func.max(alias.rating))
+        ...   .group_by(*alias.columns_expr('user_id'))
+        'SELECT posts_1.user_id FROM posts_1 GROUP BY posts_1.user_id'
+        >>> db.query(alias.user_id, alias.rating)
+        ...   .group_by(*alias.columns_expr('user_id', 'rating'))
+        'SELECT posts_1.user_id, posts_1.rating FROM posts_1 GROUP BY posts_1.user_id, posts_1.rating'
+        """
         if isinstance(cls, AliasedClass):
             mapper, _class = cls, cls.__mapper__.class_
         else:
@@ -309,7 +445,7 @@ class SmartQueryMixin(InspectionMixin):
         expressions: list[UnaryExpression] = []
         for attr in columns:
             if attr not in _class.sortable_attributes:
-                raise NoSortableError(attr, _class.__name__)
+                raise NoColumnOrHybridPropertyError(attr, _class.__name__)
 
             expressions.append(getattr(mapper, attr))
 
@@ -323,19 +459,42 @@ class SmartQueryMixin(InspectionMixin):
             str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
         ],
     ) -> list[_AbstractLoad]:
-        """Takes schema like
-        ```python
+        """Transforms an eager loading defined schema into
+        SQLAlchemy eager loading expressions.
+
+        Takes a schema like::
+
             schema = {
-                Post.user: JOINED,  # joinedload user
-                Post.comments: (SUBQUERY, {  # load comments in separate query
-                    Comment.user: JOINED  # but, in this separate query, join user
+                Post.user: 'joined',           # joinedload user
+                Post.comments: ('subquery', {  # load comments in separate query
+                    Comment.user: 'joined'     # but, in this separate query, join user
                 })
             }
-        ```
-        and returns eager loading expressions like
-        ```python
-            [joinedload(Post.user), subqueryload(Post.comments).options(joinedload(Comment.user))]
-        ```
+
+        and returns eager loading expressions like::
+
+            [
+                joinedload(Post.user),
+                subqueryload(Post.comments).options(
+                    joinedload(Comment.user)
+                )
+            ]
+
+        The supported eager loading strategies are:
+        * **joined**: ``sqlalchemy.orm.joinedload()``
+        * **subquery**: ``sqlalchemy.orm.subqueryload()``
+        * **selectin**: ``sqlalchemy.orm.selectinload()``
+
+        The constants ``JOINED``, ``SUBQUERY`` and ``SELECT_IN`` are
+        defined in the ``sqlactive.definitions`` module and can be used
+        instead of the strings:
+        >>> from sqlactive.definitions import JOINED, SUBQUERY
+        >>> schema = {
+        ...     Post.user: JOINED,
+        ...     Post.comments: (SUBQUERY, {
+        ...         Comment.user: JOINED
+        ...     }
+        ... }
 
         Parameters
         ----------
@@ -347,7 +506,6 @@ class SmartQueryMixin(InspectionMixin):
         list[_AbstractLoad]
             Eager loading expressions.
         """
-
         return cls._eager_expr_from_schema(schema)
 
     @classmethod
@@ -378,22 +536,30 @@ class SmartQueryMixin(InspectionMixin):
             | None
         ) = None,
     ) -> Select[tuple[Any, ...]]:
-        """Creates a query combining filtering, sorting,
-        grouping and eager loading.
+        """Creates a query combining filtering, sorting, grouping
+        and eager loading.
 
-        Does magic Django-like joins like ``post___user___name__startswith='Bob'``
-        (see https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
+        Does magic `Django-like joins <https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships>`_
+        like:
+        >>> post___user___name__startswith='Bob'
 
-        Does filtering, sorting and eager loading at the same time.
-        And if, say, filters, sorting and grouping need the same join,
-        it will be done only once.
+        Does filtering, sorting, grouping and eager loading at the
+        same time. And if, say, filters, sorting and grouping need
+        the same join, it will be done only once.
 
-        It also supports SQLAlchemy syntax filter expressions like
+        It also supports SQLAlchemy syntax like
         >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
         >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
+        >>> db.query(Post).order_by(Post.rating.desc())
+        >>> db.query(Post).order_by(desc(Post.rating), asc(Post.user_id))
 
-        NOTE: To get more information about the usage, see the documentation of
-        ``filter_expr``, ``order_expr``, ``columns_expr`` and ``eager_expr`` methods.
+        https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference
+
+        .. note::
+            For more flexibility, you can use the ``filter_expr``,
+            ``order_expr``, ``columns_expr`` and ``eager_expr`` methods.
+            See the `API Reference <https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference>`_
+            for more details.
 
         Parameters
         ----------
@@ -414,7 +580,6 @@ class SmartQueryMixin(InspectionMixin):
         schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None, optional
             Schema for the eager loading, by default None.
         """
-
         if not filters:
             filters = {}
         if not sort_attrs:
@@ -433,7 +598,7 @@ class SmartQueryMixin(InspectionMixin):
         aliases: OrderedDict[
             str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
         ] = OrderedDict({})
-        cls._parse_path_and_make_aliases(root_cls, '', attrs, aliases)
+        cls._make_aliases_from_attrs(root_cls, '', attrs, aliases)
 
         loaded_paths = []
         for path, al in aliases.items():
@@ -441,6 +606,7 @@ class SmartQueryMixin(InspectionMixin):
             query = query.outerjoin(al[0], al[1])  # type: ignore
             loaded_paths.append(relationship_path)
 
+        # Filtering
         if criteria:
             query = query.filter(*criteria)
 
@@ -449,18 +615,21 @@ class SmartQueryMixin(InspectionMixin):
                 *cls._recurse_filters(filters, root_cls, aliases)
             )
 
+        # Sorting
         if sort_columns:
             query = query.order_by(*sort_columns)
 
         if sort_attrs:
             query = cls._sort_query(query, sort_attrs, root_cls, aliases)
 
+        # Grouping
         if group_columns:
             query = query.group_by(*group_columns)
 
         if group_attrs:
             query = cls._group_query(query, group_attrs, root_cls, aliases)
 
+        # Eager loading
         if schema:
             query = query.options(*cls._eager_expr_from_schema(schema))
 
@@ -475,8 +644,9 @@ class SmartQueryMixin(InspectionMixin):
     ) -> Select[tuple[Any, ...]]:
         """Applies a search filter to the query.
 
-        Searches for ``search_term`` in the searchable columns of the model.
-        If ``columns`` are provided, searches only these columns.
+        Searches for ``search_term`` in the searchable columns
+        of the model. If ``columns`` are provided, searches only
+        these columns.
 
         Parameters
         ----------
@@ -487,7 +657,6 @@ class SmartQueryMixin(InspectionMixin):
         columns : Sequence[str  |  InstrumentedAttribute] | None, optional
             Columns to search in, by default None.
         """
-
         root_cls: type[Self] = query.__dict__['_propagate_attrs'][
             'plugin_subject'
         ].class_  # for example, User or Post
@@ -534,7 +703,6 @@ class SmartQueryMixin(InspectionMixin):
         NoSearchableError
             If column is not searchable.
         """
-
         searchable_columns = []
         if columns:
             for col in columns:
@@ -553,37 +721,59 @@ class SmartQueryMixin(InspectionMixin):
     def _flatten_filter_keys(
         cls, filters: dict | list
     ) -> Generator[str, None, None]:
-        """Flatten the nested filters, extracting keys where they correspond
-        to Django-like query expressions, e.g:
+        """Flatten the nested filters, extracting keys where
+        they correspond to Django-like query expressions.
 
-        Example:
-        ```
-            {or_: {'id__gt': 1000, and_ : {
-                'id__lt': 500,
-                'related___property__in': (1,2,3)
-            }}}
-        ```
-        Would be flattened to:
-        ```
-            'id__gt', 'id__lt', 'related___property__in'
-        ```
+        Takes filters like::
 
-        Lists (any Sequence subclass) are also flattened to enable support
-        of expressions like:
+            {
+                or_: {
+                    'id__gt': 1000,
+                    and_ : {
+                        'id__lt': 500,
+                        'related___property__in': (1,2,3)
+                    }
+                }
+            }
 
-        (X OR Y) AND (W OR Z)
+        and flattens them yielding::
 
-        Example:
-        ```
-            { and_: [
-                {or_: {'id__gt': 5, 'related_id__lt': 10}},
-                {or_: {'related_id2__gt': 1, 'name__like': 'Bob' }}
-            ]}
-        ```
-        Would be flattened to:
-        ```
-            'id__gt', 'related_id__lt', 'related_id2__gt', 'name__like'
-        ```
+            'id__gt'
+            'id__lt'
+            'related___property__in'
+
+        Lists (any Sequence subclass) are also flattened to
+        enable support of expressions like::
+
+            (X OR Y) AND (W OR Z)
+
+        So, filters like::
+
+            {
+                and_: [
+                    {
+                        or_: {
+                            'id__gt': 5,
+                            'related_id__lt': 10
+                        }
+                    },
+                    {
+                        or_: {
+                            'related_id2__gt': 1,
+                            'name__like': 'Bob'
+                        }
+                    }
+                ]
+            }
+
+        are flattened yielding::
+
+            'id__gt'
+            'related_id__lt'
+            'related_id2__gt'
+            'name__like'
+
+        This method is mostly used to get the aliases from filters.
 
         Parameters
         ----------
@@ -600,7 +790,6 @@ class SmartQueryMixin(InspectionMixin):
         TypeError
             If ``filters`` is not a dict or list.
         """
-
         if isinstance(filters, dict):
             for key, value in filters.items():
                 if callable(key):
@@ -618,7 +807,7 @@ class SmartQueryMixin(InspectionMixin):
             )
 
     @classmethod
-    def _parse_path_and_make_aliases(
+    def _make_aliases_from_attrs(
         cls,
         entity: type[InspectionMixin] | AliasedClass[InspectionMixin],
         entity_path: str,
@@ -627,24 +816,37 @@ class SmartQueryMixin(InspectionMixin):
             str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
         ],
     ) -> None:
-        """Parse path and make aliases.
+        """Takes a list of attributes and makes aliases from them.
 
-        Sample variables:
-            ```
-            entity: Product
-            entity_path: ''
-            attrs: ['product___subject_ids', 'user_id', '-group_id',
-                    'user___name', 'product___name']
-            aliases: OrderedDict()
-            ```
+        It overwrites the provided ``aliases`` dictionary.
 
-        Sample results:
-            ```
-            relations: {'product': ['subject_ids', 'name'], 'user': ['name']}
-            aliases: {'product___subject_ids': (Product, subject_ids),
-                    'product___name': (Product, name),
-                    'user___name': (User, name)}
-            ```
+        Sample input::
+
+            cls._make_aliases_from_attrs(
+                entity=Post,
+                entity_path='',
+                attrs=[
+                    'post___subject_ids',
+                    'user_id',
+                    '-group_id',
+                    'user___name',
+                    'post___name'
+                ],
+                aliases=OrderedDict()
+            )
+
+        Sample output:
+        >>> relations
+        {
+            'post': ['subject_ids', 'name'],
+            'user': ['name']
+        }
+        >>> aliases
+        {
+            'post___subject_ids': (Post, subject_ids),
+            'post___name': (Post, name),
+            'user___name': (User, name)
+        }
 
         Parameters
         ----------
@@ -662,11 +864,11 @@ class SmartQueryMixin(InspectionMixin):
         RelationError
             If relationship is not found.
         """
-
         relations: dict[str, list[str]] = {}
         for attr in attrs:
-            # from attr (say, 'product___subject_ids')  take
-            # relationship name ('product') and nested attribute ('subject_ids')
+            # from attr (say, 'post___subject_ids')
+            # take relationship name ('post') and
+            # nested attribute ('subject_ids')
             if cls._RELATION_SPLITTER in attr:
                 relation_name, nested_attr = attr.split(
                     cls._RELATION_SPLITTER, 1
@@ -692,9 +894,9 @@ class SmartQueryMixin(InspectionMixin):
             )
             alias: AliasedClass[InspectionMixin] = aliased(
                 relationship.property.mapper.class_
-            )  # e.g. aliased(User) or aliased(Product)
+            )  # e.g. aliased(User) or aliased(Post)
             aliases[path] = alias, relationship
-            cls._parse_path_and_make_aliases(
+            cls._make_aliases_from_attrs(
                 alias, path, nested_attrs, aliases
             )
 
@@ -714,8 +916,8 @@ class SmartQueryMixin(InspectionMixin):
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
 
-        Example:
-        ```python
+        Takes filters like::
+
             {
                 or_: {
                     'id__gt': 1000,
@@ -725,20 +927,18 @@ class SmartQueryMixin(InspectionMixin):
                     }
                 }
             }
-        ```
 
-        Parsed to:
-        ```python
+        and parses them into SQLAlchemy expressions like::
+
             [
                 or_(
-                    Product.id > 1000,
+                    Post.id > 1000,
                     and_(
-                        Product.id < 500,
-                        Product.related.property.in_((1,2,3))
+                        Post.id < 500,
+                        Post.related.property.in_((1,2,3))
                     )
                 )
             ]
-        ```
 
         Parameters
         ----------
@@ -754,11 +954,10 @@ class SmartQueryMixin(InspectionMixin):
         Generator[object, None, None]
             Expression.
         """
-
         if isinstance(filters, dict):
             for attr, value in filters.items():
                 if callable(attr):
-                    # E.g. or_, and_, or other sqlalchemy expression
+                    # e.g. or_, and_, or other sqlalchemy expression
                     yield attr(*cls._recurse_filters(value, root_cls, aliases))
                     continue
 
@@ -788,23 +987,25 @@ class SmartQueryMixin(InspectionMixin):
             str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
         ],
     ) -> Select[tuple[Any, ...]]:
-        """Sorts the query.
+        """Applies an ORDER BY clause to the query.
 
-        Example:
-        ```python
-            sort_attrs = ['-created_at', 'user___name']
-            aliases = OrderedDict({
-                'user': (aliased(User), Post.user),
-            })
-        ```
+        Sample input::
 
-        Generates:
-        ```python
+            query = select(Post)
+            query = cls._sort_query(
+                query=query,
+                sort_attrs=['-created_at', 'user___name'],
+                aliases=OrderedDict({
+                    'user': (aliased(User), Post.user),
+                })
+            )
+
+        Sample output::
+
             query = query.order_by(
                 desc(Post.created_at),
-                asc(Post.user),
+                asc(Post.user.name)
             )
-        ```
 
         Parameters
         ----------
@@ -822,7 +1023,6 @@ class SmartQueryMixin(InspectionMixin):
         Select[tuple[Any, ...]]
             Sorted query.
         """
-
         for attr in sort_attrs:
             if cls._RELATION_SPLITTER in attr:
                 prefix = ''
@@ -852,23 +1052,25 @@ class SmartQueryMixin(InspectionMixin):
             str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
         ],
     ) -> Select[tuple[Any, ...]]:
-        """Groups the query.
+        """Applies a GROUP BY clause to the query.
 
-        Example:
-        ```python
-            group_attrs = ['rating', 'user___name']
-            aliases = OrderedDict({
-                'user': (aliased(User), Post.user),
-            })
-        ```
+        Sample input::
 
-        Generates:
-        ```python
+            query = select(Post)
+            query = cls._group_query(
+                query=query,
+                group_attrs=['rating', 'user___name'],
+                aliases=OrderedDict({
+                    'user': (aliased(User), Post.user),
+                })
+            )
+
+        Sample output::
+
             query = query.group_by(
                 Post.rating,
-                Post.user,
+                Post.user.name,
             )
-        ```
 
         Parameters
         ----------
@@ -886,7 +1088,6 @@ class SmartQueryMixin(InspectionMixin):
         Select[tuple[Any, ...]]
             Grouped query.
         """
-
         for attr in group_attrs:
             if cls._RELATION_SPLITTER in attr:
                 parts = attr.rsplit(cls._RELATION_SPLITTER, 1)
@@ -910,9 +1111,11 @@ class SmartQueryMixin(InspectionMixin):
             str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
         ],
     ) -> list[_AbstractLoad]:
-        """Creates eager loading expressions from schema recursively.
+        """Creates eager loading expressions from
+        the provided ``schema`` recursively.
 
-        To see the example, see the ``eager_expr`` method.
+        To see the example, see the
+        `eager_expr() method documentation <https://daireto.github.io/sqlactive/api/smart-query-mixin/#eager_expr>`_.
 
         Parameters
         ----------
@@ -924,7 +1127,6 @@ class SmartQueryMixin(InspectionMixin):
         list[_AbstractLoad]
             Eager loading expressions.
         """
-
         result = []
         for path, value in schema.items():
             if isinstance(value, tuple):
@@ -950,13 +1152,13 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def _create_eager_load_option(
-        cls, path: InstrumentedAttribute, join_method: str
+        cls, attr: InstrumentedAttribute, join_method: str
     ) -> _AbstractLoad:
-        """Creates eager load option.
+        """Returns an eager loading option for the given attr.
 
         Parameters
         ----------
-        path : InstrumentedAttribute
+        attr : InstrumentedAttribute
             Model attribute.
         join_method : str
             Join method.
@@ -971,16 +1173,15 @@ class SmartQueryMixin(InspectionMixin):
         InvalidJoinMethodError
             If join method is not supported.
         """
-
         if join_method == JOINED:
-            return joinedload(path)
+            return joinedload(attr)
 
         if join_method == SUBQUERY:
-            return subqueryload(path)
+            return subqueryload(attr)
 
         if join_method == SELECT_IN:
-            return selectinload(path)
+            return selectinload(attr)
 
         exc = InvalidJoinMethodError(join_method)
-        exc.add_note(f"invalid join method: '{join_method}' for '{path.key}'")
+        exc.add_note(f"invalid join method: '{join_method}' for '{attr.key}'")
         raise exc

@@ -1652,7 +1652,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         --------
         Assume a model ``Post``:
         >>> from sqlactive import ActiveRecordBaseModel
-        >>> class (ActiveRecordBaseModel):
+        >>> class Post(ActiveRecordBaseModel):
         ...     __tablename__ = 'posts'
         ...     id: Mapped[int] = mapped_column(primary_key=True)
         ...     title: Mapped[str] = mapped_column()

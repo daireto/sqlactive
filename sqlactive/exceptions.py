@@ -61,7 +61,27 @@ class ModelAttributeError(SQLActiveError):
             The name of the model class.
         """
         super().__init__(
-            f"no such attribute: '{attr_name}' in " f"model '{class_name}'"
+            f"no such attribute: '{attr_name}' in "
+            f"model '{class_name}'"
+        )
+
+
+class NoColumnOrHybridPropertyError(SQLActiveError):
+    """Attribute is neither a column nor a hybrid property."""
+
+    def __init__(self, attr_name: str, class_name: str) -> None:
+        """Attribute is neither a column nor a hybrid property.
+
+        Parameters
+        ----------
+        attr_name : str
+            The name of the attribute.
+        class_name : str
+            The name of the model class.
+        """
+        super().__init__(
+            f"no such column or hybrid property: '{attr_name}' in "
+            f"model '{class_name}'"
         )
 
 
