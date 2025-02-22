@@ -726,9 +726,9 @@ async def destroy(*ids: object) -> None
 @classmethod
 async def get(
     pk: object,
-    join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-    subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+    join: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
+    subquery: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
+    schema: dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
 ) -> Self | None
 ```
 
@@ -776,8 +776,8 @@ async def get(
 @classmethod
 async def get_or_fail(
     pk: object,
-    join: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
-    subquery: list[QueryableAttribute | tuple[QueryableAttribute, bool]] | None = None,
+    join: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
+    subquery: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
 ) -> Self
 ```
@@ -1361,7 +1361,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 
 ```python
 @classmethod
-def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
+def where(*criteria: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
 > Applies one or more WHERE criteria to the query.
@@ -1410,7 +1410,7 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 
 ```python
 @classmethod
-def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
+def filter(*criterion: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
 > Synonym for [`where()`](#where).
@@ -1419,7 +1419,7 @@ def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Async
 
 ```python
 @classmethod
-def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQuery[Self]
+def find(*criterion: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
 > Synonym for [`where()`](#where).
@@ -1430,7 +1430,7 @@ def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> AsyncQu
 @classmethod
 def search(
     search_term: str,
-    columns: Sequence[str | InstrumentedAttribute] | None = None,
+    columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
 ) -> AsyncQuery[Self]
 ```
 
@@ -1486,7 +1486,7 @@ def search(
 
 ```python
 @classmethod
-def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
+def order_by(*columns: ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
 ```
 
 > Applies one or more ORDER BY criteria to the query.
@@ -1531,7 +1531,7 @@ Using both syntaxes:
 
 ```python
 @classmethod
-def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
+def sort(*columns: ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
 ```
 
 > Synonym for [`order_by()`](#order_by).
@@ -1541,7 +1541,7 @@ def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
 ```python
 @classmethod
 def group_by(
-    *columns: _ColumnExpressionOrStrLabelArgument[Any],
+    *columns: ColumnExpressionOrStrLabelArgument[Any],
     select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
 ) -> AsyncQuery[Self]
 ```
@@ -1693,7 +1693,7 @@ def top(top: int) -> AsyncQuery[Self]
 
 ```python
 @classmethod
-def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]
+def join(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]) -> AsyncQuery[Self]
 ```
 
 > Joined eager loading using LEFT OUTER JOIN.
@@ -1744,7 +1744,7 @@ def join(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQ
 
 ```python
 @classmethod
-def with_subquery(*paths: QueryableAttribute | tuple[QueryableAttribute, bool]) -> AsyncQuery[Self]
+def with_subquery(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]) -> AsyncQuery[Self]
 ```
 
 > Subqueryload or Selectinload eager loading.
@@ -1920,13 +1920,13 @@ def with_schema(
 ```python
 @classmethod
 def smart_query(
-    criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+    criteria: Sequence[ColumnElement[bool]] | None = None,
     filters: (
         dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
     ) = None,
-    sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+    sort_columns: Sequence[ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     sort_attrs: Sequence[str] | None = None,
-    group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
+    group_columns: Sequence[ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     group_attrs: Sequence[str] | None = None,
     schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
 ) -> AsyncQuery[Self]

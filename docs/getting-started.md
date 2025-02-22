@@ -297,10 +297,9 @@ user.comments[0].post.title  # Lorem ipsum
 ???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
-    not just being a `backref`.
-    This is because `sqlactive` does not know the relation direction and cannot
-    infer it.
-    So, when defining a relationship like:
+    not just being a `backref`. This is because SQLActive does not know the
+    relation direction and cannot infer it. So, when defining a relationship
+    like:
 
     ```python
     class User(BaseModel):

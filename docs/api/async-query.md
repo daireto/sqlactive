@@ -765,7 +765,7 @@ def options(*args: ExecutableOption) -> Self
 #### where
 
 ```python
-def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self
+def where(*criteria: ColumnElement[bool], **filters: Any) -> Self
 ```
 
 > Applies one or more WHERE criteria to the query.
@@ -824,7 +824,7 @@ def where(*criteria: _ColumnExpressionArgument[bool], **filters: Any) -> Self
 #### filter
 
 ```python
-def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Self
+def filter(*criterion: ColumnElement[bool], **filters: Any) -> Self
 ```
 
 > Synonym for [`where()`](#where).
@@ -832,7 +832,7 @@ def filter(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Self
 #### find
 
 ```python
-def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Self
+def find(*criterion: ColumnElement[bool], **filters: Any) -> Self
 ```
 
 > Synonym for [`where()`](#where).
@@ -842,7 +842,7 @@ def find(*criterion: _ColumnExpressionArgument[bool], **filters: Any) -> Self
 ```python
 def search(
     search_term: str,
-    columns: Sequence[str | InstrumentedAttribute] | None = None,
+    columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
 ) -> Self
 ```
 
@@ -899,7 +899,7 @@ def search(
 #### order_by
 
 ```python
-def order_by(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self
+def order_by(*columns: ColumnExpressionOrStrLabelArgument) -> Self
 ```
 
 > Applies one or more ORDER BY criteria to the query.
@@ -945,7 +945,7 @@ Using both syntaxes:
 #### sort
 
 ```python
-def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self
+def sort(*columns: ColumnExpressionOrStrLabelArgument) -> Self
 ```
 
 > Synonym for [`order_by()`](#order_by).
@@ -954,7 +954,7 @@ def sort(*columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self
 
 ```python
 def group_by(
-    *columns: _ColumnExpressionOrStrLabelArgument[Any],
+    *columns: ColumnExpressionOrStrLabelArgument,
     select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
 ) -> Self
 ```
@@ -1109,7 +1109,7 @@ def top(top: int) -> Self
 
 ```python
 def join(
-    *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+    *paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool],
     model: type[_T] | None = None
 ) -> Self
 ```
@@ -1164,7 +1164,7 @@ def join(
 
 ```python
 def with_subquery(
-    *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+    *paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool],
     model: type[_T] | None = None
 ) -> Self
 ```
