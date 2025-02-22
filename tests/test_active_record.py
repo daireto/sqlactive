@@ -50,6 +50,18 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             logger.info('Closing DB connection...')
             asyncio.run(cls.conn.close(BaseModel))
 
+    async def test_context_manager(self):
+        """Test for ``__enter__`` and ``__exit__`` methods."""
+        logger.info('Testing "__enter__" and "__exit__" methods...')
+        user = User(username='Test1000', name='Test User', age=20)
+        self.assertIsNone(user.id)
+        async with user:
+            self.assertIsNotNone(user.id)
+            self.assertEqual(35, len(await User.all()))
+            user_id = user.id
+        self.assertIsNone(await User.get(user_id))
+        self.assertEqual(34, len(await User.all()))
+
     def test_get_primary_key_name(self):
         """Test for ``_get_primary_key_name`` function."""
         logger.info('Testing "_get_primary_key_name" function...')

@@ -2301,3 +2301,13 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def set_session(cls, session: async_scoped_session[AsyncSession]) -> None:
         super().set_session(session)
         AsyncQuery.set_session(session)
+
+    async def __aenter__(self) -> Self:
+        """Saves the instance to the database temporarily.
+        The instance will be deleted on exit.
+        """
+        return await self.save()
+
+    async def __aexit__(self, *_) -> None:
+        """Deletes the instance saved on entry."""
+        await self.delete()
