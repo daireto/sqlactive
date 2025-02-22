@@ -1,4 +1,4 @@
-"""`Seed` class to seed database with test data."""
+"""``Seed`` class to seed database with test data."""
 
 from sqlactive.base_model import ActiveRecordBaseModel
 from sqlactive.conn import DBConnection

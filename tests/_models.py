@@ -1,5 +1,6 @@
 """Models for testing."""
 
+from typing import Optional
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -38,6 +39,7 @@ class Post(BaseModel):
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     body: Mapped[str] = mapped_column(nullable=False)
     rating: Mapped[int] = mapped_column(nullable=False)
+    topic: Mapped[Optional[str]] = mapped_column(String(50))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
 
     user: Mapped['User'] = relationship(back_populates='posts')

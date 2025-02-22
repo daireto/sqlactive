@@ -6,21 +6,18 @@ from typing import Any, Literal, overload
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import Select, select
-from sqlalchemy.sql._typing import (
-    _ColumnExpressionArgument,
-    _ColumnExpressionOrStrLabelArgument,
-    _ColumnsClauseArgument,
-)
+from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.operators import OperatorType
 from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery
 from .exceptions import ModelAttributeError, NoSettableError
 from .session import SessionMixin
-from .smart_query import SmartQueryMixin
+from .smart_query import ColumnExpressionOrStrLabelArgument, SmartQueryMixin
 from .utils import classproperty
 
 
@@ -550,17 +547,23 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         cls,
         pk: object,
         join: (
-            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            Sequence[
+                InstrumentedAttribute[Any]
+                | tuple[InstrumentedAttribute[Any], bool]
+            ]
             | None
         ) = None,
         subquery: (
-            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            Sequence[
+                InstrumentedAttribute[Any]
+                | tuple[InstrumentedAttribute[Any], bool]
+            ]
             | None
         ) = None,
         schema: (
             dict[
-                InstrumentedAttribute,
-                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+                InstrumentedAttribute[Any],
+                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
             ]
             | None
         ) = None,
@@ -575,15 +578,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         pk : object
             Primary key value. It can also be a dict of composite
             primary key values.
-        join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        join : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of ``join()`` method for
             details.
-        subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        subquery : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict], optional
             Schema for the eager loading, by default None.
             IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
@@ -639,17 +642,23 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         cls,
         pk: object,
         join: (
-            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            Sequence[
+                InstrumentedAttribute[Any]
+                | tuple[InstrumentedAttribute[Any], bool]
+            ]
             | None
         ) = None,
         subquery: (
-            Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]]
+            Sequence[
+                InstrumentedAttribute[Any]
+                | tuple[InstrumentedAttribute[Any], bool]
+            ]
             | None
         ) = None,
         schema: (
             dict[
-                InstrumentedAttribute,
-                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+                InstrumentedAttribute[Any],
+                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
             ]
             | None
         ) = None,
@@ -666,15 +675,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         pk : object
             Primary key value. It can also be a dict of composite
             primary key values.
-        join : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        join : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of ``join()`` method for
             details.
-        subquery : Sequence[QueryableAttribute | tuple[QueryableAttribute, bool]], optional
+        subquery : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict], optional
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict], optional
             Schema for the eager loading, by default None.
             IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
@@ -1492,7 +1501,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def where(
-        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+        cls, *criteria: ColumnElement[bool], **filters: Any
     ) -> AsyncQuery[Self]:
         """Applies one or more WHERE criteria to the query.
 
@@ -1500,7 +1509,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        *criteria : _ColumnExpressionArgument[bool]
+        *criteria : ColumnElement[bool]
             SQLAlchemy style filter expressions.
         **filters : Any
             Django-style filters.
@@ -1553,14 +1562,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def filter(
-        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+        cls, *criteria: ColumnElement[bool], **filters: Any
     ) -> AsyncQuery[Self]:
         """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
 
     @classmethod
     def find(
-        cls, *criteria: _ColumnExpressionArgument[bool], **filters: Any
+        cls, *criteria: ColumnElement[bool], **filters: Any
     ) -> AsyncQuery[Self]:
         """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
@@ -1569,7 +1578,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def search(
         cls,
         search_term: str,
-        columns: Sequence[str | InstrumentedAttribute] | None = None,
+        columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> AsyncQuery[Self]:
         """Applies a search filter to the query.
 
@@ -1581,7 +1590,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ----------
         search_term : str
             Search term.
-        columns : Sequence[str | InstrumentedAttribute] | None, optional
+        columns : Sequence[str | InstrumentedAttribute[Any]] | None, optional
             Columns to search in, by default None.
 
         Returns
@@ -1632,7 +1641,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def order_by(
-        cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]
+        cls, *columns: ColumnExpressionOrStrLabelArgument
     ) -> AsyncQuery[Self]:
         """Applies one or more ORDER BY criteria to the query.
 
@@ -1640,7 +1649,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+        *columns : ColumnExpressionOrStrLabelArgument
             Django-like or SQLAlchemy sort expressions.
 
         Returns
@@ -1690,7 +1699,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def sort(
-        cls, *columns: _ColumnExpressionOrStrLabelArgument[Any]
+        cls, *columns: ColumnExpressionOrStrLabelArgument
     ) -> AsyncQuery[Self]:
         """Synonym for ``order_by()``."""
         return cls.order_by(*columns)
@@ -1698,7 +1707,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     @classmethod
     def group_by(
         cls,
-        *columns: _ColumnExpressionOrStrLabelArgument[Any],
+        *columns: ColumnExpressionOrStrLabelArgument,
         select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
     ) -> AsyncQuery[Self]:
         """Applies one or more GROUP BY criteria to the query.
@@ -1710,7 +1719,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+        *columns : ColumnExpressionOrStrLabelArgument
             Django-like or SQLAlchemy columns.
         select_columns : Sequence[_ColumnsClauseArgument[Any]] | None, optional
             Columns to be selected (recommended), by default None.
@@ -1876,7 +1885,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def join(
-        cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]
+        cls,
+        *paths: InstrumentedAttribute[Any]
+        | tuple[InstrumentedAttribute[Any], bool],
     ) -> AsyncQuery[Self]:
         """Joined eager loading using LEFT OUTER JOIN.
 
@@ -1888,7 +1899,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
+        paths : *InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
             Relationship attributes to join.
 
         Returns
@@ -1946,7 +1957,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def with_subquery(
-        cls, *paths: QueryableAttribute | tuple[QueryableAttribute, bool]
+        cls,
+        *paths: InstrumentedAttribute[Any]
+        | tuple[InstrumentedAttribute[Any], bool],
     ) -> AsyncQuery[Self]:
         """Subqueryload or Selectinload eager loading.
 
@@ -1993,7 +2006,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        paths : *QueryableAttribute | tuple[QueryableAttribute, bool]
+        paths : *InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
             Relationship attributes to load.
 
         Returns
@@ -2068,8 +2081,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def with_schema(
         cls,
         schema: dict[
-            InstrumentedAttribute,
-            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            InstrumentedAttribute[Any],
+            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
         ],
     ) -> AsyncQuery[Self]:
         """Joined, subqueryload and selectinload eager loading.
@@ -2110,7 +2123,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
             Dictionary defining the loading strategy.
 
         Returns
@@ -2161,7 +2174,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     @classmethod
     def smart_query(
         cls,
-        criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        criteria: Sequence[ColumnElement[bool]] | None = None,
         filters: (
             dict[str, Any]
             | dict[OperatorType, Any]
@@ -2170,17 +2183,17 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             | None
         ) = None,
         sort_columns: (
-            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+            Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
         sort_attrs: Sequence[str] | None = None,
         group_columns: (
-            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+            Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
         group_attrs: Sequence[str] | None = None,
         schema: (
             dict[
-                InstrumentedAttribute,
-                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+                InstrumentedAttribute[Any],
+                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
             ]
             | None
         ) = None,

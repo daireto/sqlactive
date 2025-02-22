@@ -88,10 +88,16 @@ class SerializationMixin(InspectionMixin):
                     obj = getattr(self, key)
 
                     if isinstance(obj, SerializationMixin):
-                        result[key] = obj.to_dict(hybrid_attributes=hybrid_attributes, exclude=nested_exclude)
+                        result[key] = obj.to_dict(
+                            hybrid_attributes=hybrid_attributes,
+                            exclude=nested_exclude,
+                        )
                     elif isinstance(obj, Iterable):
                         result[key] = [
-                            o.to_dict(hybrid_attributes=hybrid_attributes, exclude=nested_exclude)
+                            o.to_dict(
+                                hybrid_attributes=hybrid_attributes,
+                                exclude=nested_exclude,
+                            )
                             for o in obj
                             if isinstance(o, SerializationMixin)
                         ]
@@ -170,9 +176,18 @@ class SerializationMixin(InspectionMixin):
         {"name": "John", "age": 30, ...}
         """
         dumped_model = self.to_dict(
-            nested=nested, hybrid_attributes=hybrid_attributes, exclude=exclude, nested_exclude=nested_exclude
+            nested=nested,
+            hybrid_attributes=hybrid_attributes,
+            exclude=exclude,
+            nested_exclude=nested_exclude,
         )
-        return json.dumps(obj=dumped_model, ensure_ascii=ensure_ascii, indent=indent, sort_keys=sort_keys, default=str)
+        return json.dumps(
+            obj=dumped_model,
+            ensure_ascii=ensure_ascii,
+            indent=indent,
+            sort_keys=sort_keys,
+            default=str,
+        )
 
     @overload
     @classmethod
@@ -260,7 +275,13 @@ class SerializationMixin(InspectionMixin):
 
             if name in obj.relations:
                 relation_class = cls.get_class_of_relation(name)
-                setattr(obj, name, relation_class.from_dict(data[name], exclude=nested_exclude))
+                setattr(
+                    obj,
+                    name,
+                    relation_class.from_dict(
+                        data[name], exclude=nested_exclude
+                    ),
+                )
                 continue
 
             if name in obj.columns:

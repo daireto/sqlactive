@@ -5,20 +5,17 @@ from typing import Any, Generic, Literal, TypeVar, overload
 
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.orm import joinedload, selectinload, subqueryload
-from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
-from sqlalchemy.sql import Select, select
-from sqlalchemy.sql._typing import (
-    _ColumnExpressionArgument,
-    _ColumnExpressionOrStrLabelArgument,
-    _ColumnsClauseArgument,
-)
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql import Select
+from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.functions import func
 from typing_extensions import Self
 
 from .exceptions import RelationError
 from .session import SessionMixin
-from .smart_query import SmartQueryMixin
+from .smart_query import ColumnExpressionOrStrLabelArgument, SmartQueryMixin
 
 _T = TypeVar('_T')
 
@@ -861,16 +858,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         self.query = self.query.options(*args)
         return self
 
-    def where(
-        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
-    ) -> Self:
+    def where(self, *criteria: ColumnElement[bool], **filters: Any) -> Self:
         """Applies one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
         Parameters
         ----------
-        *criteria : _ColumnExpressionArgument[bool]
+        *criteria : ColumnElement[bool]
             SQLAlchemy style filter expressions.
         **filters : Any
             Django-style filters.
@@ -928,22 +923,18 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         )
         return self
 
-    def filter(
-        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
-    ) -> Self:
+    def filter(self, *criteria: ColumnElement[bool], **filters: Any) -> Self:
         """Synonym for ``where()``."""
         return self.where(*criteria, **filters)
 
-    def find(
-        self, *criteria: _ColumnExpressionArgument[bool], **filters: Any
-    ) -> Self:
+    def find(self, *criteria: ColumnElement[bool], **filters: Any) -> Self:
         """Synonym for ``where()``."""
         return self.where(*criteria, **filters)
 
     def search(
         self,
         search_term: str,
-        columns: Sequence[str | InstrumentedAttribute] | None = None,
+        columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> Self:
         """Applies a search filter to the query.
 
@@ -955,7 +946,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         ----------
         search_term : str
             Search term.
-        columns : Sequence[str | InstrumentedAttribute] | None, optional
+        columns : Sequence[str | InstrumentedAttribute[Any]] | None, optional
             Columns to search in, by default None.
 
         Returns
@@ -1008,16 +999,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         )
         return self
 
-    def order_by(
-        self, *columns: _ColumnExpressionOrStrLabelArgument[Any]
-    ) -> Self:
+    def order_by(self, *columns: ColumnExpressionOrStrLabelArgument) -> Self:
         """Applies one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
         Parameters
         ----------
-        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+        *columns : ColumnExpressionOrStrLabelArgument
             Django-like or SQLAlchemy sort expressions.
 
         Returns
@@ -1070,13 +1059,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         )
         return self
 
-    def sort(self, *columns: _ColumnExpressionOrStrLabelArgument[Any]) -> Self:
+    def sort(self, *columns: ColumnExpressionOrStrLabelArgument) -> Self:
         """Synonym for ``order_by()``."""
         return self.order_by(*columns)
 
     def group_by(
         self,
-        *columns: _ColumnExpressionOrStrLabelArgument[Any],
+        *columns: ColumnExpressionOrStrLabelArgument,
         select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
     ) -> Self:
         """Applies one or more GROUP BY criteria to the query.
@@ -1088,7 +1077,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *columns : _ColumnExpressionOrStrLabelArgument[Any]
+        *columns : ColumnExpressionOrStrLabelArgument
             Django-like or SQLAlchemy columns.
         select_columns : Sequence[_ColumnsClauseArgument[Any]] | None, optional
             Columns to be selected (recommended), by default None.
@@ -1149,7 +1138,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
         """
         if select_columns:
-            self.query = select(*select_columns)
+            self.select(*select_columns)
 
         group_columns, group_attrs = self._split_columns_and_attrs(columns)
         self.query = self.smart_query(
@@ -1271,7 +1260,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
     def join(
         self,
-        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        *paths: InstrumentedAttribute[Any]
+        | tuple[InstrumentedAttribute[Any], bool],
         model: type[_T] | None = None,
     ) -> Self:
         """Joined eager loading using LEFT OUTER JOIN.
@@ -1284,7 +1274,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
+        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
             Relationship attributes to join.
         model : type[_T] | None, optional
             If given, checks that each path belongs to this model,
@@ -1348,7 +1338,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
     def with_subquery(
         self,
-        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        *paths: InstrumentedAttribute[Any]
+        | tuple[InstrumentedAttribute[Any], bool],
         model: type[_T] | None = None,
     ) -> Self:
         """Subqueryload or Selectinload eager loading.
@@ -1396,7 +1387,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
+        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
             Relationship attributes to load.
         model : type[_T] | None, optional
             If given, checks that each path belongs to this model,
@@ -1474,8 +1465,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
     def with_schema(
         self,
         schema: dict[
-            InstrumentedAttribute,
-            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            InstrumentedAttribute[Any],
+            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
         ],
     ) -> Self:
         """Joined, subqueryload and selectinload eager loading.
@@ -1516,7 +1507,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
             Dictionary defining the loading strategy.
 
         Returns
@@ -1575,13 +1566,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
     def _split_columns_and_attrs(
         self,
-        columns_and_attrs: Sequence[_ColumnExpressionOrStrLabelArgument[Any]],
+        columns_and_attrs: Sequence[ColumnExpressionOrStrLabelArgument],
     ) -> tuple[list[str], list[str]]:
         """Splits columns and attrs.
 
         Parameters
         ----------
-        columns_and_attrs : Sequence[_ColumnExpressionOrStrLabelArgument[Any]]
+        columns_and_attrs : Sequence[ColumnExpressionOrStrLabelArgument]
             Columns and attrs.
 
         Returns
@@ -1601,7 +1592,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
     def _apply_eager_loading_options(
         self,
-        *paths: QueryableAttribute | tuple[QueryableAttribute, bool],
+        *paths: InstrumentedAttribute[Any]
+        | tuple[InstrumentedAttribute[Any], bool],
         joined: bool = False,
         model: type[_T] | None = None,
     ) -> Self:
@@ -1619,7 +1611,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *paths : QueryableAttribute | tuple[QueryableAttribute, bool]
+        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
             Eager loading paths.
         joined : bool, optional
             Whether to use joined eager loading, by default False.

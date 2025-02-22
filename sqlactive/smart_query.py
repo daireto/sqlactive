@@ -9,11 +9,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import Select, asc, desc, extract, operators
-from sqlalchemy.sql._typing import (
-    _ColumnExpressionArgument,
-    _ColumnExpressionOrStrLabelArgument,
-)
-from sqlalchemy.sql.elements import UnaryExpression
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.operators import OperatorType, or_
 from typing_extensions import Self
 
@@ -28,6 +24,10 @@ from .exceptions import (
     RelationError,
 )
 from .inspection import InspectionMixin
+
+ColumnElementOrAttr = ColumnElement[Any] | InstrumentedAttribute[Any]
+ColumnExpressionOrStrLabelArgument = str | ColumnElementOrAttr
+OperationFunction = Callable[[ColumnElementOrAttr, Any], ColumnElement[Any]]
 
 
 class SmartQueryMixin(InspectionMixin):
@@ -44,7 +44,7 @@ class SmartQueryMixin(InspectionMixin):
     _DESC_PREFIX = '-'
     """Prefix used to mark descending order."""
 
-    _operators: dict[str, Callable] = {
+    _operators: dict[str, OperationFunction | OperatorType] = {
         'isnull': lambda c, v: (c == None) if v else (c != None),  # noqa: E711
         'exact': operators.eq,
         'eq': operators.eq,  # equal
@@ -257,7 +257,7 @@ class SmartQueryMixin(InspectionMixin):
         return expressions
 
     @classmethod
-    def order_expr(cls, *columns: str) -> list[UnaryExpression]:
+    def order_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
         """Transforms Django-style order expressions into
         SQLAlchemy expressions.
 
@@ -282,7 +282,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        list[UnaryExpression]
+        list[ColumnElement[Any]]
             List of sort expressions.
 
         Raises
@@ -337,7 +337,7 @@ class SmartQueryMixin(InspectionMixin):
         else:
             mapper = _class = cls
 
-        expressions: list[UnaryExpression] = []
+        expressions: list[ColumnElement[Any]] = []
         for attr in columns:
             fn, attr = (
                 (desc, attr[1:])
@@ -353,7 +353,7 @@ class SmartQueryMixin(InspectionMixin):
         return expressions
 
     @classmethod
-    def columns_expr(cls, *columns: str) -> list[UnaryExpression]:
+    def columns_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
         """Transforms column names into
         SQLAlchemy model attributes.
 
@@ -380,7 +380,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Returns
         -------
-        list[UnaryExpression]
+        list[ColumnElement[Any]]
             List of model attributes.
 
         Raises
@@ -442,7 +442,7 @@ class SmartQueryMixin(InspectionMixin):
         else:
             mapper = _class = cls
 
-        expressions: list[UnaryExpression] = []
+        expressions: list[ColumnElement[Any]] = []
         for attr in columns:
             if attr not in _class.sortable_attributes:
                 raise NoColumnOrHybridPropertyError(attr, _class.__name__)
@@ -512,7 +512,7 @@ class SmartQueryMixin(InspectionMixin):
     def smart_query(
         cls,
         query: Select[tuple[Any, ...]],
-        criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
+        criteria: Sequence[ColumnElement[bool]] | None = None,
         filters: (
             dict[str, Any]
             | dict[OperatorType, Any]
@@ -521,11 +521,11 @@ class SmartQueryMixin(InspectionMixin):
             | None
         ) = None,
         sort_columns: (
-            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+            Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
         sort_attrs: Sequence[str] | None = None,
         group_columns: (
-            Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None
+            Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
         group_attrs: Sequence[str] | None = None,
         schema: (
@@ -565,15 +565,15 @@ class SmartQueryMixin(InspectionMixin):
         ----------
         query : Select[tuple[Any, ...]]
             Native SQLAlchemy query.
-        criteria : Sequence[_ColumnExpressionArgument[bool]] | None, optional
+        criteria : Sequence[ColumnElement[bool]] | None, optional
             SQLAlchemy syntax filter expressions, by default None.
         filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None, optional
             Django-like filter expressions, by default None.
-        sort_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None, optional
+        sort_columns : Sequence[ColumnExpressionOrStrLabelArgument] | None, optional
             Standalone sort columns, by default None.
         sort_attrs : Sequence[str] | None, optional
             Django-like sort expressions, by default None.
-        group_columns : Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None, optional
+        group_columns : Sequence[ColumnExpressionOrStrLabelArgument] | None, optional
             Standalone group columns, by default None.
         group_attrs : Sequence[str] | None, optional
             Django-like group expressions, by default None.
@@ -896,9 +896,7 @@ class SmartQueryMixin(InspectionMixin):
                 relationship.property.mapper.class_
             )  # e.g. aliased(User) or aliased(Post)
             aliases[path] = alias, relationship
-            cls._make_aliases_from_attrs(
-                alias, path, nested_attrs, aliases
-            )
+            cls._make_aliases_from_attrs(alias, path, nested_attrs, aliases)
 
     @classmethod
     def _recurse_filters(

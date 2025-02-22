@@ -13,13 +13,13 @@ from ._seed import Seed
 
 
 class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
-    """Tests for `sqlactive.conn.execute` function."""
+    """Tests for ``sqlactive.conn.execute`` function."""
 
     DB_URL = 'sqlite+aiosqlite://'
 
     @classmethod
     def setUpClass(cls):
-        logger.info('***** `execute` tests *****')
+        logger.info('***** "execute" tests *****')
         logger.info('Creating DB connection...')
         cls.conn = DBConnection(cls.DB_URL, echo=False)
         seed = Seed(cls.conn, BaseModel)
@@ -32,9 +32,9 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
             asyncio.run(cls.conn.close(BaseModel))
 
     async def test_execute(self):
-        """Test for `sqlactive.conn.execute` function."""
+        """Test for ``sqlactive.conn.execute`` function."""
 
-        logger.info('Testing `execute` function...')
+        logger.info('Testing "execute" function...')
         query = select(User.age, func.count(User.id)).group_by(User.age)
         result = await execute(query, BaseModel)
         self.assertEqual((19, 1), next(result))
@@ -47,11 +47,11 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
             await execute(query)
 
     async def test_execute_without_base_model(self):
-        """Test for `sqlactive.conn.execute` function
+        """Test for ``sqlactive.conn.execute`` function
         without passing a base model.
         """
 
-        logger.info('Testing `execute` function without base model...')
+        logger.info('Testing "execute" function without base model...')
         with self.assertRaises(NoSessionError):
             query = select(User.age, func.count(User.id)).group_by(User.age)
             await execute(query)

@@ -11,7 +11,7 @@ from ._seed import Seed
 
 
 class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
-    """Tests for `sqlactive.serialization.SerializationMixin`."""
+    """Tests for ``sqlactive.serialization.SerializationMixin``."""
 
     DB_URL = 'sqlite+aiosqlite://'
 
@@ -30,9 +30,9 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             asyncio.run(cls.conn.close(BaseModel))
 
     async def test_to_dict(self):
-        """Test for `to_dict` function."""
+        """Test for ``to_dict`` function."""
 
-        logger.info('Testing `to_dict` function...')
+        logger.info('Testing "to_dict" function...')
         user = await User.with_subquery(User.posts).where(id=1).one()
         self.assertDictEqual(
             {
@@ -83,6 +83,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             {
                 'id': 1,
                 'title': 'Lorem ipsum',
+                'topic': None,
                 'body': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
                 'rating': 4,
                 'user_id': 1,
@@ -103,9 +104,9 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_to_json(self):
-        """Test for `to_json` function."""
+        """Test for ``to_json`` function."""
 
-        logger.info('Testing `to_json` function...')
+        logger.info('Testing "to_json" function...')
         user = await User.with_subquery(User.posts).where(id=1).one()
         self.assertEqual(json.dumps(user.to_dict(), ensure_ascii=False, default=str), user.to_json())
         self.assertEqual(
@@ -130,9 +131,9 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
         )
 
     def test_from_dict(self):
-        """Test for `from_dict` function."""
+        """Test for ``from_dict`` function."""
 
-        logger.info('Testing `from_dict` function...')
+        logger.info('Testing "from_dict" function...')
         user = User.from_dict({'id': 1, 'username': 'username', 'name': 'name', 'age': 0, 'is_adult': False})
         self.assertEqual(user.id, 1)
         self.assertEqual(user.username, 'username')
@@ -203,9 +204,9 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             )
 
     def test_from_json(self):
-        """Test for `from_json` function."""
+        """Test for ``from_json`` function."""
 
-        logger.info('Testing `from_json` function...')
+        logger.info('Testing "from_json" function...')
         user = User.from_json('{"id": 1, "username": "username", "name": "name", "age": 0, "is_adult": false}')
         self.assertEqual(user.id, 1)
         self.assertEqual(user.username, 'username')

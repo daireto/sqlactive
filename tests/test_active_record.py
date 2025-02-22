@@ -30,7 +30,7 @@ from ._seed import Seed
 
 
 class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
-    """Tests for `sqlactive.active_record.ActiveRecordMixin`."""
+    """Tests for ``sqlactive.active_record.ActiveRecordMixin``."""
 
     DB_URL = 'sqlite+aiosqlite://'
 
@@ -51,14 +51,14 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             asyncio.run(cls.conn.close(BaseModel))
 
     def test_get_primary_key_name(self):
-        """Test for `_get_primary_key_name` function."""
-        logger.info('Testing `_get_primary_key_name` function...')
+        """Test for ``_get_primary_key_name`` function."""
+        logger.info('Testing "_get_primary_key_name" function...')
         with self.assertRaises(CompositePrimaryKeyError):
             Sell.get_primary_key_name()
 
     def test_fill(self):
-        """Test for `fill` function."""
-        logger.info('Testing `fill` function...')
+        """Test for ``fill`` function."""
+        logger.info('Testing "fill" function...')
         user = User(username='Bob28', name='Bob', age=30)
         user.fill(**{'name': 'Bob Williams', 'age': 32})
         self.assertEqual('Bob28', user.username)
@@ -70,8 +70,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             user.fill(**{'older_than': True})
 
     async def test_save(self):
-        """Test for `save` function."""
-        logger.info('Testing `save` function...')
+        """Test for ``save`` function."""
+        logger.info('Testing "save" function...')
         user = User(username='Test28', name='Test User', age=20)
         await user.save()
         now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
@@ -86,8 +86,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await user.delete()
 
     async def test_update(self):
-        """Test for `update` function."""
-        logger.info('Testing `update` function...')
+        """Test for ``update`` function."""
+        logger.info('Testing "update" function...')
         user = await User.get_or_fail(1)
         self.assertEqual('Bob Williams', user.name)
         await asyncio.sleep(1)
@@ -99,8 +99,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await user.update(name='Bob Williams')
 
     async def test_delete(self):
-        """Test for `delete` and `remove` functions."""
-        logger.info('Testing `delete` and `remove` functions...')
+        """Test for ``delete`` and ``remove`` functions."""
+        logger.info('Testing "delete" and "remove" functions...')
         user1 = await User.find(username='Lily9845').one()
         user2 = await User.find(username='Jessica3248').one()
         await user1.delete()
@@ -122,8 +122,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_insert(self):
-        """Test for `insert` and `create` functions."""
-        logger.info('Testing `insert` and `create` functions...')
+        """Test for ``insert`` and ``create`` functions."""
+        logger.info('Testing "insert" and "create" functions...')
         user1 = await User.insert(username='Test98', name='Test User 1', age=20)
         user2 = await User.insert(username='Test95', name='Test User 2', age=20)
         user3 = await User.create(username='Test92', name='Test User 3', age=20)
@@ -137,8 +137,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await User.delete_all([user1, user2, user3])
 
     async def test_save_all(self):
-        """Test for `save_all`function."""
-        logger.info('Testing `save_all` function...')
+        """Test for ``save_all``function."""
+        logger.info('Testing "save_all" function...')
         users = [
             User(username='Test100', name='Test User 1', age=20),
             User(username='Test200', name='Test User 2', age=30),
@@ -167,8 +167,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await User.delete_all(users)
 
     async def test_insert_all(self):
-        """Test for `insert_all`function."""
-        logger.info('Testing `insert_all` function...')
+        """Test for ``insert_all``function."""
+        logger.info('Testing "insert_all" function...')
         users = [
             User(username='Test110', name='Test User 1', age=20),
             User(username='Test210', name='Test User 2', age=30),
@@ -197,8 +197,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await User.delete_all(users)
 
     async def test_update_all(self):
-        """Test for `update_all` function."""
-        logger.info('Testing `update_all` function...')
+        """Test for ``update_all`` function."""
+        logger.info('Testing "update_all" function...')
         users = [
             User(username='Test111', name='Test User 1', age=20),
             User(username='Test211', name='Test User 2', age=30),
@@ -222,8 +222,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         await User.delete_all(users)
 
     async def test_delete_all(self):
-        """Test for `delete_all` function."""
-        logger.info('Testing `delete_all` function...')
+        """Test for ``delete_all`` function."""
+        logger.info('Testing "delete_all" function...')
         users = [
             User(username='DeleteTest121', name='Test User 1', age=20),
             User(username='DeleteTest221', name='Test User 2', age=30),
@@ -246,8 +246,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await User.delete_all(users)
 
     async def test_destroy(self):
-        """Test for `destroy` function."""
-        logger.info('Testing `destroy` function...')
+        """Test for ``destroy`` function."""
+        logger.info('Testing "destroy" function...')
         user1 = await User.get_or_fail(30)
         user2 = await User.get_or_fail(31)
         user3 = await User.get_or_fail(32)
@@ -279,8 +279,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_get(self):
-        """Test for `get` function."""
-        logger.info('Testing `get` function...')
+        """Test for ``get`` function."""
+        logger.info('Testing "get" function...')
         user = await User.get(2)
         self.assertIsNotNone(user)
         if user:
@@ -321,8 +321,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, sell.product_id)
 
     async def test_get_or_fail(self):
-        """Test for `get_or_fail` function."""
-        logger.info('Testing `get_or_fail` function...')
+        """Test for ``get_or_fail`` function."""
+        logger.info('Testing "get_or_fail" function...')
         user = await User.get_or_fail(2)
         self.assertEqual('Bill65', user.username)
         with self.assertRaises(NoResultFound):
@@ -348,15 +348,15 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, user.comments[0].post.id)
 
     async def test_scalars(self):
-        """Test for `scalars` function."""
-        logger.info('Testing `scalars` function...')
+        """Test for ``scalars`` function."""
+        logger.info('Testing "scalars" function...')
         scalar_result = await User.scalars()
         users = scalar_result.all()
         self.assertEqual('Mike Turner', users[10].name)
 
     async def test_first(self):
-        """Test for `first` function."""
-        logger.info('Testing `first` function...')
+        """Test for ``first`` function."""
+        logger.info('Testing "first" function...')
         user = await User.first()
         self.assertIsNotNone(user)
         if user:
@@ -367,8 +367,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Bob Williams', user[0].name)
 
     async def test_one(self):
-        """Test for `one` function."""
-        logger.info('Testing `one` function...')
+        """Test for ``one`` function."""
+        logger.info('Testing "one" function...')
         with self.assertRaises(MultipleResultsFound):
             await User.one()
         user = await User.find(username='Joe156').one()
@@ -379,8 +379,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Joe Smith', user[0].name)
 
     async def test_one_or_none(self):
-        """Test for `one_or_none` function."""
-        logger.info('Testing `one_or_none` function...')
+        """Test for ``one_or_none`` function."""
+        logger.info('Testing "one_or_none" function...')
         with self.assertRaises(MultipleResultsFound):
             await User.one_or_none()
         user = await User.find(username='Joe156').one_or_none()
@@ -395,8 +395,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Joe Smith', user[0].name)
 
     async def test_all(self):
-        """Test for `all` function."""
-        logger.info('Testing `all` function...')
+        """Test for ``all`` function."""
+        logger.info('Testing "all" function...')
         users = await User.all()
         self.assertEqual(34, len(users))
         self.assertEqual('Mike Turner', users[10].name)
@@ -404,14 +404,14 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Mike Turner', users[10][0].name)
 
     async def test_count(self):
-        """Test for `count` function."""
-        logger.info('Testing `count` function...')
+        """Test for ``count`` function."""
+        logger.info('Testing "count" function...')
         count = await User.count()
         self.assertEqual(34, count)
 
     async def test_unique(self):
-        """Test for `unique` function."""
-        logger.info('Testing `unique` function...')
+        """Test for ``unique`` function."""
+        logger.info('Testing "unique" function...')
         scalar_result = await User.unique()
         users = scalar_result.all()
         self.assertEqual('Mike Turner', users[10].name)
@@ -420,8 +420,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Mike Turner', users[10][0].name)
 
     async def test_unique_first(self):
-        """Test for `unique_first` function."""
-        logger.info('Testing `unique_first` function...')
+        """Test for ``unique_first`` function."""
+        logger.info('Testing "unique_first" function...')
         user = await User.unique_first()
         self.assertIsNotNone(user)
         if user:
@@ -432,8 +432,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Bob Williams', user[0].name)
 
     async def test_unique_one(self):
-        """Test for `unique_one` function."""
-        logger.info('Testing `unique_one` function...')
+        """Test for ``unique_one`` function."""
+        logger.info('Testing "unique_one" function...')
         with self.assertRaises(MultipleResultsFound):
             await User.unique_one()
         user = await User.find(username='Joe156').unique_one()
@@ -444,8 +444,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Joe Smith', user[0].name)
 
     async def test_unique_one_or_none(self):
-        """Test for `unique_one_or_none` function."""
-        logger.info('Testing `unique_one_or_none` function...')
+        """Test for ``unique_one_or_none`` function."""
+        logger.info('Testing "unique_one_or_none" function...')
         with self.assertRaises(MultipleResultsFound):
             await User.unique_one_or_none()
         user = await User.find(username='Joe156').unique_one_or_none()
@@ -460,22 +460,22 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Joe Smith', user[0].name)
 
     async def test_unique_all(self):
-        """Test for `unique_all` function."""
-        logger.info('Testing `unique_all` function...')
+        """Test for ``unique_all`` function."""
+        logger.info('Testing "unique_all" function...')
         users = await User.unique_all()
         self.assertEqual('Mike Turner', users[10].name)
         users = await User.unique_all(scalars=False)
         self.assertEqual('Mike Turner', users[10][0].name)
 
     async def test_unique_count(self):
-        """Test for `unique_count` function."""
-        logger.info('Testing `unique_count` function...')
+        """Test for ``unique_count`` function."""
+        logger.info('Testing "unique_count" function...')
         count = await User.unique_count()
         self.assertEqual(34, count)
 
     async def test_select(self):
-        """Test for `select` function."""
-        logger.info('Testing `select` function...')
+        """Test for ``select`` function."""
+        logger.info('Testing "select" function...')
         async_query = User.select()
         self.assertIn('SELECT users.id, users.username, users.name', str(async_query))
         async_query.order_by('-created_at')
@@ -484,8 +484,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIn('ORDER BY users.created_at DESC', str(async_query))
 
     async def test_distinct(self):
-        """Test for `distinct` function."""
-        logger.info('Testing `distinct` function...')
+        """Test for ``distinct`` function."""
+        logger.info('Testing "distinct" function...')
         async_query = User.distinct()
         self.assertIn('DISTINCT users.id, users.username, users.name', str(async_query))
         all_ages = await User.select(User.age).all()
@@ -496,8 +496,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertCountEqual(expected_output, distinct_ages)
 
     async def test_options(self):
-        """Test for `options` function."""
-        logger.info('Testing `options` function...')
+        """Test for ``options`` function."""
+        logger.info('Testing "options" function...')
         users = await User.options(joinedload(User.posts)).unique_all()
         self.assertEqual('Lorem ipsum', users[0].posts[0].title)
         user = await User.options(joinedload(User.posts)).first()
@@ -510,8 +510,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             users = await User.options(joinedload(User.posts)).all()
 
     async def test_where(self):
-        """Test for `where`, `filter` and `find` functions."""
-        logger.info('Testing `where`, `filter` and `find` functions...')
+        """Test for ``where``, ``filter`` and ``find`` functions."""
+        logger.info('Testing "where", "filter" and "find" functions...')
         user = await User.where(username='Joe156').one()
         self.assertEqual('Joe Smith', user.name)
         user = await User.filter(username='Jane54').one()
@@ -520,8 +520,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('John Doe', user.name)
 
     async def test_search(self):
-        """Test for `search` function."""
-        logger.info('Testing `search` function...')
+        """Test for ``search`` function."""
+        logger.info('Testing "search" function...')
         users = await User.search('John').all()
         self.assertEqual('John84', users[0].username)
         self.assertEqual('John Doe', users[0].name)
@@ -547,8 +547,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             User.search('John', columns=(User.age,))
 
     async def test_order_by(self):
-        """Test for `order_by` and `sort` functions."""
-        logger.info('Testing `order_by` and `sort` functions...')
+        """Test for ``order_by`` and ``sort`` functions."""
+        logger.info('Testing "order_by" and "sort" functions...')
         users = await User.find(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
         users = await User.order_by(User.username).where(username__like='Ji%').all()
@@ -559,8 +559,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(24, len(posts))
 
     async def test_group_by(self):
-        """Test for `group_by` function."""
-        logger.info('Testing `group_by` function...')
+        """Test for ``group_by`` function."""
+        logger.info('Testing "group_by" function...')
         users = await User.group_by(User.age, select_columns=(User.age, func.count(User.id))).all(scalars=False)
         self.assertEqual((26, 2), users[3])
         users = await User.group_by('age', select_columns=(User.age, func.count(User.id))).all(scalars=False)
@@ -576,8 +576,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((1, 'Jane Doe', 1), posts[2])
 
     async def test_offset(self):
-        """Test for `offset` and `skip` functions."""
-        logger.info('Testing `offset` and `skip` functions...')
+        """Test for ``offset`` and ``skip`` functions."""
+        logger.info('Testing "offset" and "skip" functions...')
         users = await User.offset(1).where(username__like='Ji%').all()
         self.assertEqual(2, len(users))
         users = await User.skip(2).where(username__like='Ji%').all()
@@ -586,8 +586,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await User.offset(-1).where(username__like='Ji%').all()
 
     async def test_limit(self):
-        """Test for `limit`, `take` and  `top` functions."""
-        logger.info('Testing `limit`, `take` and  `top` functions...')
+        """Test for ``limit``, ``take`` and  ``top`` functions."""
+        logger.info('Testing "limit", "take" and "top" functions...')
         users = await User.limit(2).where(username__like='Ji%').all()
         self.assertEqual(2, len(users))
         users = await User.take(1).where(username__like='Ji%').all()
@@ -598,8 +598,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await User.limit(-1).where(username__like='Ji%').all()
 
     async def test_join(self):
-        """Test for `join` function."""
-        logger.info('Testing `join` function...')
+        """Test for ``join`` function."""
+        logger.info('Testing "join" function...')
         users = await User.join(User.posts, (User.comments, True)).unique_all()
         USERS_THAT_HAVE_COMMENTS = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         self.assertEqual(USERS_THAT_HAVE_COMMENTS, [user.id for user in users])
@@ -612,8 +612,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await User.join((Post.comments, True)).all()  # type: ignore
 
     async def test_with_subquery(self):
-        """Test for `with_subquery` function."""
-        logger.info('Testing `with_subquery` function...')
+        """Test for ``with_subquery`` function."""
+        logger.info('Testing "with_subquery" function...')
         users_count = len(await User.all())
         users = await User.with_subquery(User.posts, (User.comments, True)).all()
         self.assertEqual(users_count, len(users), 'message')
@@ -626,8 +626,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             await User.with_subquery((Post.comments, True)).all()  # type: ignore
 
     async def test_with_schema(self):
-        """Test for `with_schema` function."""
-        logger.info('Testing `with_schema` function...')
+        """Test for ``with_schema`` function."""
+        logger.info('Testing "with_schema" function...')
         schema = {
             User.posts: JOINED,
             User.comments: (SUBQUERY, {Comment.post: SELECT_IN}),
@@ -640,8 +640,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Jill Peterson', post.comments[1].user.name)
 
     async def test_smart_query(self):
-        """Test for `smart_query` function."""
-        logger.info('Testing `smart_query` function...')
+        """Test for ``smart_query`` function."""
+        logger.info('Testing "smart_query" function...')
         query = User.smart_query(
             criteria=(or_(User.age == 30, User.age == 32),),
             filters={'username__like': '%8'},
