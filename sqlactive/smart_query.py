@@ -85,7 +85,7 @@ class SmartQueryMixin(InspectionMixin):
     """Django-like operators mapping."""
 
     @classmethod
-    def filter_expr(cls, **filters: object) -> list:
+    def filter_expr(cls, **filters: object) -> list[ColumnElement[Any]]:
         """Transform Django-style filters into
         SQLAlchemy expressions.
 
@@ -118,8 +118,8 @@ class SmartQueryMixin(InspectionMixin):
 
             SELECT * FROM post_1 WHERE post_1.rating=5
 
-        For such case, ``filter_expr`` (and other methods like
-        ``order_expr`` and ``columns_expr``) can be called ON ALIAS::
+        For such case, this method (and other methods like
+        ``order_expr()`` and ``columns_expr()``) can be called ON ALIAS::
 
             alias = aliased(Post)
             db.query(alias).filter(*alias.filter_expr(rating=5))
@@ -153,10 +153,15 @@ class SmartQueryMixin(InspectionMixin):
             flexibility. It does not do magic Django-like joins.
             Use the high-level ``smart_query()`` method for that.
 
+        Parameters
+        ----------
+        **filters
+            Django-style filters.
+
         Returns
         -------
-        list
-            List of filter expressions.
+        list[ColumnElement[Any]]
+            Filter expressions.
 
         Raises
         ------
@@ -280,10 +285,15 @@ class SmartQueryMixin(InspectionMixin):
             flexibility. It does not do magic Django-like joins.
             Use the high-level ``smart_query()`` method for that.
 
+        Parameters
+        ----------
+        *columns
+            Django-style sort expressions.
+
         Returns
         -------
         list[ColumnElement[Any]]
-            List of sort expressions.
+            Sort expressions.
 
         Raises
         ------
@@ -378,10 +388,15 @@ class SmartQueryMixin(InspectionMixin):
             flexibility. It does not do magic Django-like joins.
             Use the high-level ``smart_query()`` method for that.
 
+        Parameters
+        ----------
+        *columns
+            Column names.
+
         Returns
         -------
         list[ColumnElement[Any]]
-            List of model attributes.
+            Model attributes.
 
         Raises
         ------
@@ -455,8 +470,8 @@ class SmartQueryMixin(InspectionMixin):
     def eager_expr(
         cls,
         schema: dict[
-            InstrumentedAttribute,
-            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            InstrumentedAttribute[Any],
+            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
         ],
     ) -> list[_AbstractLoad]:
         """Transforms an eager loading defined schema into
@@ -493,18 +508,49 @@ class SmartQueryMixin(InspectionMixin):
         ...     Post.user: JOINED,
         ...     Post.comments: (SUBQUERY, {
         ...         Comment.user: JOINED
-        ...     }
+        ...     })
         ... }
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
             Schema for the eager loading.
 
         Returns
         -------
         list[_AbstractLoad]
             Eager loading expressions.
+
+        Examples
+        --------
+        Assume a model ``Post``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class Post(ActiveRecordBaseModel):
+        ...     __tablename__ = 'posts'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     title: Mapped[str] = mapped_column()
+        ...     rating: Mapped[int] = mapped_column()
+        ...     user_id: Mapped[int] = mapped_column(
+        ...         ForeignKey('users.id')
+        ...     )
+        ...     user: Mapped['User'] = relationship(
+        ...         back_populates='posts'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='post'
+        ...     )
+
+        Usage:
+        >>> schema = {
+        ...     Post.user: JOINED,
+        ...     Post.comments: (SUBQUERY, {Comment.user: SELECT_IN}),
+        ... }
+        >>> expressions = Post.eager_expr(schema)
+        >>> post1 = await Post.options(*expressions).limit(1).unique_one()
+        >>> post1.user.name
+        'Bob Williams'
+        >>> post1.comments[0].user.name
+        'Bob Williams'
         """
         return cls._eager_expr_from_schema(schema)
 
@@ -530,8 +576,8 @@ class SmartQueryMixin(InspectionMixin):
         group_attrs: Sequence[str] | None = None,
         schema: (
             dict[
-                InstrumentedAttribute,
-                str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+                InstrumentedAttribute[Any],
+                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
             ]
             | None
         ) = None,
@@ -547,13 +593,11 @@ class SmartQueryMixin(InspectionMixin):
         same time. And if, say, filters, sorting and grouping need
         the same join, it will be done only once.
 
-        It also supports SQLAlchemy syntax like
+        It also supports SQLAlchemy syntax like:
         >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
         >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
         >>> db.query(Post).order_by(Post.rating.desc())
         >>> db.query(Post).order_by(desc(Post.rating), asc(Post.user_id))
-
-        https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference
 
         .. note::
             For more flexibility, you can use the ``filter_expr``,
@@ -577,8 +621,36 @@ class SmartQueryMixin(InspectionMixin):
             Standalone group columns, by default None.
         group_attrs : Sequence[str] | None, optional
             Django-like group expressions, by default None.
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None, optional
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict] | None, optional
             Schema for the eager loading, by default None.
+
+        Returns
+        -------
+        Select[tuple[Any, ...]]
+            SQLAlchemy query with filtering, sorting, grouping and
+            eager loading.
+
+        Examples
+        --------
+        >>> query = User.smart_query(
+        ...     criteria=(or_(User.age == 30, User.age == 32),),
+        ...     filters={'username__like': '%8'},
+        ...     sort_columns=(User.username,),
+        ...     sort_attrs=('age',),
+        ...     schema={
+        ...         User.posts: JOINED,
+        ...         User.comments: (SUBQUERY, {
+        ...             Comment.post: SELECT_IN
+        ...         })
+        ...     },
+        ... )
+        >>> users = await query.unique_all()
+        >>> [user.username for user in users]
+        ['Bob28', 'Ian48', 'Jessica3248']
+        >>> users[0].posts[0].title
+        'Lorem ipsum'
+        >>> users[0].comments[0].post.title
+        'Lorem ipsum'
         """
         if not filters:
             filters = {}
@@ -596,7 +668,8 @@ class SmartQueryMixin(InspectionMixin):
             + list(group_attrs)
         )
         aliases: OrderedDict[
-            str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
+            str,
+            tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]],
         ] = OrderedDict({})
         cls._make_aliases_from_attrs(root_cls, '', attrs, aliases)
 
@@ -640,7 +713,7 @@ class SmartQueryMixin(InspectionMixin):
         cls,
         query: Select[tuple[Any, ...]],
         search_term: str,
-        columns: Sequence[str | InstrumentedAttribute] | None = None,
+        columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> Select[tuple[Any, ...]]:
         """Applies a search filter to the query.
 
@@ -654,8 +727,19 @@ class SmartQueryMixin(InspectionMixin):
             Native SQLAlchemy query.
         search_term : str
             Search term.
-        columns : Sequence[str  |  InstrumentedAttribute] | None, optional
+        columns : Sequence[str  |  InstrumentedAttribute[Any]] | None, optional
             Columns to search in, by default None.
+
+        Returns
+        -------
+        Select[tuple[Any, ...]]
+            SQLAlchemy query with the search filter applied.
+
+        Examples
+        --------
+        To learn how to use this method, see the
+        ``sqlactive.active_record.ActiveRecordMixin.search`` method.
+        It uses this method internally.
         """
         root_cls: type[Self] = query.__dict__['_propagate_attrs'][
             'plugin_subject'
@@ -680,7 +764,7 @@ class SmartQueryMixin(InspectionMixin):
     def _get_searchable_columns(
         cls,
         root_cls: type[Self],
-        columns: Sequence[str | InstrumentedAttribute] | None = None,
+        columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> list[str]:
         """Returns a list of searchable columns.
 
@@ -690,7 +774,7 @@ class SmartQueryMixin(InspectionMixin):
         ----------
         root_cls : type[Self]
             Model class.
-        columns : Sequence[str  |  InstrumentedAttribute] | None, optional
+        columns : Sequence[str  |  InstrumentedAttribute[Any]] | None, optional
             Columns to search in, by default None.
 
         Returns
@@ -813,7 +897,8 @@ class SmartQueryMixin(InspectionMixin):
         entity_path: str,
         attrs: list[str],
         aliases: OrderedDict[
-            str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
+            str,
+            tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]],
         ],
     ) -> None:
         """Takes a list of attributes and makes aliases from them.
@@ -856,7 +941,7 @@ class SmartQueryMixin(InspectionMixin):
             Entity path. It should be empty for the first call.
         attrs : list[str]
             List of attributes.
-        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]]
+        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]]
             Aliases dictionary. It should be empty for the first call.
 
         Raises
@@ -909,7 +994,8 @@ class SmartQueryMixin(InspectionMixin):
         ),
         root_cls: type[Self],
         aliases: OrderedDict[
-            str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
+            str,
+            tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]],
         ],
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
@@ -944,7 +1030,7 @@ class SmartQueryMixin(InspectionMixin):
             Django-like filter expressions.
         root_cls : type[SmartQueryMixin]
             Model class.
-        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]]
+        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]]
             Aliases dictionary.
 
         Yields
@@ -982,7 +1068,8 @@ class SmartQueryMixin(InspectionMixin):
         sort_attrs: Sequence[str],
         root_cls: type[Self],
         aliases: OrderedDict[
-            str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
+            str,
+            tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]],
         ],
     ) -> Select[tuple[Any, ...]]:
         """Applies an ORDER BY clause to the query.
@@ -1013,7 +1100,7 @@ class SmartQueryMixin(InspectionMixin):
             Sort columns.
         root_cls : type[SmartQueryMixin]
             Model class.
-        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]]
+        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]]
             Aliases dictionary.
 
         Returns
@@ -1047,7 +1134,8 @@ class SmartQueryMixin(InspectionMixin):
         group_attrs: Sequence[str],
         root_cls: type[Self],
         aliases: OrderedDict[
-            str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]
+            str,
+            tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]],
         ],
     ) -> Select[tuple[Any, ...]]:
         """Applies a GROUP BY clause to the query.
@@ -1078,7 +1166,7 @@ class SmartQueryMixin(InspectionMixin):
             Group columns.
         root_cls : type[SmartQueryMixin]
             Model class.
-        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute]]
+        aliases : OrderedDict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]]
             Aliases dictionary.
 
         Returns
@@ -1105,8 +1193,8 @@ class SmartQueryMixin(InspectionMixin):
     def _eager_expr_from_schema(
         cls,
         schema: dict[
-            InstrumentedAttribute,
-            str | tuple[str, dict[InstrumentedAttribute, Any]] | dict,
+            InstrumentedAttribute[Any],
+            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
         ],
     ) -> list[_AbstractLoad]:
         """Creates eager loading expressions from
@@ -1117,7 +1205,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
+        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
             Schema for the eager loading.
 
         Returns
@@ -1150,7 +1238,7 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def _create_eager_load_option(
-        cls, attr: InstrumentedAttribute, join_method: str
+        cls, attr: InstrumentedAttribute[Any], join_method: str
     ) -> _AbstractLoad:
         """Returns an eager loading option for the given attr.
 
