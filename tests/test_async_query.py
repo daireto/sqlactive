@@ -30,7 +30,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_init(self):
         """Test for ``fill`` function."""
-
         logger.info('Testing constructor...')
         async_query = AsyncQuery(User.query)
         users = await async_query.all()
@@ -38,7 +37,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_query(self):
         """Test for ``fill`` function."""
-
         logger.info('Testing "query" property...')
         async_query = User.get_async_query()
         async_query.query = async_query.query.limit(1)
@@ -48,7 +46,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_str_and_repr(self):
         """Test for ``__str__`` and ``__repr__`` functions."""
-
         logger.info('Testing "__str__" and "__repr__" functions...')
         async_query = User.get_async_query()
         self.assertEqual(repr(async_query), str(async_query.query))
@@ -56,7 +53,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_filter_and_find(self):
         """Test for ``filter`` and ``find`` functions."""
-
         logger.info('Testing "filter" and "find" functions...')
         async_query = User.get_async_query()
         user = await async_query.filter(username='Joe156').one()
@@ -66,12 +62,15 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_sort(self):
         """Test for ``sort`` function."""
-
         logger.info('Testing "sort" function...')
         async_query = User.get_async_query()
         users = await async_query.filter(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
-        users = await async_query.sort(User.username).filter(username__like='Ji%').all()
+        users = (
+            await async_query.sort(User.username)
+            .filter(username__like='Ji%')
+            .all()
+        )
         self.assertEqual('Jill874', users[0].username)
         async_query = Post.get_async_query()
         posts = await async_query.sort('-rating', 'user___name').all()
@@ -79,7 +78,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_skip(self):
         """Test for ``skip`` function."""
-
         logger.info('Testing "skip" function...')
         async_query = User.get_async_query()
         users = await async_query.skip(1).filter(username__like='Ji%').all()
@@ -89,7 +87,6 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
 
     async def test_take_and_top(self):
         """Test for ``take`` and ``top`` functions."""
-
         logger.info('Test for "take" and "top" functions...')
         async_query = User.get_async_query()
         users = await async_query.take(2).filter(username__like='Ji%').all()

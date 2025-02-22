@@ -15,8 +15,12 @@ class BaseModel(ActiveRecordBaseModel):
 class User(BaseModel):
     __tablename__ = 'users'
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    username: Mapped[str] = mapped_column(String(18), nullable=False, unique=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True, index=True
+    )
+    username: Mapped[str] = mapped_column(
+        String(18), nullable=False, unique=True
+    )
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     age: Mapped[int] = mapped_column(nullable=False)
 
@@ -35,7 +39,9 @@ class User(BaseModel):
 class Post(BaseModel):
     __tablename__ = 'posts'
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True, index=True
+    )
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     body: Mapped[str] = mapped_column(nullable=False)
     rating: Mapped[int] = mapped_column(nullable=False)
@@ -49,7 +55,9 @@ class Post(BaseModel):
 class Comment(BaseModel):
     __tablename__ = 'comments'
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True, index=True
+    )
     body: Mapped[str] = mapped_column(nullable=False)
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
@@ -61,19 +69,25 @@ class Comment(BaseModel):
 class Product(BaseModel):
     __tablename__ = 'products'
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True, index=True
+    )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[float] = mapped_column(nullable=False)
 
-    sells: Mapped[list['Sell']] = relationship(back_populates='product', viewonly=True)
+    sells: Mapped[list['Sell']] = relationship(
+        back_populates='product', viewonly=True
+    )
 
 
 class Sell(BaseModel):
     __tablename__ = 'sells'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey('products.id'), primary_key=True
+    )
     quantity: Mapped[int] = mapped_column(nullable=False)
 
     product: Mapped['Product'] = relationship(back_populates='sells')

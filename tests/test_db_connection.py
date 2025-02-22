@@ -14,7 +14,6 @@ class TestDBConnection(unittest.IsolatedAsyncioTestCase):
 
     async def test_all(self):
         """Test for ``init_db`` function."""
-
         logger.info('Testing constructor...')
         conn = DBConnection(self.DB_URL, echo=False)
 

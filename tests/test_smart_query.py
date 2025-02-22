@@ -46,9 +46,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_operators(self):
         """Test for operators."""
-
         logger.info('Testing operators...')
-        ops = SmartQueryMixin._operators
         today = datetime.today()
         post_with_topic = await Post(
             title='Lorem ipsum',
@@ -68,9 +66,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     post.topic is None
-                    for post in await Post.where(
-                        ops['isnull'](Post.topic, True)
-                    ).all()
+                    for post in await Post.where(topic__isnull=True).all()
                 ]
             )
         )
@@ -78,9 +74,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     post.topic is not None
-                    for post in await Post.where(
-                        ops['isnull'](Post.topic, False)
-                    ).all()
+                    for post in await Post.where(topic__isnull=False).all()
                 ]
             )
         )
@@ -88,57 +82,41 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     user.age == 25
-                    for user in await User.where(ops['eq'](User.age, 25)).all()
+                    for user in await User.where(age__exact=25).all()
                 ]
             )
         )
         self.assertTrue(
             all(
-                [
-                    user.age != 25
-                    for user in await User.where(ops['ne'](User.age, 25)).all()
-                ]
+                [user.age == 25 for user in await User.where(age__eq=25).all()]
             )
         )
         self.assertTrue(
             all(
-                [
-                    user.age > 25
-                    for user in await User.where(ops['gt'](User.age, 25)).all()
-                ]
+                [user.age != 25 for user in await User.where(age__ne=25).all()]
             )
         )
         self.assertTrue(
-            all(
-                [
-                    user.age >= 25
-                    for user in await User.where(ops['ge'](User.age, 25)).all()
-                ]
-            )
+            all([user.age > 25 for user in await User.where(age__gt=25).all()])
         )
         self.assertTrue(
             all(
-                [
-                    user.age < 25
-                    for user in await User.where(ops['lt'](User.age, 25)).all()
-                ]
+                [user.age >= 25 for user in await User.where(age__ge=25).all()]
             )
         )
         self.assertTrue(
+            all([user.age < 25 for user in await User.where(age__lt=25).all()])
+        )
+        self.assertTrue(
             all(
-                [
-                    user.age <= 25
-                    for user in await User.where(ops['le'](User.age, 0)).all()
-                ]
+                [user.age <= 25 for user in await User.where(age__le=25).all()]
             )
         )
         self.assertTrue(
             all(
                 [
                     user.age == 20 or user.age == 30
-                    for user in await User.where(
-                        ops['in'](User.age, [20, 30])
-                    ).all()
+                    for user in await User.where(age__in=[20, 30]).all()
                 ]
             )
         )
@@ -146,9 +124,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     user.age != 20 and user.age != 30
-                    for user in await User.where(
-                        ops['notin'](User.age, [20, 30])
-                    ).all()
+                    for user in await User.where(age__notin=[20, 30]).all()
                 ]
             )
         )
@@ -156,8 +132,32 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     user.age >= 20 and user.age <= 30
+                    for user in await User.where(age__between=[20, 30]).all()
+                ]
+            )
+        )
+        self.assertTrue(
+            all(
+                [
+                    user.username.startswith('Ji')
+                    for user in await User.where(username__like='Ji%').all()
+                ]
+            )
+        )
+        self.assertTrue(
+            all(
+                [
+                    user.username.startswith('Ji')
+                    for user in await User.where(username__ilike='ji%').all()
+                ]
+            )
+        )
+        self.assertTrue(
+            all(
+                [
+                    user.username.startswith('Ji')
                     for user in await User.where(
-                        ops['between'](User.age, [20, 30])
+                        username__startswith='Ji'
                     ).all()
                 ]
             )
@@ -167,37 +167,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.username.startswith('Ji')
                     for user in await User.where(
-                        ops['like'](User.username, 'Ji%')
-                    ).all()
-                ]
-            )
-        )
-        self.assertTrue(
-            all(
-                [
-                    user.username.startswith('Ji')
-                    for user in await User.where(
-                        ops['ilike'](User.username, 'ji%')
-                    ).all()
-                ]
-            )
-        )
-        self.assertTrue(
-            all(
-                [
-                    user.username.startswith('Ji')
-                    for user in await User.where(
-                        ops['startswith'](User.username, 'Ji')
-                    ).all()
-                ]
-            )
-        )
-        self.assertTrue(
-            all(
-                [
-                    user.username.startswith('Ji')
-                    for user in await User.where(
-                        ops['istartswith'](User.username, 'ji')
+                        username__istartswith='ji'
                     ).all()
                 ]
             )
@@ -207,7 +177,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.name.endswith('Anderson')
                     for user in await User.where(
-                        ops['endswith'](User.name, 'Anderson')
+                        name__endswith='Anderson'
                     ).all()
                 ]
             )
@@ -217,7 +187,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.name.endswith('Anderson')
                     for user in await User.where(
-                        ops['iendswith'](User.name, 'anderson')
+                        name__iendswith='anderson'
                     ).all()
                 ]
             )
@@ -226,9 +196,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
             all(
                 [
                     'wa' in user.name.lower()
-                    for user in await User.where(
-                        ops['contains'](User.name, 'Wa')
-                    ).all()
+                    for user in await User.where(name__contains='Wa').all()
                 ]
             )
         )
@@ -237,7 +205,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year == today.year
                     for user in await User.where(
-                        ops['year'](User.created_at, today.year)
+                        created_at__year=today.year
                     ).all()
                 ]
             )
@@ -247,7 +215,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year != (today.year - 1)
                     for user in await User.where(
-                        ops['year_ne'](User.created_at, today.year)
+                        created_at__year_ne=today.year
                     ).all()
                 ]
             )
@@ -257,7 +225,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year > (today.year - 1)
                     for user in await User.where(
-                        ops['year_gt'](User.created_at, today.year)
+                        created_at__year_gt=today.year
                     ).all()
                 ]
             )
@@ -267,7 +235,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year >= (today.year - 1)
                     for user in await User.where(
-                        ops['year_ge'](User.created_at, today.year)
+                        created_at__year_ge=today.year
                     ).all()
                 ]
             )
@@ -277,7 +245,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year < (today.year + 1)
                     for user in await User.where(
-                        ops['year_lt'](User.created_at, today.year)
+                        created_at__year_lt=today.year
                     ).all()
                 ]
             )
@@ -287,7 +255,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.year <= (today.year + 1)
                     for user in await User.where(
-                        ops['year_le'](User.created_at, today.year)
+                        created_at__year_le=today.year
                     ).all()
                 ]
             )
@@ -297,7 +265,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month == today.month
                     for user in await User.where(
-                        ops['month'](User.created_at, today.month)
+                        created_at__month=today.month
                     ).all()
                 ]
             )
@@ -307,7 +275,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month != (today.month - 1)
                     for user in await User.where(
-                        ops['month_ne'](User.created_at, today.month)
+                        created_at__month_ne=today.month
                     ).all()
                 ]
             )
@@ -317,7 +285,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month > (today.month - 1)
                     for user in await User.where(
-                        ops['month_gt'](User.created_at, today.month)
+                        created_at__month_gt=today.month
                     ).all()
                 ]
             )
@@ -327,7 +295,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month >= (today.month - 1)
                     for user in await User.where(
-                        ops['month_ge'](User.created_at, today.month)
+                        created_at__month_ge=today.month
                     ).all()
                 ]
             )
@@ -337,7 +305,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month < (today.month + 1)
                     for user in await User.where(
-                        ops['month_lt'](User.created_at, today.month)
+                        created_at__month_lt=today.month
                     ).all()
                 ]
             )
@@ -347,7 +315,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.month <= (today.month + 1)
                     for user in await User.where(
-                        ops['month_le'](User.created_at, today.month)
+                        created_at__month_le=today.month
                     ).all()
                 ]
             )
@@ -357,7 +325,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day == today.day
                     for user in await User.where(
-                        ops['day'](User.created_at, today.day)
+                        created_at__day=today.day
                     ).all()
                 ]
             )
@@ -367,7 +335,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day != (today.day - 1)
                     for user in await User.where(
-                        ops['day_ne'](User.created_at, today.day)
+                        created_at__day_ne=today.day
                     ).all()
                 ]
             )
@@ -377,7 +345,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day > (today.day - 1)
                     for user in await User.where(
-                        ops['day_gt'](User.created_at, today.day)
+                        created_at__day_gt=today.day
                     ).all()
                 ]
             )
@@ -387,7 +355,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day >= (today.day - 1)
                     for user in await User.where(
-                        ops['day_ge'](User.created_at, today.day)
+                        created_at__day_ge=today.day
                     ).all()
                 ]
             )
@@ -397,7 +365,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day < (today.day + 1)
                     for user in await User.where(
-                        ops['day_lt'](User.created_at, today.day)
+                        created_at__day_lt=today.day
                     ).all()
                 ]
             )
@@ -407,7 +375,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [
                     user.created_at.day <= (today.day + 1)
                     for user in await User.where(
-                        ops['day_le'](User.created_at, today.day)
+                        created_at__day_le=today.day
                     ).all()
                 ]
             )
@@ -418,7 +386,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_filter_expr(self):
         """Test for ``filter_expr`` function."""
-
         logger.info('Testing "filter_expr" function...')
         expressions = User.filter_expr(
             username__like='Ji%', age__in=[30, 32, 34]
@@ -458,7 +425,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_order_expr(self):
         """Test for ``order_expr`` function."""
-
         logger.info('Testing "order_expr" function...')
         expressions = User.order_expr('-age', 'username')
         expected_expressions = [desc(User.age), asc(User.username)]
@@ -473,7 +439,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_columns_expr(self):
         """Test for ``columns_expr`` function."""
-
         logger.info('Testing "columns_expr" function...')
         expressions = Post.columns_expr('rating', 'title')
         expected_expressions = [Post.rating, Post.title]
@@ -495,7 +460,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_eager_expr(self):
         """Test for ``eager_expr`` function."""
-
         logger.info('Testing "eager_expr" function...')
         schema = {
             User.posts: JOINED,
@@ -522,7 +486,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     def test_flatten_filter_keys(self):
         """Test for ``_flatten_filter_keys`` function."""
-
         logger.info('Testing "_flatten_filter_keys" function...')
         filter_keys = list(
             SmartQueryMixin._flatten_filter_keys(
@@ -557,7 +520,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     def test_make_aliases_from_attrs(self):
         """Test for ``_make_aliases_from_attrs`` function."""
-
         logger.info('Testing "_make_aliases_from_attrs" function...')
         aliases = OrderedDict()
         SmartQueryMixin._make_aliases_from_attrs(
@@ -585,7 +547,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     def test_recurse_filters(self):
         """Test for ``_recurse_filters`` function."""
-
         logger.info('Testing "_recurse_filters" function...')
         aliases = OrderedDict(
             {
@@ -633,7 +594,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     def test_sort_query(self):
         """Test for ``_sort_query`` function."""
-
         logger.info('Testing "_sort_query" function...')
         aliases = OrderedDict(
             {
@@ -662,7 +622,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     def test_group_query(self):
         """Test for ``_group_query`` function."""
-
         logger.info('Testing "_group_query" function...')
         aliases = OrderedDict(
             {
@@ -689,7 +648,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_eager_expr_from_schema(self):
         """Test for ``_eager_expr_from_schema`` function."""
-
         logger.info('Testing "_eager_expr_from_schema" function...')
         schema = {
             Post.user: JOINED,

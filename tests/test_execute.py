@@ -33,7 +33,6 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
 
     async def test_execute(self):
         """Test for ``sqlactive.conn.execute`` function."""
-
         logger.info('Testing "execute" function...')
         query = select(User.age, func.count(User.id)).group_by(User.age)
         result = await execute(query, BaseModel)
@@ -50,7 +49,6 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
         """Test for ``sqlactive.conn.execute`` function
         without passing a base model.
         """
-
         logger.info('Testing "execute" function without base model...')
         with self.assertRaises(NoSessionError):
             query = select(User.age, func.count(User.id)).group_by(User.age)
