@@ -62,6 +62,7 @@ extra:
       name: 'LinkedIn: Dairo Mosquera'
 markdown_extensions:
   - admonition
+  - attr_list
   - pymdownx.details
   - pymdownx.superfences
   - def_list

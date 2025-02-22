@@ -2,7 +2,8 @@
 
 ## Installation
 
-You can simply install sqlactive from the [PyPI](https://pypi.org/project/sqlactive/):
+You can simply install sqlactive from the
+[PyPI](https://pypi.org/project/sqlactive/):
 
 ```bash
 pip install sqlactive
@@ -16,10 +17,12 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](api/active-record-mixin.md): Provides a set of ActiveRecord-like
-    helper methods for interacting with the database.
-* [`TimestampMixin`](api/timestamp-mixin.md): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](api/serialization-mixin.md): Provides serialization and deserialization methods.
+* [`ActiveRecordMixin`](api/active-record-mixin.md): Provides a set of
+  ActiveRecord-like helper methods for interacting with the database.
+* [`TimestampMixin`](api/timestamp-mixin.md): Adds the `created_at` and
+  `updated_at` timestamp columns.
+* [`SerializationMixin`](api/serialization-mixin.md): Provides serialization and
+  deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -76,8 +79,8 @@ class Comment(BaseModel):
 
 ???+ warning
 
-    When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
-    in the base class to avoid creating tables for the base class.
+    When defining a `BaseModel` class, don't forget to set `__abstract__` to
+    `True` in the base class to avoid creating tables for the base class.
 
 ???+ tip
 
@@ -91,13 +94,13 @@ class Comment(BaseModel):
         # ...
     ```
 
-    However, it is recommended to define a base model class for your models and
-    inherit from it.
+    However, it is recommended to define a base model class for your models
+    and inherit from it.
 
     Your base model class can also inherit directly from the mixins.
-    For example, if you don't want to implement automatic timestamps don't inherit
-    from `ActiveRecordBaseModel` class. Instead, inherit from `ActiveRecordMixin`
-    and/or `SerializationMixin`:
+    For example, if you don't want to implement automatic timestamps don't
+    inherit from `ActiveRecordBaseModel` class. Instead, inherit from
+    `ActiveRecordMixin` and/or `SerializationMixin`:
 
     ```python
     from sqlactive import ActiveRecordMixin, SerializationMixin
@@ -137,13 +140,14 @@ async with async_engine.begin() as conn:
     await conn.run_sync(BaseModel.metadata.create_all)
 ```
 
-The use of the `expire_on_commit` flag is explained in the warning of [this section](#4-perform-bulk-operations).
+The use of the `expire_on_commit` flag is explained in the warning of
+[this section](#4-perform-bulk-operations).
 
 ???+ tip
 
     Use the `DBConnection` class as a shortcut to initialize the database.
-    The `DBConnection` class is a wrapper around the `async_engine`, `async_sessionmaker`
-    and `async_scoped_session` objects:
+    The `DBConnection` class is a wrapper around the `async_engine`,
+    `async_sessionmaker` and `async_scoped_session` objects:
 
     ```python
     from sqlactive import DBConnection
@@ -153,7 +157,8 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
     await conn.init_db(BaseModel)
     ```
 
-    See the [DB Connection Helper](api/db-connection-helper.md) section for more information.
+    See the [DB Connection Helper](api/db-connection-helper.md) section
+    for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -186,7 +191,21 @@ await user.delete()
 
 ???+ tip
 
-    Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
+    If you need to create a record for a short period of time, you can use the
+    `with` statement:
+
+    ```python
+    with User(name='Bob', age=30) as user:
+        ...
+    ```
+
+    The `with` statement will create the record and delete it at the end of the
+    block.
+
+    Check the [Temporary Records documentation](api/active-record-mixin.md#temporary-records)
+    for more information.
+
+    Also, check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -198,7 +217,7 @@ users = [
     User(username='Bob1234', name='Bob Doe', age=22),
 ]
 
-await User.insert_all(users, refresh=True)
+await User.insert_all(users)
 users = await User.find(username__endswith='Doe').all()
 users  # [<User #1>, <User #2>]
 
@@ -208,54 +227,6 @@ users = await User.find(username__endswith='Doe').all()
 users  # []
 ```
 
-???+ warning
-
-    When calling bulk operation methods, i.e. `save_all`, `insert_all`
-    and `update_all`, the `refresh` flag must be set to `True` in order
-    to access the saved/updated attributes of the affected rows.
-    <br>**NOTE**: This may lead to a higher latency due to additional database queries.
-
-    ```python
-    users = [
-        User(username='John1234', name='John Doe', age=20),
-        User(username='Jane1234', name='Jane Doe', age=21),
-        # ...,
-    ]
-    await User.save_all(users, refresh=True)
-    users[0].updated_at
-    # 2024-12-28 23:00:51
-    ```
-
-    If `refresh` is not set to `True`, a `sqlalchemy.orm.exc.DetachedInstanceError`
-    may be raised when trying to access the updated attributes because the instances
-    are detached (unavailable after commit).
-
-    ```python
-    users = [
-        User(username='John1234', name='John Doe', age=20),
-        User(username='Jane1234', name='Jane Doe', age=21),
-        # ...,
-    ]
-    await User.save_all(users)
-    users[0].updated_at
-    # Traceback (most recent call last):
-    #     ...
-    # sqlalchemy.orm.exc.DetachedInstanceError: Instance <User ...> is not bound
-    # to a Session; attribute refresh operation cannot proceed
-    # (Background on this error at: https://sqlalche.me/e/20/bhk3)
-    ```
-
-    Another option is to set the `expire_on_commit` flag to `False` in the
-    `async_sessionmaker` when initializing the database. However, **this does not update the instances after commit**.
-    It just keeps the instances available after commit.
-
-    ```python
-    async_sessionmaker = async_sessionmaker(
-        bind=async_engine,
-        expire_on_commit=False,
-    )
-    ```
-
 ???+ tip
 
     Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
@@ -263,7 +234,7 @@ users  # []
 
 ### 5. Perform Queries
 
-Perform simple and complex queries, eager loading, and dictionary serialization:
+Perform simple and complex queries with eager loading:
 
 ```python
 from sqlactive import JOINED, SUBQUERY
@@ -297,34 +268,22 @@ user.comments[0].post.title  # Lorem ipsum
 ???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
-    not just being a `backref`.
-    This is because `sqlactive` does not know the relation direction and cannot
-    infer it.
-    So, when defining a relationship like:
-
-    ```python
-    class User(BaseModel):
-        # ...
-        posts: Mapped[list['Post']] = relationship(back_populates='user')
-    ```
-
-    It is required to define the reverse relationship:
-
-    ```python
-    class Post(BaseModel):
-        # ...
-        user: Mapped['User'] = relationship(back_populates='posts')
-    ```
+    not just being a `backref`. See the
+    [About Relationships](api/active-record-mixin.md#about-relationships)
+    section for more information.
 
 ???+ tip
 
     Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
 
-For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
-and `eager_expr` methods can be used.
+For more flexibility, the low-level
+[`filter_expr()`](api/smart-query-mixin.md#filter_expr),
+[`order_expr()`](api/smart-query-mixin.md#order_expr),
+[`column_expr()`](api/smart-query-mixin.md#columns_expr) and
+[`eager_expr()`](api/smart-query-mixin.md#eager_expr) methods can be used.
 
-> **Example of `filter_expr` method usage:**
+> **Example of `filter_expr()` method usage**
 >
 > ```python
 > Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
@@ -337,9 +296,9 @@ and `eager_expr` methods can be used.
 
 ???+ note
 
-    Low-level `filter_expr`, `order_expr`, `column_expr` and `eager_expr` methods
-    are very low-level and does NOT do magic Django-like joins. Use `smart_query`
-    for that:
+    Low-level `filter_expr()`, `order_expr()`, `column_expr()` and
+    `eager_expr()` methods are very low-level and does NOT do magic
+    Django-like joins. Use `smart_query()` for that:
 
     ```python
     query = User.smart_query(
@@ -358,47 +317,32 @@ and `eager_expr` methods can be used.
     )
     ```
 
-???+ tip
-
     Check the [Smart Query Mixin API Reference](api/smart-query-mixin.md#api-reference)
-    for more details about the `smart_query` method and the low-level methods.
+    for more details about the `smart_query()` method and the low-level methods.
 
-### 6. Perform Native Queries
-
-Perform native SQLAlchemy queries using the `execute` method:
-
-```python
-    from sqlalchemy import select, func
-    from sqlactive import execute
-
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query)
-    # [(20, 1), (22, 4), (25, 12)]
-```
-
-If your base model is not `ActiveRecordBaseModel` you must pass your base
-model class to the `base_model` argument of the `execute` method:
+To perform native SQLAlchemy queries asynchronously,
+you can use the `execute()` method:
 
 ```python
-    from sqlalchemy import select, func
-    from sqlactive import ActiveRecordBaseModel, execute
+from sqlalchemy import select, func
+from sqlactive import ActiveRecordBaseModel, execute
 
-    # Note that it does not matter if your base model
-    # inherits from `ActiveRecordBaseModel`, you still
-    # need to pass it to this method
-    class BaseModel(ActiveRecordBaseModel):
-        __abstract__ = True
+class BaseModel(ActiveRecordBaseModel):
+    __abstract__ = True
 
-    class User(BaseModel):
-        __tablename__ = 'users'
-        # ...
+class User(BaseModel):
+    __tablename__ = 'users'
+    # ...
 
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query, BaseModel)
-    # [(20, 1), (22, 4), (25, 12)]
+query = select(User.age, func.count(User.id)).group_by(User.age)
+result = await execute(query, BaseModel)
+# [(20, 1), (22, 4), (25, 12)]
 ```
 
-### 7. Manage Timestamps
+See the [Native SQLAlchemy queries](api/native-sqlalchemy-queries.md)
+documentation for more information.
+
+### 6. Manage Timestamps
 
 Timestamps (`created_at` and `updated_at`) are automatically managed:
 
@@ -415,11 +359,13 @@ user.updated_at  # 2024-12-28 23:00:52
 
 ???+ tip
 
-    Check the [`TimestampMixin`](api/timestamp-mixin.md) class to know how to customize the timestamps behavior.
+    Check the [`TimestampMixin`](api/timestamp-mixin.md) class to know how
+    to customize the timestamps behavior.
 
-### 8. Serialization and Deserialization
+### 7. Serialization and Deserialization
 
-Models can be serialized and deserialized using the `to_dict` and `from_dict` methods:
+Models can be serialized/deserialized to/from dictionaries using
+the `to_dict()` and `from_dict()` methods:
 
 ```python
 user = await User.insert(username='John1234', name='John Doe', age=25)
@@ -430,7 +376,8 @@ user = User.from_dict(user_dict)
 user.name  # John Doe
 ```
 
-Also, models can be serialized and deserialized using the `to_json` and `from_json` methods:
+Also, models can be serialized/deserialized to/from JSON using
+the `to_json()` and `from_json()` methods:
 
 ```python
 user = await User.insert(username='John1234', name='John Doe', age=25)

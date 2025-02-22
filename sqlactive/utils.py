@@ -10,17 +10,14 @@ class classproperty(Generic[_T]):
     """Decorator for a Class-level property.
 
     Usage:
-
-    ```python
-        class Foo:
-            @classproperty
-            def foo(cls):
-                return "foo"
-    ```
+    >>> class Foo:
+    ...     @classproperty
+    ...     def foo(cls):
+    ...         return 'foo'
     >>> Foo.foo
-    # foo
+    'foo'
     >>> Foo().foo
-    # foo
+    'foo'
     """
 
     fget: Callable[[Any], _T]

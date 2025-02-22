@@ -1,28 +1,28 @@
-"""This module defines `ActiveRecordBaseModel` class."""
+"""This module defines ``ActiveRecordBaseModel`` class."""
 
 from .active_record import ActiveRecordMixin
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 
 
-class ActiveRecordBaseModel(ActiveRecordMixin, SerializationMixin, TimestampMixin):
+class ActiveRecordBaseModel(
+    ActiveRecordMixin, SerializationMixin, TimestampMixin
+):
     """This is intended to be a base class for all models.
 
     Inherits from:
 
-    - `ActiveRecordMixin`: Provides a set of ActiveRecord-like
+    - ``ActiveRecordMixin``: Provides a set of ActiveRecord-like
     helper methods for interacting with the database.
-    - `TimestampMixin`: Adds the `created_at` and `updated_at`
+    - ``TimestampMixin``: Adds the ``created_at`` and ``updated_at``
     timestamp columns.
-    - `SerializationMixin`: Provides serialization
+    - ``SerializationMixin``: Provides serialization
     and deserialization methods.
 
-    It is recommended to define a `BaseModel` class that inherits from
-    `ActiveRecordBaseModel` and use it as the base class for all models
-    as shown in the following example:
+    It is recommended to define a ``BaseModel`` class that inherits
+    from ``ActiveRecordBaseModel`` and use it as the base class for all
+    models as shown in the following example::
 
-    Usage:
-    ```python
         from sqlalchemy import Mapped, mapped_column
         from sqlactive import ActiveRecordBaseModel
 
@@ -33,9 +33,8 @@ class ActiveRecordBaseModel(ActiveRecordMixin, SerializationMixin, TimestampMixi
             __tablename__ = 'users'
             id: Mapped[int] = mapped_column(primary_key=True)
             name: Mapped[str] = mapped_column(String(100))
-    ```
 
-    Example:
+    Overview of Active Record methods:
     >>> bob = User.insert(name='Bob')
     >>> bob
     # <User #1>
@@ -56,8 +55,10 @@ class ActiveRecordBaseModel(ActiveRecordMixin, SerializationMixin, TimestampMixi
     >>> User.all()
     # []
 
-    NOTE: When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
-    in the base class to avoid creating tables for the base class.
+    .. note::
+        When defining a ``BaseModel`` class, don't forget to set
+        ``__abstract__`` to ``True`` in the base class to avoid
+        creating tables for the base class.
     """
 
     __abstract__ = True

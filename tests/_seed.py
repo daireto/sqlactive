@@ -1,4 +1,4 @@
-"""`Seed` class to seed database with test data."""
+"""``Seed`` class to seed database with test data."""
 
 from sqlactive.base_model import ActiveRecordBaseModel
 from sqlactive.conn import DBConnection
@@ -9,7 +9,11 @@ from ._models import Comment, Post, Product, Sell, User
 
 class Seed:
 
-    def __init__(self, conn: DBConnection, base_model: type[ActiveRecordBaseModel] | None = None):
+    def __init__(
+        self,
+        conn: DBConnection,
+        base_model: type[ActiveRecordBaseModel] | None = None,
+    ):
         """Creates a new seeder.
 
         Parameters
@@ -76,7 +80,9 @@ class Seed:
                 User(username='George341854', name='George Mason', age=29),
                 User(username='Emily894', name='Emily Watson', age=27),
                 User(username='Kate6485', name='Kate Middleton', age=28),
-                User(username='Jennifer5215', name='Jennifer Lawrence', age=31),
+                User(
+                    username='Jennifer5215', name='Jennifer Lawrence', age=31
+                ),
                 User(username='Jessica3248', name='Jessica Alba', age=30),
                 User(username='Lily9845', name='Lily Collins', age=29),
             ]
@@ -332,14 +338,30 @@ class Seed:
 
         await Product.insert_all(
             [
-                Product(name='Product 1', description='Description 1', price=10.0),
-                Product(name='Product 2', description='Description 2', price=20.0),
-                Product(name='Product 3', description='Description 3', price=30.0),
-                Product(name='Product 4', description='Description 4', price=40.0),
-                Product(name='Product 5', description='Description 5', price=50.0),
-                Product(name='Product 6', description='Description 6', price=60.0),
-                Product(name='Product 7', description='Description 7', price=70.0),
-                Product(name='Product 8', description='Description 8', price=80.0),
+                Product(
+                    name='Product 1', description='Description 1', price=10.0
+                ),
+                Product(
+                    name='Product 2', description='Description 2', price=20.0
+                ),
+                Product(
+                    name='Product 3', description='Description 3', price=30.0
+                ),
+                Product(
+                    name='Product 4', description='Description 4', price=40.0
+                ),
+                Product(
+                    name='Product 5', description='Description 5', price=50.0
+                ),
+                Product(
+                    name='Product 6', description='Description 6', price=60.0
+                ),
+                Product(
+                    name='Product 7', description='Description 7', price=70.0
+                ),
+                Product(
+                    name='Product 8', description='Description 8', price=80.0
+                ),
             ]
         )
 
@@ -348,13 +370,13 @@ class Seed:
 
         await Sell.insert_all(
             [
-                Sell(id=1, product_id=1),
-                Sell(id=2, product_id=2),
-                Sell(id=3, product_id=3),
-                Sell(id=4, product_id=4),
-                Sell(id=5, product_id=5),
-                Sell(id=6, product_id=6),
-                Sell(id=7, product_id=7),
-                Sell(id=8, product_id=8),
+                Sell(id=1, product_id=1, quantity=2),
+                Sell(id=2, product_id=2, quantity=2),
+                Sell(id=3, product_id=3, quantity=5),
+                Sell(id=4, product_id=4, quantity=4),
+                Sell(id=5, product_id=5, quantity=3),
+                Sell(id=6, product_id=6, quantity=4),
+                Sell(id=7, product_id=7, quantity=1),
+                Sell(id=8, product_id=8, quantity=4),
             ]
         )

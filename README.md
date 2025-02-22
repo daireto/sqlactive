@@ -12,8 +12,8 @@
     <a href="https://pypi.org/project/SQLAlchemy" target="_blank">
         <img src="https://img.shields.io/badge/SQLAlchemy-2.0%2B-orange" alt="Supported SQLAlchemy versions">
     </a>
-    <a href="https://github.com/astral-sh/ruff" target="_blank">
-        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+    <a href="https://github.com/daireto/sqlactive/actions" target="_blank">
+        <img src="https://github.com/daireto/sqlactive/actions/workflows/publish.yml/badge.svg" alt="Publish">
     </a>
     <a href='https://coveralls.io/github/daireto/sqlactive?branch=main'>
         <img src='https://coveralls.io/repos/github/daireto/sqlactive/badge.svg?branch=main' alt='Coverage Status' />
@@ -26,17 +26,19 @@
 <!-- omit in toc -->
 # SQLActive
 
-SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
-Bring Django-like queries, automatic timestamps, nested eager loading,
-and dictionary serialization for SQLAlchemy models.
+SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper for
+SQLAlchemy. Bring Django-like queries, automatic timestamps, nested eager
+loading, and serialization/deserialization for SQLAlchemy models.
 
-Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/).
+Heavily inspired by
+[sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/).
 
-Documentation: https://daireto.github.io/sqlactive/
+Visit the [documentation website](https://daireto.github.io/sqlactive/).
 
 <!-- omit in toc -->
 ## Table of Contents
 - [Features](#features)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
   - [1. Define the Models](#1-define-the-models)
@@ -44,13 +46,12 @@ Documentation: https://daireto.github.io/sqlactive/
   - [3. Perform CRUD Operations](#3-perform-crud-operations)
   - [4. Perform Bulk Operations](#4-perform-bulk-operations)
   - [5. Perform Queries](#5-perform-queries)
-  - [6. Perform Native Queries](#6-perform-native-queries)
-  - [7. Manage Timestamps](#7-manage-timestamps)
-  - [8. Serialization and Deserialization](#8-serialization-and-deserialization)
-- [Testing](#testing)
+  - [6. Manage Timestamps](#6-manage-timestamps)
+  - [7. Serialization and Deserialization](#7-serialization-and-deserialization)
+- [Testing and Linting](#testing-and-linting)
   - [Unit Tests](#unit-tests)
   - [Coverage](#coverage)
-  - [Lint](#lint)
+  - [Linting](#linting)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -59,17 +60,24 @@ Documentation: https://daireto.github.io/sqlactive/
 ## Features
 
 - **Asynchronous Support**: Async operations for better scalability.
-- **ActiveRecord-like methods**: Perform CRUD operations with a syntax similar to
-  [Peewee](https://docs.peewee-orm.com/en/latest/).
+- **ActiveRecord-like methods**: Perform CRUD operations with a syntax similar
+  to [Peewee](https://docs.peewee-orm.com/en/latest/).
 - **Django-like queries**: Perform intuitive and
   [expressive queries](https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships).
 - **Nested eager loading**: Load nested relationships efficiently.
 - **Automatic timestamps**: Auto-manage `created_at` and `updated_at` fields.
-- **Dictionary serialization**: Convert models to JSON-friendly dictionaries with ease.
+- **Serialization/deserialization**: Serialize and deserialize models to/from
+  dict or JSON easily.
+
+## Requirements
+
+- Python 3.10+
+- sqlalchemy 2.0+
 
 ## Installation
 
-You can simply install sqlactive from the [PyPI](https://pypi.org/project/sqlactive/):
+You can simply install sqlactive from
+[PyPI](https://pypi.org/project/sqlactive/):
 
 ```bash
 pip install sqlactive
@@ -83,10 +91,13 @@ The `ActiveRecordBaseModel` class provides a base class for your models.
 
 It inherits from:
 
-* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active-record-mixin/): Provides a set of ActiveRecord-like
-    helper methods for interacting with the database.
-* [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp-mixin/): Adds the `created_at` and `updated_at` timestamp columns.
-* [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization-mixin/): Provides serialization and deserialization methods.
+* [`ActiveRecordMixin`](https://daireto.github.io/sqlactive/api/active-record-mixin/):
+  Provides a set of ActiveRecord-like helper methods for interacting with
+  the database.
+* [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp-mixin/):
+  Adds the `created_at` and `updated_at` timestamp columns.
+* [`SerializationMixin`](https://daireto.github.io/sqlactive/api/serialization-mixin/):
+  Provides serialization and deserialization methods.
 
 It is recommended to define a `BaseModel` class that inherits from
 `ActiveRecordBaseModel` and use it as the base class for all models
@@ -142,8 +153,8 @@ class Comment(BaseModel):
 ```
 
 > [!WARNING]
-> When defining a `BaseModel` class, don't forget to set `__abstract__` to `True`
-> in the base class to avoid creating tables for the base class.
+> When defining a `BaseModel` class, don't forget to set `__abstract__` to
+> `True` in the base class to avoid creating tables for the base class.
 
 > [!TIP]
 > The models can directly inherit from the `ActiveRecordBaseModel` class:
@@ -199,12 +210,13 @@ async with async_engine.begin() as conn:
     await conn.run_sync(BaseModel.metadata.create_all)
 ```
 
-The use of the `expire_on_commit` flag is explained in the warning of [this section](#4-perform-bulk-operations).
+The use of the `expire_on_commit` flag is explained in the warning of
+[this section](#4-perform-bulk-operations).
 
 > [!TIP]
 > Use the `DBConnection` class as a shortcut to initialize the database.
-> The `DBConnection` class is a wrapper around the `async_engine`, `async_sessionmaker`
-> and `async_scoped_session` objects:
+> The `DBConnection` class is a wrapper around the `async_engine`,
+> `async_sessionmaker` and `async_scoped_session` objects:
 > ```python
 > from sqlactive import DBConnection
 >
@@ -212,7 +224,9 @@ The use of the `expire_on_commit` flag is explained in the warning of [this sect
 > conn = DBConnection(DATABASE_URL, echo=False)
 > await conn.init_db(BaseModel)
 > ```
-> Check the documentation of [DB Connection Helper](https://daireto.github.io/sqlactive/api/db-connection-helper/) for more information.
+> Check the documentation of
+> [DB Connection Helper](https://daireto.github.io/sqlactive/api/db-connection-helper/)
+> for more information.
 
 ### 3. Perform CRUD Operations
 
@@ -243,7 +257,19 @@ await user.delete()
 > (i.e. a boolean `is_deleted` column).
 
 > [!TIP]
-> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
+> If you need to create a record for a short period of time, you can use the
+> `with` statement:
+> ```python
+> with User(name='Bob', age=30) as user:
+>     ...
+> ```
+> The `with` statement will create the record and delete it at the end of the
+> block.
+>
+> Check the [Temporary Records documentation](https://daireto.github.io/sqlactive/api/active-record-mixin/#temporary-records)
+> for more information.
+>
+> Also, check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 ### 4. Perform Bulk Operations
@@ -255,7 +281,7 @@ users = [
     User(username='Bob1234', name='Bob Doe', age=22),
 ]
 
-await User.insert_all(users, refresh=True)
+await User.insert_all(users)
 users = await User.find(username__endswith='Doe').all()
 users  # [<User #1>, <User #2>]
 
@@ -265,55 +291,13 @@ users = await User.find(username__endswith='Doe').all()
 users  # []
 ```
 
-> [!WARNING]
-> When calling bulk operation methods, i.e. `save_all`, `insert_all` and
-> `update_all`, the `refresh` flag must be set to `True` in order to access
-> the updated attributes of the affected rows.
-> <br>**NOTE**: This may lead to a higher latency due to additional database queries.
-> ```python
-> users = [
->     User(username='John1234', name='John Doe', age=20),
->     User(username='Jane1234', name='Jane Doe', age=21),
->     # ...,
-> ]
-> await User.save_all(users, refresh=True)
-> users[0].updated_at
-> # 2024-12-28 23:00:51
-> ```
-> If `refresh` is not set to `True`, a `sqlalchemy.orm.exc.DetachedInstanceError`
-> may be raised when trying to access the updated attributes because the instances
-> are detached (unavailable after commit).
-> ```python
-> users = [
->     User(username='John1234', name='John Doe', age=20),
->     User(username='Jane1234', name='Jane Doe', age=21),
->     # ...,
-> ]
-> await User.save_all(users)
-> users[0].updated_at
-> # Traceback (most recent call last):
-> #     ...
-> # sqlalchemy.orm.exc.DetachedInstanceError: Instance <User ...> is not bound
-> # to a Session; attribute refresh operation cannot proceed
-> # (Background on this error at: https://sqlalche.me/e/20/bhk3)
-> ```
-> Another option is to set the `expire_on_commit` flag to `False` in the
-> `async_sessionmaker` when initializing the database. However, **this does not update the instances after commit**.
-> It just keeps the instances available after commit.
-> ```python
-> async_sessionmaker = async_sessionmaker(
->     bind=async_engine,
->     expire_on_commit=False,
-> )
-> ```
-
 > [!TIP]
 > Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 ### 5. Perform Queries
 
-Perform simple and complex queries, eager loading, and dictionary serialization:
+Perform simple and complex queries with eager loading:
 
 ```python
 from sqlactive import JOINED, SUBQUERY
@@ -347,29 +331,20 @@ user.comments[0].post.title  # Lorem ipsum
 > [!WARNING]
 > All relations used in filtering/sorting/grouping should be explicitly set,
 > not just being a `backref`.
-> This is because `sqlactive` does not know the relation direction and cannot
-> infer it.
-> So, when defining a relationship like:
-> ```python
-> class User(BaseModel):
->     # ...
->     posts: Mapped[list['Post']] = relationship(back_populates='user')
-> ```
-> It is required to define the reverse relationship:
-> ```python
-> class Post(BaseModel):
->     # ...
->     user: Mapped['User'] = relationship(back_populates='posts')
-> ```
+> See the [About Relationships](https://daireto.github.io/sqlactive/api/active-record-mixin/#about-relationships) section for more information.
 
 > [!TIP]
 > Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
-For more flexibility, the low-level `filter_expr`, `order_expr`, `column_expr`
-and `eager_expr` methods can be used.
+For more flexibility, the low-level
+[`filter_expr()`](https://daireto.github.io/sqlactive/api/smart-query-mixin/#filter_expr),
+[`order_expr()`](https://daireto.github.io/sqlactive/api/smart-query-mixin/#order_expr),
+[`column_expr()`](https://daireto.github.io/sqlactive/api/smart-query-mixin/#columns_expr)
+and [`eager_expr()`](https://daireto.github.io/sqlactive/api/smart-query-mixin/#eager_expr)
+methods can be used.
 
-**Example of `filter_expr` method usage:**
+**Example of `filter_expr()` method usage**
 
 > ```python
 > Post.filter(*Post.filter_expr(rating__gt=2, body='text'))
@@ -381,9 +356,9 @@ and `eager_expr` methods can be used.
 > but also allows magic operators like `rating__gt`.
 
 > [!IMPORTANT]
-> Low-level `filter_expr`, `order_expr`, `column_expr` and `eager_expr` methods
-> are very low-level and does NOT do magic Django-like joins. Use `smart_query`
-> for that:
+> Low-level `filter_expr()`, `order_expr()`, `column_expr()` and
+> `eager_expr()` methods are very low-level and does NOT do magic
+> Django-like joins. Use `smart_query()` for that:
 > ```python
 > query = User.smart_query(
 >     criterion=(or_(User.age == 30, User.age == 32),),
@@ -403,44 +378,31 @@ and `eager_expr` methods can be used.
 
 > [!TIP]
 > Check the [Smart Query Mixin API Reference](https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference)
-> for more details about the `smart_query` method and the low-level methods.
+> for more details about the `smart_query()` method and the low-level methods.
 
-### 6. Perform Native Queries
-
-Perform native SQLAlchemy queries using the `execute` method:
-
-```python
-    from sqlalchemy import select, func
-    from sqlactive import execute
-
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query)
-    # [(20, 1), (22, 4), (25, 12)]
-```
-
-If your base model is not `ActiveRecordBaseModel` you must pass your base
-model class to the `base_model` argument of the `execute` method:
+To perform native SQLAlchemy queries asynchronously,
+you can use the `execute()` method:
 
 ```python
-    from sqlalchemy import select, func
-    from sqlactive import ActiveRecordBaseModel, execute
+from sqlalchemy import select, func
+from sqlactive import ActiveRecordBaseModel, execute
 
-    # Note that it does not matter if your base model
-    # inherits from `ActiveRecordBaseModel`, you still
-    # need to pass it to this method
-    class BaseModel(ActiveRecordBaseModel):
-        __abstract__ = True
+class BaseModel(ActiveRecordBaseModel):
+    __abstract__ = True
 
-    class User(BaseModel):
-        __tablename__ = 'users'
-        # ...
+class User(BaseModel):
+    __tablename__ = 'users'
+    # ...
 
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query, BaseModel)
-    # [(20, 1), (22, 4), (25, 12)]
+query = select(User.age, func.count(User.id)).group_by(User.age)
+result = await execute(query, BaseModel)
+# [(20, 1), (22, 4), (25, 12)]
 ```
 
-### 7. Manage Timestamps
+See the [Native SQLAlchemy queries](https://daireto.github.io/sqlactive/api/native-sqlalchemy-queries/)
+documentation for more information.
+
+### 6. Manage Timestamps
 
 Timestamps (`created_at` and `updated_at`) are automatically managed:
 
@@ -459,9 +421,10 @@ user.updated_at  # 2024-12-28 23:00:52
 > Check the [`TimestampMixin`](https://daireto.github.io/sqlactive/api/timestamp-mixin/)
 > class to know how to customize the timestamps behavior.
 
-### 8. Serialization and Deserialization
+### 7. Serialization and Deserialization
 
-Models can be serialized and deserialized using the `to_dict` and `from_dict` methods:
+Models can be serialized/deserialized to/from dictionaries using
+the `to_dict()` and `from_dict()` methods:
 
 ```python
 user = await User.insert(username='John1234', name='John Doe', age=25)
@@ -472,7 +435,8 @@ user = User.from_dict(user_dict)
 user.name  # John Doe
 ```
 
-Also, models can be serialized and deserialized using the `to_json` and `from_json` methods:
+Also, models can be serialized/deserialized to/from JSON using
+the `to_json()` and `from_json()` methods:
 
 ```python
 user = await User.insert(username='John1234', name='John Doe', age=25)
@@ -483,7 +447,7 @@ user = User.from_json(user_json)
 user.name  # John Doe
 ```
 
-## Testing
+## Testing and Linting
 
 ### Unit Tests
 
@@ -499,8 +463,9 @@ To run a specific test, use the following command:
 python -m unittest tests.<test_name>
 ```
 
-**Available tests:**
+**Available tests**
 - `test_active_record.py`
+- `test_async_query.py`
 - `test_db_connection.py`
 - `test_execute.py`
 - `test_inspection.py`
@@ -533,7 +498,7 @@ To generate the HTML report, run the following command:
 python -m coverage html -d htmlcov
 ```
 
-### Lint
+### Linting
 
 First, install the `ruff` package:
 
@@ -557,11 +522,12 @@ Please read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Support
 
 If you find this project useful, give it a ⭐ on GitHub to show your support!
 
-Also, give it a ⭐ to [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/)
+Also, give it a ⭐ to
+[sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/)
 which inspired this project!
