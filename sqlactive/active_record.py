@@ -2261,7 +2261,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def get_primary_key_name(cls) -> str:
         """Gets the primary key name of the model.
 
-        .. deprecated:: 0.2.0
+        .. deprecated:: 0.2
             This method will be removed in future versions.
             Use ``primary_key_name`` property instead.
 
