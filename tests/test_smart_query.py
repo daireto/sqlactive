@@ -48,36 +48,38 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         """Test for operators."""
         logger.info('Testing operators...')
         today = datetime.today()
-        post_with_topic = await Post(
+        post_with_topic = Post(
             title='Lorem ipsum',
             body='Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             rating=4,
             user_id=1,
             topic='Some topic',
-        ).save()
-        post_without_topic = await Post(
+        )
+        post_without_topic = Post(
             title='Lorem ipsum',
             body='Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             rating=4,
             user_id=1,
-        ).save()
+        )
 
-        self.assertTrue(
-            all(
-                [
-                    post.topic is None
-                    for post in await Post.where(topic__isnull=True).all()
-                ]
+        async with post_with_topic, post_without_topic:
+            self.assertTrue(
+                all(
+                    [
+                        post.topic is None
+                        for post in await Post.where(topic__isnull=True).all()
+                    ]
+                )
             )
-        )
-        self.assertTrue(
-            all(
-                [
-                    post.topic is not None
-                    for post in await Post.where(topic__isnull=False).all()
-                ]
+            self.assertTrue(
+                all(
+                    [
+                        post.topic is not None
+                        for post in await Post.where(topic__isnull=False).all()
+                    ]
+                )
             )
-        )
+
         self.assertTrue(
             all(
                 [
@@ -380,9 +382,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 ]
             )
         )
-
-        # clean up
-        await Post.delete_all([post_with_topic, post_without_topic])
 
     async def test_filter_expr(self):
         """Test for ``filter_expr`` function."""
