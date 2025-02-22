@@ -1062,9 +1062,9 @@ def smart_query(
 > >>> [user.username for user in users]
 > ['Bob28', 'Ian48', 'Jessica3248']
 > >>> users[0].posts[0].title
-Lorem ipsum
+> Lorem ipsum
 > >>> users[0].comments[0].post.title
-Lorem ipsum
+> Lorem ipsum
 > ```
 
 #### apply_search_filter

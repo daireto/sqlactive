@@ -5,9 +5,34 @@ scoped sessions.
 
 ## API Reference
 
+### Class Properties
+
+#### AsyncSession
+
+```python
+@classproperty
+def AsyncSession() -> async_scoped_session[AsyncSession]
+```
+
+> Async session factory.
+
+> **Raises**
+
+> - `NoSessionError`: If no session is available.
+
+> **Examples**
+
+> Usage:
+> ```python
+> async with SaActiveRecord.AsyncSession() as session:
+>     session.add(model)
+>     await session.commit()
+> ```
+
 ### Class Methods
 
 #### set_session
+
 ```python
 @classmethod
 def set_session(session: async_scoped_session[AsyncSession])
@@ -44,37 +69,10 @@ def set_session(session: async_scoped_session[AsyncSession])
 > ```
 
 #### close_session
+
 ```python
 @classmethod
 def close_session()
 ```
 
 > Closes the async session.
-
-> **Examples**
-
-> ```python
-> ActiveRecordBaseModel.close_session()
-> ```
-
-### Class Properties
-
-#### AsyncSession
-```python
-@classproperty
-def AsyncSession() -> async_scoped_session[AsyncSession]
-```
-
-> Async session factory.
-
-> **Raises**
-
-> - `NoSessionError`: If no session is available.
-
-> **Examples**
-
-> ```python
-> async with SaActiveRecord.AsyncSession() as session:
->     session.add(model)
->     await session.commit()
-> ```

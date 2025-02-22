@@ -118,7 +118,7 @@ i.e. `User`), the session will be set automatically.
 
 > Calling `set_session` from either a base model or a model:
 >
-> ```pycon
+> ```python
 > # from your base model class (recommended)
 > YourBaseModel.set_session(session)
 >
@@ -135,7 +135,7 @@ i.e. `User`), the session will be set automatically.
 >
 > Calling `set_session` from the `AsyncQuery` instance:
 >
-> ```pycon
+> ```python
 > # create a instance
 > query = select(User)
 > async_query = AsyncQuery(query)
@@ -152,20 +152,20 @@ i.e. `User`), the session will be set automatically.
 Example of usage:
 
 ```python
-    query = select(User)
-    async_query = AsyncQuery(query)
-    async_query = async_query.where(name__like='%John%').sort('-created_at')
-    async_query = async_query.limit(2)
-    users = await async_query.all()
+query = select(User)
+async_query = AsyncQuery(query)
+async_query = async_query.where(name__like='%John%').sort('-created_at')
+async_query = async_query.limit(2)
+users = await async_query.all()
 ```
 
 To get the `sqlalchemy.sql.Select` instance to use native SQLAlchemy methods
 use the `query` property:
 
 ```python
-    query = select(User)
-    async_query = AsyncQuery(query)
-    async_query.query  # <sqlalchemy.sql.Select at 0x...>
+query = select(User)
+async_query = AsyncQuery(query)
+async_query.query  # <sqlalchemy.sql.Select at 0x...>
 ```
 
 ???+ warning

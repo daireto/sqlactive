@@ -100,7 +100,6 @@ class DBConnection:
             Keyword arguments to be passed to the
             ``sqlalchemy.ext.asyncio.create_async_engine`` function.
         """
-
         self.async_engine = create_async_engine(url, **kw)
         self.async_sessionmaker = async_sessionmaker(
             bind=self.async_engine, expire_on_commit=False
@@ -130,7 +129,6 @@ class DBConnection:
             conn = DBConnection(DATABASE_URL, echo=True)
             asyncio.run(conn.init_db(BaseModel)) # Pass your base model
         """
-
         if not base_model:
             base_model = ActiveRecordBaseModel
 
@@ -165,7 +163,6 @@ class DBConnection:
 
             asyncio.run(conn.close(BaseModel))  # Pass your base model
         """
-
         await self.async_engine.dispose()
         if base_model:
             base_model.close_session()
@@ -205,7 +202,7 @@ async def execute(
             # ...
 
         query = select(User.age, func.count(User.id)).group_by(User.age)
-        result = await execute(query, BaseModel)
+        result = await execute(query, BaseModel)  # or execute(query, User)
 
     .. warning::
         Your base model must have a session in order to use this method.
@@ -214,7 +211,6 @@ async def execute(
         your base model, you can call its ``set_session`` method
         to set the session.
     """
-
     if not base_model:
         base_model = ActiveRecordBaseModel
     async with base_model.AsyncSession() as session:

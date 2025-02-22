@@ -367,34 +367,34 @@ and `eager_expr` methods can be used.
 Perform native SQLAlchemy queries using the `execute` method:
 
 ```python
-    from sqlalchemy import select, func
-    from sqlactive import execute
+from sqlalchemy import select, func
+from sqlactive import execute
 
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query)
-    # [(20, 1), (22, 4), (25, 12)]
+query = select(User.age, func.count(User.id)).group_by(User.age)
+result = await execute(query)
+# [(20, 1), (22, 4), (25, 12)]
 ```
 
 If your base model is not `ActiveRecordBaseModel` you must pass your base
 model class to the `base_model` argument of the `execute` method:
 
 ```python
-    from sqlalchemy import select, func
-    from sqlactive import ActiveRecordBaseModel, execute
+from sqlalchemy import select, func
+from sqlactive import ActiveRecordBaseModel, execute
 
-    # Note that it does not matter if your base model
-    # inherits from `ActiveRecordBaseModel`, you still
-    # need to pass it to this method
-    class BaseModel(ActiveRecordBaseModel):
-        __abstract__ = True
+# Note that it does not matter if your base model
+# inherits from `ActiveRecordBaseModel`, you still
+# need to pass it to this method
+class BaseModel(ActiveRecordBaseModel):
+    __abstract__ = True
 
-    class User(BaseModel):
-        __tablename__ = 'users'
-        # ...
+class User(BaseModel):
+    __tablename__ = 'users'
+    # ...
 
-    query = select(User.age, func.count(User.id)).group_by(User.age)
-    result = await execute(query, BaseModel)
-    # [(20, 1), (22, 4), (25, 12)]
+query = select(User.age, func.count(User.id)).group_by(User.age)
+result = await execute(query, BaseModel)
+# [(20, 1), (22, 4), (25, 12)]
 ```
 
 ### 7. Manage Timestamps
