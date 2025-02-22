@@ -48,10 +48,10 @@ Visit the [documentation website](https://daireto.github.io/sqlactive/).
   - [5. Perform Queries](#5-perform-queries)
   - [6. Manage Timestamps](#6-manage-timestamps)
   - [7. Serialization and Deserialization](#7-serialization-and-deserialization)
-- [Testing](#testing)
+- [Testing and Linting](#testing-and-linting)
   - [Unit Tests](#unit-tests)
   - [Coverage](#coverage)
-  - [Lint](#lint)
+  - [Linting](#linting)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -435,7 +435,7 @@ user = User.from_json(user_json)
 user.name  # John Doe
 ```
 
-## Testing
+## Testing and Linting
 
 ### Unit Tests
 
@@ -486,7 +486,7 @@ To generate the HTML report, run the following command:
 python -m coverage html -d htmlcov
 ```
 
-### Lint
+### Linting
 
 First, install the `ruff` package:
 
