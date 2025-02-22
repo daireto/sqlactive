@@ -17,23 +17,9 @@ It uses the functionality of the [`Inspection Mixin`](inspection-mixin.md).
 ???+ warning
 
     All relations used in filtering/sorting/grouping should be explicitly set,
-    not just being a `backref`. This is because SQLActive does not know the
-    relation direction and cannot infer it. So, when defining a relationship
-    like:
-
-    ```python
-    class User(BaseModel):
-        # ...
-        posts: Mapped[list['Post']] = relationship(back_populates='user')
-    ```
-
-    It is required to define the reverse relationship:
-
-    ```python
-    class Post(BaseModel):
-        # ...
-        user: Mapped['User'] = relationship(back_populates='posts')
-    ```
+    not just being a `backref`. See the
+    [About Relationships](active-record-mixin.md#about-relationships) section
+    for more information.
 
 ???+ info
 

@@ -12,8 +12,8 @@
     <a href="https://pypi.org/project/SQLAlchemy" target="_blank">
         <img src="https://img.shields.io/badge/SQLAlchemy-2.0%2B-orange" alt="Supported SQLAlchemy versions">
     </a>
-    <a href="https://github.com/astral-sh/ruff" target="_blank">
-        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+    <a href="https://github.com/daireto/sqlactive/actions" target="_blank">
+        <img src="https://github.com/daireto/sqlactive/actions/workflows/publish.yml/badge.svg" alt="Publish">
     </a>
     <a href='https://coveralls.io/github/daireto/sqlactive?branch=main'>
         <img src='https://coveralls.io/repos/github/daireto/sqlactive/badge.svg?branch=main' alt='Coverage Status' />
@@ -28,24 +28,35 @@
 [SQLActive](https://github.com/daireto/sqlactive) is a lightweight
 and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 Bring Django-like queries, automatic timestamps, nested eager loading,
-and dictionary serialization for SQLAlchemy models.
+and serialization/deserialization for SQLAlchemy models.
 
-Heavily inspired by [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins).
+Heavily inspired by
+[sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins).
 
-The source code for this project is available on [GitHub](https://github.com/daireto/sqlactive).
+The source code for this project is available on
+[GitHub](https://github.com/daireto/sqlactive).
 
 ## Features
 
 - **Asynchronous Support**: Async operations for better scalability.
-- **ActiveRecord-like methods**: Perform CRUD operations with a syntax similar to
-  [Peewee](https://docs.peewee-orm.com/en/latest/).
+- **ActiveRecord-like methods**: Perform CRUD operations with a syntax similar
+  to [Peewee](https://docs.peewee-orm.com/en/latest/).
 - **Django-like queries**: Perform intuitive and
   [expressive queries](https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships).
 - **Nested eager loading**: Load nested relationships efficiently.
 - **Automatic timestamps**: Auto-manage `created_at` and `updated_at` fields.
-- **Dictionary serialization**: Convert models to JSON-friendly dictionaries with ease.
+- **Serialization/deserialization**: Serialize and deserialize models to/from
+  dict or JSON easily.
+
+## Requirements
+
+- Python 3.10+
+- sqlalchemy 2.0+
 
 ## Installation
+
+You can simply install sqlactive from
+[PyPI](https://pypi.org/project/sqlactive/):
 
 ```bash
 pip install sqlactive

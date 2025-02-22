@@ -5,6 +5,13 @@ The `AsyncQuery` class is an Async wrapper for `sqlalchemy.sql.Select`.
 It implements the functionality of both [`Session`](session-mixin.md)
 and [`Smart Queries`](smart-query-mixin.md) mixins.
 
+???+ warning
+
+    All relations used in filtering/sorting/grouping should be explicitly set,
+    not just being a `backref`. See the
+    [About Relationships](active-record-mixin.md#about-relationships) section
+    for more information.
+
 ???+ info
 
     The examples below assume the following models:

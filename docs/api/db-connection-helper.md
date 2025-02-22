@@ -16,6 +16,11 @@ db = DBConnection(DATABASE_URL, echo=False)
 This is a shortcut:
 
 ```python
+from asyncio import current_task
+from sqlalchemy.ext.asyncio import (
+    create_async_engine, async_sessionmaker, async_scoped_session
+)
+
 DATABASE_URL = 'sqlite+aiosqlite://'
 async_engine = create_async_engine(DATABASE_URL, echo=False)
 async_sessionmaker = async_sessionmaker(bind=async_engine, expire_on_commit=False)
@@ -36,8 +41,7 @@ The `DBConnection` class has the following methods:
 
 #### init_db
 
-Initialize the database tables.
-It also sets the `session` attribute of the base model to
+Initialize the database tables. It also sets the session of the base model to
 the `async_scoped_session` async session factory:
 
 ```python
@@ -67,8 +71,8 @@ asyncio.run(conn.init_db(BaseModel)) # Pass your base model
 
 #### close
 
-Close the database connection.
-It also sets the `session` attribute of the base model to `None`:
+Close the database connection. It also sets the session of the base model
+to `None`:
 
 ```python
 from sqlactive import DBConnection

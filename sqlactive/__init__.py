@@ -3,7 +3,7 @@
 
 SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper
 for SQLAlchemy. Bring Django-like queries, automatic timestamps, nested
-eager loading, and dictionary serialization for SQLAlchemy models.
+eager loading, and serialization/deserialization for SQLAlchemy models.
 
 Documentation: https://daireto.github.io/sqlactive/
 
