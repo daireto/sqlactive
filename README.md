@@ -257,7 +257,19 @@ await user.delete()
 > (i.e. a boolean `is_deleted` column).
 
 > [!TIP]
-> Check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
+> If you need to create a record for a short period of time, you can use the
+> `with` statement:
+> ```python
+> with User(name='Bob', age=30) as user:
+>     ...
+> ```
+> The `with` statement will create the record and delete it at the end of the
+> block.
+>
+> Check the [Temporary Records documentation](https://daireto.github.io/sqlactive/api/active-record-mixin/#temporary-records)
+> for more information.
+>
+> Also, check the [Active Record Mixin API Reference](https://daireto.github.io/sqlactive/api/active-record-mixin/#api-reference)
 > to see all the available methods.
 
 ### 4. Perform Bulk Operations

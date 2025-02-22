@@ -195,6 +195,48 @@ await User.delete_all(users)
 await User.destroy(1, 2, 3)  # Deletes users with IDs 1, 2, and 3
 ```
 
+#### Temporary Records
+
+If you need to create a record for a short period of time, you can use the
+`with` statement:
+
+```python
+with User(name='Bob', age=30) as user:
+    ...
+```
+
+The `with` statement will create the record using the [`save()`](#save) method.
+The record will be deleted at the end of the block using the [`delete()`](#delete).
+
+Here is an example of using temporary records to test the [`isnull`](smart-query-mixin.md#isnull) filter operator:
+
+```python
+post1 = Post(
+    title='Lorem ipsum',
+    body='Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    rating=4,
+    user_id=1,
+    topic='Some topic',  # this post has a topic
+)
+post2 = Post(
+    title='Lorem ipsum',
+    body='Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    rating=4,
+    user_id=1,  # this post does not have a topic
+)
+
+# post1 and post2 will be deleted at the end of the block
+async with post1, post2:
+
+    # If isnull=True, only posts without a topic must be returned
+    posts = await Post.where(topic__isnull=True).all()
+    assert all([p.topic is None for p in posts]) is True
+
+    # If isnull=False, only posts with a topic must be returned
+    posts = await Post.where(topic__isnull=False).all()
+    assert all([post.topic is not None for p in posts]) is True
+```
+
 ### Querying
 
 #### Basic Queries

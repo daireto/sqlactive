@@ -191,7 +191,21 @@ await user.delete()
 
 ???+ tip
 
-    Check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
+    If you need to create a record for a short period of time, you can use the
+    `with` statement:
+
+    ```python
+    with User(name='Bob', age=30) as user:
+        ...
+    ```
+
+    The `with` statement will create the record and delete it at the end of the
+    block.
+
+    Check the [Temporary Records documentation](api/active-record-mixin.md#temporary-records)
+    for more information.
+
+    Also, check the [Active Record Mixin API Reference](api/active-record-mixin.md#api-reference)
     to see all the available methods.
 
 ### 4. Perform Bulk Operations
