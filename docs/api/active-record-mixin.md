@@ -465,7 +465,7 @@ async def save() -> Self
 
 > **Raises**
 
-> - `Exception`: If saving fails.
+> - `TransactionError`: If saving fails.
 
 > **Examples**
 
@@ -518,6 +518,10 @@ async def delete() -> None
 >     implement a custom soft delete method, i.e. using `save()` method to
 >     update the row with a flag indicating if the row is deleted or not
 >     (i.e. a boolean `is_deleted` column).
+
+> **Raises**
+
+> - `TransactionError`: If deleting fails.
 
 > **Examples**
 
@@ -606,6 +610,10 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > - `rows`: Sequence of rows to be saved.
 > - `refresh`: Whether to refresh the rows after commit (default: `False`).
+
+> **Raises**
+
+> - `TransactionError`: If saving fails.
 
 > **Examples**
 
@@ -712,6 +720,10 @@ async def delete_all(rows: Sequence[Self]) -> None
 
 > - `rows`: Sequence of rows to be deleted.
 
+> **Raises**
+
+> - `TransactionError`: If deleting fails.
+
 > **Examples**
 
 > ```pycon
@@ -750,6 +762,7 @@ async def destroy(*ids: object) -> None
 > **Raises**
 
 > - `CompositePrimaryKeyError`: If the model has a composite primary key.
+> - `TransactionError`: If deleting fails.
 
 > **Examples**
 
