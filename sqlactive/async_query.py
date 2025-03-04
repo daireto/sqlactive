@@ -15,9 +15,17 @@ from typing_extensions import Self
 
 from .exceptions import RelationError
 from .session import SessionMixin
-from .smart_query import ColumnExpressionOrStrLabelArgument, SmartQueryMixin
+from .smart_query import (
+    ColumnExpressionOrStrLabelArgument,
+    EagerSchema,
+    SmartQueryMixin,
+)
 
 _T = TypeVar('_T')
+
+EagerLoadPath = (
+    InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+)
 
 
 class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
@@ -1259,10 +1267,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         return self.limit(top)
 
     def join(
-        self,
-        *paths: InstrumentedAttribute[Any]
-        | tuple[InstrumentedAttribute[Any], bool],
-        model: type[_T] | None = None,
+        self, *paths: EagerLoadPath, model: type[_T] | None = None
     ) -> Self:
         """Joined eager loading using LEFT OUTER JOIN.
 
@@ -1274,7 +1279,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+        *paths : EagerLoadPath
             Relationship attributes to join.
         model : type[_T] | None, optional
             If given, checks that each path belongs to this model,
@@ -1337,10 +1342,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         )
 
     def with_subquery(
-        self,
-        *paths: InstrumentedAttribute[Any]
-        | tuple[InstrumentedAttribute[Any], bool],
-        model: type[_T] | None = None,
+        self, *paths: EagerLoadPath, model: type[_T] | None = None
     ) -> Self:
         """Subqueryload or Selectinload eager loading.
 
@@ -1387,7 +1389,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         Parameters
         ----------
-        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+        *paths : EagerLoadPath
             Relationship attributes to load.
         model : type[_T] | None, optional
             If given, checks that each path belongs to this model,
@@ -1462,13 +1464,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         """
         return self._apply_eager_loading_options(*paths, model=model)
 
-    def with_schema(
-        self,
-        schema: dict[
-            InstrumentedAttribute[Any],
-            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-        ],
-    ) -> Self:
+    def with_schema(self, schema: EagerSchema) -> Self:
         """Joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
@@ -1592,8 +1588,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
     def _apply_eager_loading_options(
         self,
-        *paths: InstrumentedAttribute[Any]
-        | tuple[InstrumentedAttribute[Any], bool],
+        *paths: EagerLoadPath,
         joined: bool = False,
         model: type[_T] | None = None,
     ) -> Self:
@@ -1609,9 +1604,12 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
 
         The ``joined`` flag is used for joined eager loading.
 
+        If path is a tuple, the second element is used to determine
+        whether to use selectin or, if ``joined`` is True, inner join.
+
         Parameters
         ----------
-        *paths : InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+        *paths : EagerLoadPath
             Eager loading paths.
         joined : bool, optional
             Whether to use joined eager loading, by default False.
@@ -1635,35 +1633,28 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
         for path in paths:
             # if path is like (User.comments, True)
             if isinstance(path, tuple):
-                if not isinstance(path[1], bool):
+                attr, use_selectin = path
+                if not isinstance(use_selectin, bool):
                     raise TypeError(
                         f"expected boolean for second element of tuple, "
-                        f"got {type(path[1])}: '{path[1]}'"
+                        f"got {type(use_selectin)}: {use_selectin!r}"
                     )
-
-                # raise error if, i.e., model is User
-                # and path is Post.comments
-                if model and path[0].class_ != model:
-                    raise RelationError(path[0].key, model.__name__)
-
-                if joined:
-                    options.append(joinedload(path[0], innerjoin=path[1]))
-                    continue
-
-                options.append(
-                    selectinload(path[0]) if path[1] else subqueryload(path[0])
-                )
 
             # simple paths like User.posts, User.comments
             else:
-                if model and path.class_ != model:
-                    raise RelationError(path.key, model.__name__)
+                attr, use_selectin = path, False  # subqueryload by default
 
-                if joined:
-                    options.append(joinedload(path))
-                    continue
+            # raise error if, i.e., model is User
+            # and path is Post.comments
+            if model and attr.class_ != model:
+                raise RelationError(attr.key, model.__name__)
 
-                options.append(subqueryload(path))
+            if joined:
+                options.append(joinedload(attr, innerjoin=use_selectin))
+            else:
+                options.append(
+                    selectinload(attr) if use_selectin else subqueryload(attr)
+                )
 
         return self.options(*options)
 

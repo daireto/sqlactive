@@ -20,13 +20,11 @@ class SessionMixin:
         session : async_scoped_session[AsyncSession]
             Async session factory.
         """
-
         cls._session = session
 
     @classmethod
     def close_session(cls) -> None:
         """Closes the async session."""
-
         cls._session = None
 
     @classproperty
@@ -44,7 +42,6 @@ class SessionMixin:
         NoSessionError
             If no session is available.
         """
-
         if cls._session is not None:
             return cls._session
         else:
