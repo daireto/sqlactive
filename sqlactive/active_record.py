@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import Any, Literal, overload
 
 from sqlalchemy.engine import Result, Row, ScalarResult
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import Select, select
@@ -14,7 +14,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery, EagerLoadPath
-from .exceptions import ModelAttributeError, NoSettableError, TransactionError
+from .exceptions import ModelAttributeError, NoSettableError
 from .session import SessionMixin
 from .smart_query import (
     ColumnExpressionOrStrLabelArgument,
@@ -181,7 +181,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        TransactionError
+        SQLAlchemyError
             If saving fails.
 
         Examples
@@ -205,9 +205,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.commit()
                 await session.refresh(self)
                 return self
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise TransactionError(str(error))
+                raise
 
     async def update(self, **kwargs) -> Self:
         """Updates the current row with the provided values.
@@ -253,7 +253,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        TransactionError
+        SQLAlchemyError
             If deleting fails.
 
         Examples
@@ -279,9 +279,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             try:
                 await session.delete(self)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise TransactionError(str(error))
+                raise
 
     async def remove(self) -> None:
         """Synonym for ``delete()``."""
@@ -353,7 +353,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        TransactionError
+        SQLAlchemyError
             If saving fails.
 
         Examples
@@ -406,9 +406,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 if refresh:
                     for row in rows:
                         await session.refresh(row)
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise TransactionError(str(error))
+                raise
 
     @classmethod
     async def insert_all(
@@ -472,7 +472,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        TransactionError
+        SQLAlchemyError
             If deleting fails.
 
         Examples
@@ -499,9 +499,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 for row in rows:
                     await session.delete(row)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise TransactionError(str(error))
+                raise
 
     @classmethod
     async def destroy(cls, *ids: object) -> None:
@@ -528,7 +528,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ------
         CompositePrimaryKeyError
             If the model has a composite primary key.
-        TransactionError
+        SQLAlchemyError
             If deleting fails.
 
         Examples
@@ -559,9 +559,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 for row in rows:
                     await session.delete(row)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise TransactionError(str(error))
+                raise
 
     @classmethod
     async def get(

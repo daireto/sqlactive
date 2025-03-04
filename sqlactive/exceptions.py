@@ -241,19 +241,3 @@ class RelationError(SQLActiveError, AttributeError):
         super().__init__(
             f'no such relation: {relation_name!r} in model {class_name}', note
         )
-
-
-class TransactionError(SQLActiveError, RuntimeError):
-    """Transaction error."""
-
-    def __init__(self, message: str, note: str = '') -> None:
-        """Transaction error.
-
-        Parameters
-        ----------
-        message : str
-            Error message.
-        note : str, optional
-            Additional note, by default ''.
-        """
-        super().__init__(f'transaction commit error: {message}', note)
