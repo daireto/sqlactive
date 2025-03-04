@@ -4,20 +4,24 @@ from collections.abc import Sequence
 from typing import Any, Literal, overload
 
 from sqlalchemy.engine import Result, Row, ScalarResult
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import Select, select
 from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
-from sqlalchemy.sql.operators import OperatorType
 from typing_extensions import Self, deprecated
 
-from .async_query import AsyncQuery
+from .async_query import AsyncQuery, EagerLoadPath
 from .exceptions import ModelAttributeError, NoSettableError
 from .session import SessionMixin
-from .smart_query import ColumnExpressionOrStrLabelArgument, SmartQueryMixin
+from .smart_query import (
+    ColumnExpressionOrStrLabelArgument,
+    DjangoFilters,
+    EagerSchema,
+    SmartQueryMixin,
+)
 from .utils import classproperty
 
 
@@ -177,7 +181,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        Exception
+        SQLAlchemyError
             If saving fails.
 
         Examples
@@ -201,9 +205,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.commit()
                 await session.refresh(self)
                 return self
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise error
+                raise
 
     async def update(self, **kwargs) -> Self:
         """Updates the current row with the provided values.
@@ -247,6 +251,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             flag indicating if the row is deleted or not (i.e. a boolean
             ``is_deleted`` column).
 
+        Raises
+        ------
+        SQLAlchemyError
+            If deleting fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -270,9 +279,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             try:
                 await session.delete(self)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise error
+                raise
 
     async def remove(self) -> None:
         """Synonym for ``delete()``."""
@@ -342,6 +351,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         refresh : bool, optional
             Whether to refresh the rows after commit, by default False.
 
+        Raises
+        ------
+        SQLAlchemyError
+            If saving fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -392,9 +406,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 if refresh:
                     for row in rows:
                         await session.refresh(row)
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise error
+                raise
 
     @classmethod
     async def insert_all(
@@ -456,6 +470,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         rows : Sequence[Self]
             Rows to be deleted.
 
+        Raises
+        ------
+        SQLAlchemyError
+            If deleting fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -480,9 +499,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 for row in rows:
                     await session.delete(row)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise error
+                raise
 
     @classmethod
     async def destroy(cls, *ids: object) -> None:
@@ -509,6 +528,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ------
         CompositePrimaryKeyError
             If the model has a composite primary key.
+        SQLAlchemyError
+            If deleting fails.
 
         Examples
         --------
@@ -538,35 +559,17 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 for row in rows:
                     await session.delete(row)
                 await session.commit()
-            except Exception as error:
+            except SQLAlchemyError:
                 await session.rollback()
-                raise error
+                raise
 
     @classmethod
     async def get(
         cls,
         pk: object,
-        join: (
-            Sequence[
-                InstrumentedAttribute[Any]
-                | tuple[InstrumentedAttribute[Any], bool]
-            ]
-            | None
-        ) = None,
-        subquery: (
-            Sequence[
-                InstrumentedAttribute[Any]
-                | tuple[InstrumentedAttribute[Any], bool]
-            ]
-            | None
-        ) = None,
-        schema: (
-            dict[
-                InstrumentedAttribute[Any],
-                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-            ]
-            | None
-        ) = None,
+        join: Sequence[EagerLoadPath] | None = None,
+        subquery: Sequence[EagerLoadPath] | None = None,
+        schema: EagerSchema | None = None,
     ) -> Self | None:
         """Fetches a row by primary key or ``None`` if no result is found.
 
@@ -578,15 +581,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         pk : object
             Primary key value. It can also be a dict of composite
             primary key values.
-        join : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
+        join : Sequence[EagerLoadPath] | None, optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of ``join()`` method for
             details.
-        subquery : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
+        subquery : Sequence[EagerLoadPath] | None, optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
-        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict], optional
+        schema : EagerSchema | None, optional
             Schema for the eager loading, by default None.
             IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
@@ -622,46 +625,26 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user
         None
         """
-        if isinstance(pk, dict):
-            criteria = pk
-        else:
-            criteria = {cls.primary_key_name: pk}
-
+        criteria = pk if isinstance(pk, dict) else {cls.primary_key_name: pk}
         async_query = cls.get_async_query()
         async_query.where(**criteria)
+
         if join:
             async_query.join(*join)
         if subquery:
             async_query.with_subquery(*subquery)
         if schema:
             async_query.with_schema(schema)
+
         return await async_query.unique_one_or_none()
 
     @classmethod
     async def get_or_fail(
         cls,
         pk: object,
-        join: (
-            Sequence[
-                InstrumentedAttribute[Any]
-                | tuple[InstrumentedAttribute[Any], bool]
-            ]
-            | None
-        ) = None,
-        subquery: (
-            Sequence[
-                InstrumentedAttribute[Any]
-                | tuple[InstrumentedAttribute[Any], bool]
-            ]
-            | None
-        ) = None,
-        schema: (
-            dict[
-                InstrumentedAttribute[Any],
-                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-            ]
-            | None
-        ) = None,
+        join: Sequence[EagerLoadPath] | None = None,
+        subquery: Sequence[EagerLoadPath] | None = None,
+        schema: EagerSchema | None = None,
     ) -> Self:
         """Fetches a row by primary key or raises a
         ``sqlalchemy.exc.NoResultFound`` exception
@@ -675,15 +658,15 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         pk : object
             Primary key value. It can also be a dict of composite
             primary key values.
-        join : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
+        join : Sequence[EagerLoadPath] | None, optional
             Paths to join eager load, by default None.
             IMPORTANT: See the documentation of ``join()`` method for
             details.
-        subquery : Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]], optional
+        subquery : Sequence[EagerLoadPath] | None, optional
             Paths to subquery eager load, by default None.
             IMPORTANT: See the documentation of ``with_subquery()`` method
             for details.
-        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict], optional
+        schema : EagerSchema | None, optional
             Schema for the eager loading, by default None.
             IMPORTANT: See the documentation of ``with_schema()`` method
             for details.
@@ -721,10 +704,10 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         sqlalchemy.exc.NoResultFound: User with id '100' was not found
         """
         cursor = await cls.get(pk, join=join, subquery=subquery, schema=schema)
-        if cursor:
-            return cursor
-        else:
-            raise NoResultFound(f"{cls.__name__} with id '{pk}' was not found")
+        if not cursor:
+            raise NoResultFound(f'{cls.__name__} with id {pk!r} was not found')
+
+        return cursor
 
     @classmethod
     async def scalars(cls) -> ScalarResult[Self]:
@@ -1884,11 +1867,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.limit(top)
 
     @classmethod
-    def join(
-        cls,
-        *paths: InstrumentedAttribute[Any]
-        | tuple[InstrumentedAttribute[Any], bool],
-    ) -> AsyncQuery[Self]:
+    def join(cls, *paths: EagerLoadPath) -> AsyncQuery[Self]:
         """Joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
@@ -1899,7 +1878,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        paths : *InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+        paths : *EagerLoadPath
             Relationship attributes to join.
 
         Returns
@@ -1956,11 +1935,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.join(*paths, model=cls)
 
     @classmethod
-    def with_subquery(
-        cls,
-        *paths: InstrumentedAttribute[Any]
-        | tuple[InstrumentedAttribute[Any], bool],
-    ) -> AsyncQuery[Self]:
+    def with_subquery(cls, *paths: EagerLoadPath) -> AsyncQuery[Self]:
         """Subqueryload or Selectinload eager loading.
 
         Emits a second SELECT statement (Subqueryload) for each
@@ -2006,7 +1981,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        paths : *InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
+        paths : *EagerLoadPath
             Relationship attributes to load.
 
         Returns
@@ -2078,13 +2053,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.with_subquery(*paths, model=cls)
 
     @classmethod
-    def with_schema(
-        cls,
-        schema: dict[
-            InstrumentedAttribute[Any],
-            str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-        ],
-    ) -> AsyncQuery[Self]:
+    def with_schema(cls, schema: EagerSchema) -> AsyncQuery[Self]:
         """Joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
@@ -2175,13 +2144,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def smart_query(
         cls,
         criteria: Sequence[ColumnElement[bool]] | None = None,
-        filters: (
-            dict[str, Any]
-            | dict[OperatorType, Any]
-            | list[dict[str, Any]]
-            | list[dict[OperatorType, Any]]
-            | None
-        ) = None,
+        filters: DjangoFilters | None = None,
         sort_columns: (
             Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
@@ -2190,13 +2153,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             Sequence[ColumnExpressionOrStrLabelArgument] | None
         ) = None,
         group_attrs: Sequence[str] | None = None,
-        schema: (
-            dict[
-                InstrumentedAttribute[Any],
-                str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-            ]
-            | None
-        ) = None,
+        schema: EagerSchema | None = None,
     ) -> AsyncQuery[Self]:
         smart_query = super().smart_query(
             query=cls.query,
