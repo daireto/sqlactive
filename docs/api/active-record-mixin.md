@@ -465,7 +465,7 @@ async def save() -> Self
 
 > **Raises**
 
-> - `TransactionError`: If saving fails.
+> - `SQLAlchemyError`: If saving fails.
 
 > **Examples**
 
@@ -521,7 +521,7 @@ async def delete() -> None
 
 > **Raises**
 
-> - `TransactionError`: If deleting fails.
+> - `SQLAlchemyError`: If deleting fails.
 
 > **Examples**
 
@@ -613,7 +613,7 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 
 > **Raises**
 
-> - `TransactionError`: If saving fails.
+> - `SQLAlchemyError`: If saving fails.
 
 > **Examples**
 
@@ -722,7 +722,7 @@ async def delete_all(rows: Sequence[Self]) -> None
 
 > **Raises**
 
-> - `TransactionError`: If deleting fails.
+> - `SQLAlchemyError`: If deleting fails.
 
 > **Examples**
 
@@ -762,7 +762,7 @@ async def destroy(*ids: object) -> None
 > **Raises**
 
 > - `CompositePrimaryKeyError`: If the model has a composite primary key.
-> - `TransactionError`: If deleting fails.
+> - `SQLAlchemyError`: If deleting fails.
 
 > **Examples**
 
