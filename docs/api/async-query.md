@@ -1116,8 +1116,7 @@ def top(top: int) -> Self
 
 ```python
 def join(
-    *paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool],
-    model: type[_T] | None = None
+    *paths: EagerLoadPath, model: type[_T] | None = None
 ) -> Self
 ```
 
@@ -1171,8 +1170,7 @@ def join(
 
 ```python
 def with_subquery(
-    *paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool],
-    model: type[_T] | None = None
+    *paths: EagerLoadPath, model: type[_T] | None = None
 ) -> Self
 ```
 
@@ -1278,9 +1276,7 @@ def with_subquery(
 #### with_schema
 
 ```python
-def with_schema(
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
-) -> Self
+def with_schema(schema: EagerSchema) -> Self
 ```
 
 > Joined, subqueryload and selectinload eager loading.

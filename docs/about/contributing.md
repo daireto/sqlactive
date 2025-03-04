@@ -144,7 +144,6 @@ To suggest a feature:
         int
             Sum of the integers.
         """
-
         return a + b
     ```
 

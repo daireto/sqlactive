@@ -768,9 +768,9 @@ async def destroy(*ids: object) -> None
 @classmethod
 async def get(
     pk: object,
-    join: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
-    subquery: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
-    schema: dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+    join: Sequence[EagerLoadPath] | None = None,
+    subquery: Sequence[EagerLoadPath] | None = None,
+    schema: EagerSchema | None = None,
 ) -> Self | None
 ```
 
@@ -818,9 +818,9 @@ async def get(
 @classmethod
 async def get_or_fail(
     pk: object,
-    join: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
-    subquery: Sequence[InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]] | None = None,
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+    join: Sequence[EagerLoadPath] | None = None,
+    subquery: Sequence[EagerLoadPath] | None = None,
+    schema: EagerSchema | None = None,
 ) -> Self
 ```
 
@@ -1735,7 +1735,7 @@ def top(top: int) -> AsyncQuery[Self]
 
 ```python
 @classmethod
-def join(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]) -> AsyncQuery[Self]
+def join(*paths: EagerLoadPath) -> AsyncQuery[Self]
 ```
 
 > Joined eager loading using LEFT OUTER JOIN.
@@ -1786,7 +1786,7 @@ def join(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], 
 
 ```python
 @classmethod
-def with_subquery(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]) -> AsyncQuery[Self]
+def with_subquery(*paths: EagerLoadPath) -> AsyncQuery[Self]
 ```
 
 > Subqueryload or Selectinload eager loading.
@@ -1890,9 +1890,7 @@ def with_subquery(*paths: InstrumentedAttribute[Any] | tuple[InstrumentedAttribu
 
 ```python
 @classmethod
-def with_schema(
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict]
-) -> AsyncQuery[Self]
+def with_schema(schema: EagerSchema) -> AsyncQuery[Self]
 ```
 
 > Joined, subqueryload and selectinload eager loading.
@@ -1963,14 +1961,12 @@ def with_schema(
 @classmethod
 def smart_query(
     criteria: Sequence[ColumnElement[bool]] | None = None,
-    filters: (
-        dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
-    ) = None,
+    filters: DjangoFilters | None = None,
     sort_columns: Sequence[ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     sort_attrs: Sequence[str] | None = None,
     group_columns: Sequence[ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     group_attrs: Sequence[str] | None = None,
-    schema: dict[InstrumentedAttribute, str | tuple[str, dict[InstrumentedAttribute, Any]] | dict] | None = None,
+    schema: EagerSchema | None = None,
 ) -> AsyncQuery[Self]
 ```
 

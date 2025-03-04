@@ -900,9 +900,7 @@ def columns_expr(*columns: str) -> list[ColumnElement[Any]]
 
 ```python
 @classmethod
-def eager_expr(
-    schema: dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
-) -> list[_AbstractLoad]
+def eager_expr(schema: EagerSchema) -> list[_AbstractLoad]
 ```
 
 > Transforms an eager loading defined schema into SQLAlchemy
@@ -976,14 +974,12 @@ def smart_query(
     cls,
     query: Select[tuple[Any, ...]],
     criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
-    filters: (
-        dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]] | None
-    ) = None,
+    filters: DjangoFilters | None = None,
     sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     sort_attrs: Sequence[str] | None = None,
     group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     group_attrs: Sequence[str] | None = None,
-    schema: dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict] | None = None,
+    schema: EagerSchema | None = None,
 ) -> Select[tuple[Any, ...]]:
 ```
 
