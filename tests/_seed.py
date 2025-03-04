@@ -23,13 +23,11 @@ class Seed:
         base_model : type[ActiveRecordBaseModel], optional
             Base model class, by default ActiveRecordBaseModel.
         """
-
         self.conn = conn
         self.base_model = base_model
 
     async def run(self):
         """Seeds the database with test data."""
-
         logger.info('Initializing database...')
         await self.conn.init_db(self.base_model)
         logger.info('Seeding users...')
@@ -46,7 +44,6 @@ class Seed:
 
     async def seed_users(self):
         """Seeds the database with test users."""
-
         await User.insert_all(
             [
                 User(username='Bob28', name='Bob Williams', age=30),
@@ -90,7 +87,6 @@ class Seed:
 
     async def seed_posts(self):
         """Seeds the database with test posts."""
-
         await Post.insert_all(
             [
                 Post(
@@ -242,7 +238,6 @@ class Seed:
 
     async def seed_comments(self):
         """Seeds the database with test comments."""
-
         await Comment.insert_all(
             [
                 Comment(
@@ -335,7 +330,6 @@ class Seed:
 
     async def seed_products(self):
         """Seeds the database with test products."""
-
         await Product.insert_all(
             [
                 Product(
@@ -367,7 +361,6 @@ class Seed:
 
     async def seed_sells(self):
         """Seeds the database with test sells."""
-
         await Sell.insert_all(
             [
                 Sell(id=1, product_id=1, quantity=2),
