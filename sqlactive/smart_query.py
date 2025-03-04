@@ -245,24 +245,23 @@ class SmartQueryMixin(InspectionMixin):
                     attr_name, op_name = attr.rsplit(cls._OPERATOR_SPLITTER, 1)
                     op = cls._operators.get(op_name)
                     if not op:
-                        exc = OperatorError(op_name)
-                        exc.add_note(
-                            f"expression '{attr}' has incorrect operator: "
-                            f"'{op_name}'"
+                        raise OperatorError(
+                            op_name,
+                            f'expression {attr!r} has incorrect operator: '
+                            f'{op_name!r}',
                         )
-                        raise exc
 
                 # assume equality operator for other cases (say, id=1)
                 else:
                     attr_name, op = attr, operators.eq
 
                 if attr_name not in valid_attributes:
-                    exc = NoFilterableError(attr_name, _class.__name__)
-                    exc.add_note(
-                        f"expression '{attr}' has incorrect attribute: "
-                        f"'{attr_name}'"
+                    raise NoFilterableError(
+                        attr_name,
+                        _class.__name__,
+                        f'expression {attr!r} has incorrect attribute: '
+                        f'{attr_name!r}',
                     )
-                    raise exc
 
                 column = getattr(mapper, attr_name)
                 expressions.append(op(column, value))
@@ -918,7 +917,7 @@ class SmartQueryMixin(InspectionMixin):
         else:
             raise TypeError(
                 'expected dict or list in filters, '
-                f'got {type(filters)!r}: {filters!r}'
+                f'got {type(filters)}: {filters!r}'
             )
 
     @classmethod
@@ -995,9 +994,11 @@ class SmartQueryMixin(InspectionMixin):
                 else relation_name
             )
             if relation_name not in entity.relations:
-                exc = RelationError(relation_name, entity.__name__)
-                exc.add_note(f"incorrect relation path: '{path}'")
-                raise exc
+                raise RelationError(
+                    relation_name,
+                    entity.__name__,
+                    f'incorrect relation path: {path!r}',
+                )
 
             relationship: InstrumentedAttribute = getattr(
                 entity, relation_name
@@ -1068,7 +1069,7 @@ class SmartQueryMixin(InspectionMixin):
                 try:
                     yield from entity.filter_expr(**{attr_name: value})
                 except Exception as e:
-                    e.add_note(f"incorrect filter path: '{attr}'")
+                    e.add_note(f'incorrect filter path: {attr!r}')
                     raise
 
         elif isinstance(filters, list):
@@ -1133,7 +1134,7 @@ class SmartQueryMixin(InspectionMixin):
             try:
                 query = query.order_by(*entity.order_expr(attr_name))
             except Exception as e:
-                e.add_note(f"incorrect order path: '{attr}'")
+                e.add_note(f'incorrect order path: {attr!r}')
                 raise
 
         return query
@@ -1192,7 +1193,7 @@ class SmartQueryMixin(InspectionMixin):
             try:
                 query = query.group_by(*entity.columns_expr(attr_name))
             except Exception as e:
-                e.add_note(f"incorrect group path: '{attr}'")
+                e.add_note(f'incorrect group path: {attr!r}')
                 raise
 
         return query
@@ -1268,6 +1269,7 @@ class SmartQueryMixin(InspectionMixin):
         if join_method == SELECT_IN:
             return selectinload(attr)
 
-        exc = InvalidJoinMethodError(join_method)
-        exc.add_note(f"invalid join method: '{join_method}' for '{attr.key}'")
-        raise exc
+        raise InvalidJoinMethodError(
+            join_method,
+            f'invalid join method: {join_method!r} for {attr.key!r}',
+        )

@@ -1636,8 +1636,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[_T]):
                 attr, use_selectin = path
                 if not isinstance(use_selectin, bool):
                     raise TypeError(
-                        f"expected boolean for second element of tuple, "
-                        f"got {type(use_selectin)}: {use_selectin!r}"
+                        f'expected boolean for second element of tuple, '
+                        f'got {type(use_selectin)}: {use_selectin!r}'
                     )
 
             # simple paths like User.posts, User.comments

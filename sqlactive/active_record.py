@@ -14,7 +14,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery, EagerLoadPath
-from .exceptions import ModelAttributeError, NoSettableError
+from .exceptions import ModelAttributeError, NoSettableError, TransactionError
 from .session import SessionMixin
 from .smart_query import (
     ColumnExpressionOrStrLabelArgument,
@@ -181,7 +181,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Raises
         ------
-        Exception
+        TransactionError
             If saving fails.
 
         Examples
@@ -207,7 +207,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 return self
             except Exception as error:
                 await session.rollback()
-                raise error
+                raise TransactionError(str(error))
 
     async def update(self, **kwargs) -> Self:
         """Updates the current row with the provided values.
@@ -251,6 +251,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
             flag indicating if the row is deleted or not (i.e. a boolean
             ``is_deleted`` column).
 
+        Raises
+        ------
+        TransactionError
+            If deleting fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -276,7 +281,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.commit()
             except Exception as error:
                 await session.rollback()
-                raise error
+                raise TransactionError(str(error))
 
     async def remove(self) -> None:
         """Synonym for ``delete()``."""
@@ -346,6 +351,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         refresh : bool, optional
             Whether to refresh the rows after commit, by default False.
 
+        Raises
+        ------
+        TransactionError
+            If saving fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -398,7 +408,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                         await session.refresh(row)
             except Exception as error:
                 await session.rollback()
-                raise error
+                raise TransactionError(str(error))
 
     @classmethod
     async def insert_all(
@@ -460,6 +470,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         rows : Sequence[Self]
             Rows to be deleted.
 
+        Raises
+        ------
+        TransactionError
+            If deleting fails.
+
         Examples
         --------
         Assume a model ``User``:
@@ -486,7 +501,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.commit()
             except Exception as error:
                 await session.rollback()
-                raise error
+                raise TransactionError(str(error))
 
     @classmethod
     async def destroy(cls, *ids: object) -> None:
@@ -513,6 +528,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ------
         CompositePrimaryKeyError
             If the model has a composite primary key.
+        TransactionError
+            If deleting fails.
 
         Examples
         --------
@@ -544,7 +561,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 await session.commit()
             except Exception as error:
                 await session.rollback()
-                raise error
+                raise TransactionError(str(error))
 
     @classmethod
     async def get(
@@ -688,7 +705,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         """
         cursor = await cls.get(pk, join=join, subquery=subquery, schema=schema)
         if not cursor:
-            raise NoResultFound(f"{cls.__name__} with id '{pk}' was not found")
+            raise NoResultFound(f'{cls.__name__} with id {pk!r} was not found')
 
         return cursor
 
