@@ -26,9 +26,9 @@
 <!-- omit in toc -->
 # SQLActive
 
-SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper for
-SQLAlchemy. Bring Django-like queries, automatic timestamps, nested eager
-loading, and serialization/deserialization for SQLAlchemy models.
+A lightweight and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
+Brings Django-like queries, automatic timestamps, nested eager loading, and
+serialization/deserialization for SQLAlchemy models.
 
 Heavily inspired by
 [sqlalchemy-mixins](https://github.com/absent1706/sqlalchemy-mixins/).
@@ -40,18 +40,14 @@ Visit the [documentation website](https://daireto.github.io/sqlactive/).
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Usage](#usage)
-  - [1. Define the Models](#1-define-the-models)
-  - [2. Initialize the Database](#2-initialize-the-database)
-  - [3. Perform CRUD Operations](#3-perform-crud-operations)
-  - [4. Perform Bulk Operations](#4-perform-bulk-operations)
-  - [5. Perform Queries](#5-perform-queries)
-  - [6. Manage Timestamps](#6-manage-timestamps)
-  - [7. Serialization and Deserialization](#7-serialization-and-deserialization)
-- [Testing and Linting](#testing-and-linting)
-  - [Unit Tests](#unit-tests)
-  - [Coverage](#coverage)
-  - [Linting](#linting)
+- [Quick Start](#quick-start)
+    - [1. Define the Models](#1-define-the-models)
+    - [2. Initialize the Database](#2-initialize-the-database)
+    - [3. Perform CRUD Operations](#3-perform-crud-operations)
+    - [4. Perform Bulk Operations](#4-perform-bulk-operations)
+    - [5. Perform Queries](#5-perform-queries)
+    - [6. Manage Timestamps](#6-manage-timestamps)
+    - [7. Serialization and Deserialization](#7-serialization-and-deserialization)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -71,8 +67,10 @@ Visit the [documentation website](https://daireto.github.io/sqlactive/).
 
 ## Requirements
 
-- Python 3.10+
-- sqlalchemy 2.0+
+Python>=3.10
+
+Dependencies:
+- sqlalchemy>=2.0.0
 
 ## Installation
 
@@ -83,7 +81,7 @@ You can simply install sqlactive from
 pip install sqlactive
 ```
 
-## Usage
+## Quick Start
 
 ### 1. Define the Models
 
@@ -447,71 +445,6 @@ user = User.from_json(user_json)
 user.name  # John Doe
 ```
 
-## Testing and Linting
-
-### Unit Tests
-
-To run the tests, simply run the following command from the root directory:
-
-```bash
-python -m unittest discover -s tests -t .
-```
-
-To run a specific test, use the following command:
-
-```bash
-python -m unittest tests.<test_name>
-```
-
-**Available tests**
-- `test_active_record.py`
-- `test_async_query.py`
-- `test_db_connection.py`
-- `test_execute.py`
-- `test_inspection.py`
-- `test_serialization.py`
-- `test_smart_query.py`
-
-### Coverage
-
-First, install the `coverage` package:
-
-```bash
-pip install coverage
-```
-
-To check the coverage, run the following command:
-
-```bash
-python -m coverage run -m unittest discover -s tests -t .
-```
-
-To generate the coverage report, run the following command:
-
-```bash
-python -m coverage report -m
-```
-
-To generate the HTML report, run the following command:
-
-```bash
-python -m coverage html -d htmlcov
-```
-
-### Linting
-
-First, install the `ruff` package:
-
-```bash
-pip install ruff
-```
-
-To check the code style, run the following command:
-
-```bash
-python -m ruff check .
-```
-
 ## Documentation
 
 Find the complete documentation [here](https://daireto.github.io/sqlactive/).
@@ -522,7 +455,8 @@ Please read the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE)
+file for details.
 
 ## Support
 

@@ -27,7 +27,7 @@
 
 [SQLActive](https://github.com/daireto/sqlactive) is a lightweight
 and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
-Bring Django-like queries, automatic timestamps, nested eager loading,
+Brings Django-like queries, automatic timestamps, nested eager loading,
 and serialization/deserialization for SQLAlchemy models.
 
 Heavily inspired by
@@ -50,8 +50,10 @@ The source code for this project is available on
 
 ## Requirements
 
-- Python 3.10+
-- sqlalchemy 2.0+
+Python>=3.10
+
+Dependencies:
+- sqlalchemy>=2.0.0
 
 ## Installation
 
@@ -62,7 +64,7 @@ You can simply install sqlactive from
 pip install sqlactive
 ```
 
-## Example
+## Quick Start
 
 ```python
 import asyncio
@@ -146,4 +148,5 @@ Please read the [contribution guidelines](about/contributing.md).
 
 ## License
 
-This project is licensed under the terms of the [MIT License](about/license.md).
+This project is licensed under the MIT License - see the
+[LICENSE](about/license.md) page for details.
