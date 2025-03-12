@@ -6,9 +6,9 @@ from typing import Any
 from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
 from sqlalchemy.orm import DeclarativeBase, RelationshipProperty
 from sqlalchemy.sql.schema import Column
-from typing_extensions import Self
 
 from .exceptions import CompositePrimaryKeyError, RelationError
+from .types import Self
 from .utils import classproperty
 
 

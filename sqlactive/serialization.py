@@ -5,11 +5,11 @@ from collections.abc import Iterable
 from typing import Any, overload
 
 from sqlalchemy.orm.exc import DetachedInstanceError
-from typing_extensions import Self
 
 from sqlactive.exceptions import ModelAttributeError
 
 from .inspection import InspectionMixin
+from .types import Self
 
 
 class SerializationMixin(InspectionMixin):
