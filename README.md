@@ -67,10 +67,9 @@ Visit the [documentation website](https://daireto.github.io/sqlactive/).
 
 ## Requirements
 
-Python>=3.10
-
-Dependencies:
-- sqlalchemy>=2.0.0
+- `Python>=3.10`
+- `SQLAlchemy>=2.0.0`
+- `typing_extensions>=4.5.0 (for Python<3.11)`
 
 ## Installation
 
