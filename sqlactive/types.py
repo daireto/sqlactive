@@ -6,10 +6,11 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.operators import OperatorType
 
+# ruff: noqa: F401
 if sys.version_info >= (3, 11):
-    from typing import Self  # noqa: F401
+    from typing import Self  # pragma: no cover
 else:
-    from typing_extensions import Self  # noqa: F401
+    from typing_extensions import Self  # pragma: no cover
 
 T = TypeVar('T')
 
