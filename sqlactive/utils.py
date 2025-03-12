@@ -1,12 +1,12 @@
 """Utils for Active SQLAlchemy."""
 
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
-_T = TypeVar('_T')
+from .types import T
 
 
-class classproperty(Generic[_T]):
+class classproperty(Generic[T]):
     """Decorator for a Class-level property.
 
     Usage:
@@ -20,10 +20,10 @@ class classproperty(Generic[_T]):
     'foo'
     """
 
-    fget: Callable[[Any], _T]
+    fget: Callable[[Any], T]
 
-    def __init__(self, func: Callable[[Any], _T]) -> None:
+    def __init__(self, func: Callable[[Any], T]) -> None:
         self.fget = func
 
-    def __get__(self, _: object, owner_cls: type | None = None) -> _T:
+    def __get__(self, _: object, owner_cls: type | None = None) -> T:
         return self.fget(owner_cls)

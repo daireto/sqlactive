@@ -226,14 +226,14 @@ async def execute() -> Result[Any]
 #### scalars
 
 ```python
-async def scalars() -> ScalarResult[_T]
+async def scalars() -> ScalarResult[T]
 ```
 
 > Returns a `sqlalchemy.engine.ScalarResult` instance containing all rows.
 
 > **Returns**
 
-> - `sqlalchemy.engine.ScalarResult[_T]`: Result instance containing
+> - `sqlalchemy.engine.ScalarResult[T]`: Result instance containing
 > all scalars.
 
 > **Examples**
@@ -256,7 +256,7 @@ async def scalars() -> ScalarResult[_T]
 #### first
 
 ```python
-async def first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
+async def first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
 > Fetches the first row or `None` if no results are found.
@@ -265,12 +265,12 @@ async def first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 
 > **Parameters**
 
-> - `scalar`: If `True`, returns a scalar value (`_T`),
+> - `scalar`: If `True`, returns a scalar value (`T`),
 > otherwise returns a row (default: `True`).
 
 > **Returns**
 
-> - `_T`: Instance for method chaining (scalar).
+> - `T`: Instance for method chaining (scalar).
 > - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
 > - `None`: If no result is found.
 
@@ -302,7 +302,7 @@ async def first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 #### one
 
 ```python
-async def one(scalar: bool = True) -> _T | Row[tuple[Any, ...]]
+async def one(scalar: bool = True) -> T | Row[tuple[Any, ...]]
 ```
 
 > Fetches one row or raises a `sqlalchemy.exc.NoResultFound` exception
@@ -315,12 +315,12 @@ async def one(scalar: bool = True) -> _T | Row[tuple[Any, ...]]
 
 > **Parameters**
 
-> - `scalar`: If `True`, returns a scalar value (`_T`),
+> - `scalar`: If `True`, returns a scalar value (`T`),
 > otherwise returns a row (default: `True`).
 
 > **Returns**
 
-> - `_T`: Instance for method chaining (scalar).
+> - `T`: Instance for method chaining (scalar).
 > - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
 
 > **Raises**
@@ -368,7 +368,7 @@ async def one(scalar: bool = True) -> _T | Row[tuple[Any, ...]]
 #### one_or_none
 
 ```python
-async def one_or_none(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
+async def one_or_none(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
 > Fetches one row or `None` if no results are found.
@@ -380,12 +380,12 @@ async def one_or_none(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 
 > **Parameters**
 
-> - `scalar`: If `True`, returns a scalar value (`_T`),
+> - `scalar`: If `True`, returns a scalar value (`T`),
 > otherwise returns a row (default: `True`).
 
 > **Returns**
 
-> - `_T`: Instance for method chaining (scalar).
+> - `T`: Instance for method chaining (scalar).
 > - `sqlalchemy.engine.Row[tuple[Any, ...]]`: Row.
 > - `None`: If no result is found.
 
@@ -434,7 +434,7 @@ async def one_or_none(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 #### all
 
 ```python
-async def all(scalars: bool = True) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]
+async def all(scalars: bool = True) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]
 ```
 
 > Fetches all rows.
@@ -443,12 +443,12 @@ async def all(scalars: bool = True) -> Sequence[_T] | Sequence[Row[tuple[Any, ..
 
 > **Parameters**
 
-> - `scalars`: If `True`, returns scalar values (`Sequence[_T]`),
+> - `scalars`: If `True`, returns scalar values (`Sequence[T]`),
 > otherwise returns rows (default: `True`).
 
 > **Returns**
 
-> - `Sequence[_T]`: Instances (scalars).
+> - `Sequence[T]`: Instances (scalars).
 > - `Sequence[sqlalchemy.engine.Row[tuple[Any, ...]]]`: Rows.
 
 > **Examples**
@@ -501,7 +501,7 @@ async def count() -> int
 #### unique
 
 ```python
-async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, ...]]
+async def unique(scalars: bool = True) -> ScalarResult[T] | Result[tuple[Any, ...]]
 ```
 
 > Similar to [`scalars()`](#scalars) but applies unique filtering to
@@ -525,7 +525,7 @@ async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, .
 
 > **Returns**
 
-> - `sqlalchemy.engine.ScalarResult[_T]`: Result instance containing
+> - `sqlalchemy.engine.ScalarResult[T]`: Result instance containing
 > all scalars.
 > - `sqlalchemy.engine.Result[tuple[Any, ...]]`: Result instance containing
 > all rows.
@@ -546,7 +546,7 @@ async def unique(scalars: bool = True) -> ScalarResult[_T] | Result[tuple[Any, .
 #### unique_first
 
 ```python
-async def unique_first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
+async def unique_first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
 > Similar to [`first()`](#first) but applies unique filtering to
@@ -565,7 +565,7 @@ async def unique_first(scalar: bool = True) -> _T | Row[tuple[Any, ...]] | None
 #### unique_one
 
 ```python
-async def unique_one(scalar: bool) -> _T | Row[tuple[Any, ...]]
+async def unique_one(scalar: bool) -> T | Row[tuple[Any, ...]]
 ```
 
 > Similar to [`one()`](#one) but applies unique filtering to
@@ -584,7 +584,7 @@ async def unique_one(scalar: bool) -> _T | Row[tuple[Any, ...]]
 #### unique_one_or_none
 
 ```python
-async def unique_one_or_none(scalar: bool) -> _T | Row[tuple[Any, ...]] | None
+async def unique_one_or_none(scalar: bool) -> T | Row[tuple[Any, ...]] | None
 ```
 
 > Similar to [`one_or_none()`](#one_or_none) but applies unique filtering to
@@ -604,7 +604,7 @@ async def unique_one_or_none(scalar: bool) -> _T | Row[tuple[Any, ...]] | None
 #### unique_all
 
 ```python
-async def unique_all(scalars: bool) -> Sequence[_T] | Sequence[Row[tuple[Any, ...]]]
+async def unique_all(scalars: bool) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]
 ```
 
 > Similar to [`all()`](#all) but applies unique filtering to
@@ -1116,7 +1116,7 @@ def top(top: int) -> Self
 
 ```python
 def join(
-    *paths: EagerLoadPath, model: type[_T] | None = None
+    *paths: EagerLoadPath, model: type[T] | None = None
 ) -> Self
 ```
 
@@ -1170,7 +1170,7 @@ def join(
 
 ```python
 def with_subquery(
-    *paths: EagerLoadPath, model: type[_T] | None = None
+    *paths: EagerLoadPath, model: type[T] | None = None
 ) -> Self
 ```
 

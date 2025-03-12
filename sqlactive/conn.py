@@ -1,7 +1,7 @@
 """This module defines ``DBConnection`` class."""
 
 from asyncio import current_task
-from typing import Any, TypeVar
+from typing import Any
 
 from sqlalchemy.engine import Result
 from sqlalchemy.engine.interfaces import _CoreAnyExecuteParams
@@ -14,8 +14,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.sql.selectable import TypedReturnsRows
 
 from .base_model import ActiveRecordBaseModel
-
-_T = TypeVar('_T', bound=Any)
+from .types import RowType
 
 
 class DBConnection:
@@ -170,11 +169,11 @@ class DBConnection:
 
 
 async def execute(
-    statement: TypedReturnsRows[_T],
+    statement: TypedReturnsRows[RowType],
     base_model: type[ActiveRecordBaseModel] | None = None,
     params: _CoreAnyExecuteParams | None = None,
     **kwargs,
-) -> Result[_T]:
+) -> Result[RowType]:
     """Executes a statement using the ``AsyncSession``
     of the ``ActiveRecordBaseModel`` and return a buffered
     ``sqlalchemy.engine.Result`` object::

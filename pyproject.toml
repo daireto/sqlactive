@@ -35,6 +35,8 @@ classifiers = [
 ]
 dependencies = [
     "sqlalchemy>=2.0.0",
+    "deprecated>=1.2.18",
+    "typing-extensions>=4.12.2",
 ]
 
 [project.urls]

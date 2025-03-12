@@ -20,8 +20,6 @@ a smooth collaboration process.
 - Adhere to **clean code principles**, such as **SOLID**, **DRY**, and
   **KISS**. Avoid unnecessary complexity.
 - Use **Active Record** patterns for database interactions where applicable.
-- Limit the use of classes unless strictly necessary; prefer functions when
-  simpler and sufficient.
 - Keep contributions small and focused. One feature or fix per pull request.
 - Discuss significant changes or enhancements transparently by opening an
   issue first.
@@ -33,16 +31,8 @@ a smooth collaboration process.
 - Use **Ruff** as the linter and formatter (**Black** could be an alternative).
 - Write **NumPy-style docstrings** for all public functions, classes, attributes,
   and properties.
-- Commit messages and pull requests must follow specific prefixes:
-    - `ci:` for CI/CD changes.
-    - `test:` Update tests/* files.
-    - `dist:` Changes to dependencies, e.g. `requirements.txt`.
-    - `minor:` Small changes.
-    - `docs:` Updates to documentation. `doc` is also a valid prefix.
-    - `fix:` Bug fixes.
-    - `refactor:` Refactor of existing code.
-    - `nit:` Small code review changes mainly around style or syntax.
-    - `feat:` New features.
+- Commit messages and pull requests must follow specific prefixes described
+  [here](#commit-message-format).
 
 ## Your First Pull Request
 
@@ -185,4 +175,5 @@ Before submitting a pull request:
 5. Provide a clear and descriptive pull request title and description.
 
 Pull requests titles should be short and descriptive, and should not exceed
-72 characters. Also, must follow the specified commit message format.
+72 characters. Also, must follow the specified
+[commit message format](#commit-message-format).

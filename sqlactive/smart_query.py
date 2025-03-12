@@ -1,6 +1,6 @@
 """This module defines ``SmartQueryMixin`` class."""
 
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Generator, Sequence
 from typing import Any
 
 from sqlalchemy.orm import aliased, joinedload, selectinload, subqueryload
@@ -10,7 +10,6 @@ from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql import Select, asc, desc, extract, operators
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.operators import OperatorType, or_
-from typing_extensions import Self
 
 from .definitions import JOINED, SELECT_IN, SUBQUERY
 from .exceptions import (
@@ -23,23 +22,17 @@ from .exceptions import (
     RelationError,
 )
 from .inspection import InspectionMixin
+from .types import (
+    ColumnExpressionOrStrLabelArgument,
+    DjangoFilters,
+    EagerSchema,
+    OperationFunction,
+    Self,
+)
 
 Aliases = dict[
     str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]
 ]
-ColumnElementOrAttr = ColumnElement[Any] | InstrumentedAttribute[Any]
-ColumnExpressionOrStrLabelArgument = str | ColumnElementOrAttr
-DjangoFilters = (
-    dict[str, Any]
-    | dict[OperatorType, Any]
-    | list[dict[str, Any]]
-    | list[dict[OperatorType, Any]]
-)
-EagerSchema = dict[
-    InstrumentedAttribute[Any],
-    str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict,
-]
-OperationFunction = Callable[[ColumnElementOrAttr, Any], ColumnElement[Any]]
 
 
 class SmartQueryMixin(InspectionMixin):
@@ -917,7 +910,7 @@ class SmartQueryMixin(InspectionMixin):
         else:
             raise TypeError(
                 'expected dict or list in filters, '
-                f'got {type(filters)}: {filters!r}'
+                f'got {type(filters).__name__}: {filters!r}'
             )
 
     @classmethod

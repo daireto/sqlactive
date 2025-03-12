@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from typing import Any, Literal, overload
 
+from deprecated import deprecated
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
@@ -11,16 +12,16 @@ from sqlalchemy.sql import Select, select
 from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
-from typing_extensions import Self, deprecated
 
 from .async_query import AsyncQuery, EagerLoadPath
 from .exceptions import ModelAttributeError, NoSettableError
 from .session import SessionMixin
-from .smart_query import (
+from .smart_query import SmartQueryMixin
+from .types import (
     ColumnExpressionOrStrLabelArgument,
     DjangoFilters,
     EagerSchema,
-    SmartQueryMixin,
+    Self,
 )
 from .utils import classproperty
 
@@ -2211,9 +2212,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     @deprecated(
-        "Deprecated since version 0.2: "
-        "Use 'primary_key_name' property instead.",
-        stacklevel=2,
+        version='0.2',
+        reason="Use 'primary_key_name' property instead.",
     )
     def get_primary_key_name(cls) -> str:
         """Gets the primary key name of the model.
