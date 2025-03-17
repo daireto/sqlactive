@@ -972,7 +972,7 @@ def eager_expr(schema: EagerSchema) -> list[_AbstractLoad]
 @classmethod
 def smart_query(
     cls,
-    query: Select[tuple[Any, ...]],
+    query: Query,
     criteria: Sequence[_ColumnExpressionArgument[bool]] | None = None,
     filters: DjangoFilters | None = None,
     sort_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
@@ -980,7 +980,7 @@ def smart_query(
     group_columns: Sequence[_ColumnExpressionOrStrLabelArgument[Any]] | None = None,
     group_attrs: Sequence[str] | None = None,
     schema: EagerSchema | None = None,
-) -> Select[tuple[Any, ...]]:
+) -> Query:
 ```
 
 > Creates a query combining filtering, sorting, grouping and eager loading.
@@ -1022,7 +1022,7 @@ def smart_query(
 
 > **Returns**
 
-> - `Select[tuple[Any, ...]]`: SQLAlchemy query with filtering, sorting,
+> - `Query`: SQLAlchemy query with filtering, sorting,
 > grouping and eager loading, that is to say, a beautiful smart query.
 
 > **Examples**
@@ -1054,10 +1054,10 @@ def smart_query(
 ```python
 @classmethod
 def apply_search_filter(
-    query: Select[tuple[Any, ...]],
+    query: Query,
     search_term: str,
     columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
-) -> Select[tuple[Any, ...]]
+) -> Query
 ```
 
 > Applies a search filter to the query.
@@ -1073,7 +1073,7 @@ def apply_search_filter(
 
 > **Returns**
 
-> - `Select[tuple[Any, ...]]`: SQLAlchemy query with the search filter applied.
+> - `Query`: SQLAlchemy query with the search filter applied.
 
 > **Examples**
 
