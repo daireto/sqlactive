@@ -11,7 +11,6 @@ from sqlalchemy.sql.operators import and_, or_
 from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
 from sqlactive.exceptions import (
-    InvalidJoinMethodError,
     NoColumnOrHybridPropertyError,
     NoFilterableError,
     NoSortableError,
@@ -483,40 +482,6 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual('Bob28', expected_users[0]['username'])
         self.assertEqual(4, expected_users[0]['posts'][0]['rating'])
 
-    def test_flatten_filter_keys(self):
-        """Test for ``_flatten_filter_keys`` function."""
-        logger.info('Testing "_flatten_filter_keys" function...')
-        filter_keys = list(
-            SmartQueryMixin._flatten_filter_keys(
-                {
-                    or_: {
-                        'id__gt': 1000,
-                        and_: {
-                            'id__lt': 500,
-                            'related___property__in': (1, 2, 3),
-                        },
-                    }
-                }
-            )
-        )
-        self.assertCountEqual(
-            ['id__gt', 'id__lt', 'related___property__in'], filter_keys
-        )
-        filter_keys = list(
-            SmartQueryMixin._flatten_filter_keys(
-                [{'id__lt': 500}, {'related___property__in': (1, 2, 3)}]
-            )
-        )
-        self.assertCountEqual(
-            ['id__lt', 'related___property__in'], filter_keys
-        )
-        with self.assertRaises(TypeError):
-            filter_keys = list(
-                SmartQueryMixin._flatten_filter_keys(
-                    {or_: {'id__gt': 1000}, and_: True}
-                )
-            )
-
     def test_make_aliases_from_attrs(self):
         """Test for ``_make_aliases_from_attrs`` function."""
         logger.info('Testing "_make_aliases_from_attrs" function...')
@@ -644,28 +609,3 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 root_cls=Post,
                 aliases=aliases,
             )
-
-    async def test_eager_expr_from_schema(self):
-        """Test for ``_eager_expr_from_schema`` function."""
-        logger.info('Testing "_eager_expr_from_schema" function...')
-        schema = {
-            Post.user: JOINED,
-            Post.comments: (SUBQUERY, {Comment.user: SELECT_IN}),
-        }
-        eager_expr = SmartQueryMixin._eager_expr_from_schema(schema)
-        post1 = await Post.options(*eager_expr).limit(1).unique_one()
-        self.assertEqual('Bob Williams', post1.user.name)
-        self.assertEqual('Bob Williams', post1.comments[0].user.name)
-
-        schema = {Post.user: JOINED, Post.comments: {Comment.user: SELECT_IN}}
-        eager_expr = SmartQueryMixin._eager_expr_from_schema(schema)
-        post2 = await Post.options(*eager_expr).limit(1).unique_one()
-        self.assertEqual('Bob Williams', post2.user.name)
-        self.assertEqual('Bob Williams', post2.comments[0].user.name)
-
-        with self.assertRaises(InvalidJoinMethodError):
-            schema = {
-                Post.user: JOINED,
-                Post.comments: (SUBQUERY, {Comment.user: 'UNKNOWN'}),
-            }
-            SmartQueryMixin._eager_expr_from_schema(schema)
