@@ -1,5 +1,5 @@
-aiosqlite==0.20.0
-colorlog==6.9.0
+aiosqlite>=0.20.0
+colorlog>=6.9.0
 deprecated>=1.2.18
-sqlalchemy==2.0.36
+sqlalchemy>=2.0.0
 typing-extensions>=4.12.2
