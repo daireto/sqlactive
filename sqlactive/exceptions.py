@@ -35,22 +35,6 @@ class CompositePrimaryKeyError(SQLActiveError, ValueError):
         )
 
 
-class InvalidJoinMethodError(SQLActiveError, ValueError):
-    """Invalid join method."""
-
-    def __init__(self, join_method: str, note: str = '') -> None:
-        """Invalid join method.
-
-        Parameters
-        ----------
-        join_method : str
-            Join method.
-        note : str, optional
-            Additional note, by default ''.
-        """
-        super().__init__(f'no such join method: {join_method!r}', note)
-
-
 class ModelAttributeError(SQLActiveError, AttributeError):
     """Attribute not found in model."""
 
