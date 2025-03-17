@@ -192,7 +192,7 @@ async_query.query  # <sqlalchemy.sql.Select at 0x...>
 #### query
 
 ```python
-query: Select[tuple[Any, ...]]
+query: Query
 ```
 
 > The wrapped `sqlalchemy.sql.Select` instance.

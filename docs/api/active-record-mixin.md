@@ -1994,7 +1994,7 @@ def smart_query(
 
 ```python
 @classmethod
-def get_async_query(query: Select[tuple[Any, ...]] | None = None) -> AsyncQuery[Self]
+def get_async_query(query: Query | None = None) -> AsyncQuery[Self]
 ```
 
 > Returns an `AsyncQuery` instance with the provided

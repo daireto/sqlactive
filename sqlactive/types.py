@@ -5,6 +5,7 @@ from typing import Any, TypeVar
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.operators import OperatorType
+from sqlalchemy.sql.selectable import Select
 
 # ruff: noqa: F401
 if sys.version_info >= (3, 11):
@@ -13,6 +14,8 @@ else:
     from typing_extensions import Self  # pragma: no cover
 
 T = TypeVar('T')
+
+Query = Select[tuple[T, ...]]
 
 EagerLoadPath = (
     InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]

@@ -6,7 +6,6 @@ from typing import Any, Generic, Literal, overload
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.orm import joinedload, selectinload, subqueryload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql import Select
 from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
@@ -19,6 +18,7 @@ from .types import (
     ColumnExpressionOrStrLabelArgument,
     EagerLoadPath,
     EagerSchema,
+    Query,
     Self,
     T,
 )
@@ -88,10 +88,10 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     __abstract__ = True
 
-    query: Select[tuple[Any, ...]]
+    query: Query
     """The wrapped ``sqlalchemy.sql.Select`` instance."""
 
-    def __init__(self, query: Select[tuple[Any, ...]]) -> None:
+    def __init__(self, query: Query) -> None:
         """Builds an async wrapper for SQLAlchemy ``Query``.
 
         .. warning::
@@ -100,7 +100,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         Parameters
         ----------
-        query : Select[tuple[Any, ...]]
+        query : Query
             The ``sqlalchemy.sql.Select`` instance.
         """
         self.query = query

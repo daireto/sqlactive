@@ -21,6 +21,7 @@ from .types import (
     ColumnExpressionOrStrLabelArgument,
     DjangoFilters,
     EagerSchema,
+    Query,
     Self,
 )
 from .utils import classproperty
@@ -2169,9 +2170,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return cls.get_async_query(smart_query)
 
     @classmethod
-    def get_async_query(
-        cls, query: Select[tuple[Any, ...]] | None = None
-    ) -> AsyncQuery[Self]:
+    def get_async_query(cls, query: Query | None = None) -> AsyncQuery[Self]:
         """Returns an ``AsyncQuery`` instance with
         the provided ``sqlalchemy.sql.Select`` instance.
 
@@ -2180,7 +2179,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        query : Select[tuple[Any, ...]] | None, optional
+        query : Query | None, optional
             SQLAlchemy query, by default None.
 
         Returns
