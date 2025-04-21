@@ -14,6 +14,7 @@ from sqlalchemy.sql.operators import OperatorType, or_
 from .exceptions import (
     NoColumnOrHybridPropertyError,
     NoFilterableError,
+    NoSearchableColumnsError,
     NoSearchableError,
     NoSortableError,
     OperatorError,
@@ -709,7 +710,7 @@ class SmartQueryMixin(InspectionMixin):
 
         searchable_columns = cls._get_searchable_columns(root_cls, columns)
         if not searchable_columns:
-            return query
+            raise NoSearchableColumnsError(root_cls.__name__)
 
         if len(searchable_columns) > 1:
             search_conditions = [
