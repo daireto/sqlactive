@@ -120,6 +120,25 @@ class NoSessionError(SQLActiveError, RuntimeError):
         )
 
 
+class NoSearchableColumnsError(SQLActiveError, RuntimeError):
+    """No searchable columns in model."""
+
+    def __init__(self, class_name: str, note: str = '') -> None:
+        """No searchable columns in model.
+
+        Parameters
+        ----------
+        class_name : str
+            The name of the model class.
+        note : str, optional
+            Additional note, by default ''.
+        """
+        super().__init__(
+            f'model {class_name} has no searchable columns',
+            note,
+        )
+
+
 class NoSearchableError(SQLActiveError, AttributeError):
     """Attribute not searchable."""
 

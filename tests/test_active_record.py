@@ -572,6 +572,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
     async def test_search(self):
         """Test for ``search`` function."""
         logger.info('Testing "search" function...')
+        self.assertEqual(24, await Post.search('lorem').count())
         users = await User.search('John').all()
         self.assertEqual('John84', users[0].username)
         self.assertEqual('John Doe', users[0].name)
