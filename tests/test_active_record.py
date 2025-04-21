@@ -19,6 +19,7 @@ from sqlactive.conn import DBConnection
 from sqlactive.exceptions import (
     CompositePrimaryKeyError,
     ModelAttributeError,
+    NoSearchableColumnsError,
     NoSearchableError,
     NoSettableError,
     RelationError,
@@ -596,6 +597,8 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             User.search('John', columns=('age',))
         with self.assertRaises(NoSearchableError):
             User.search('John', columns=(User.age,))
+        with self.assertRaises(NoSearchableColumnsError):
+            Sell.search('lorem')
 
     async def test_order_by(self):
         """Test for ``order_by`` and ``sort`` functions."""
