@@ -708,13 +708,18 @@ class SmartQueryMixin(InspectionMixin):
         root_cls = get_query_root_cls(query, raise_on_none=True)
 
         searchable_columns = cls._get_searchable_columns(root_cls, columns)
+        if not searchable_columns:
+            return query
+
         if len(searchable_columns) > 1:
-            criteria = or_(
-                *[
-                    getattr(root_cls, col).ilike(f'%{search_term}%')
-                    for col in searchable_columns
-                ]
-            )
+            search_conditions = [
+                getattr(root_cls, col).ilike(f'%{search_term}%')
+                for col in searchable_columns
+            ]
+
+            criteria = or_(search_conditions.pop(0), search_conditions.pop(0))
+            while search_conditions:
+                criteria = or_(criteria, search_conditions.pop(0))
         else:
             criteria = getattr(root_cls, searchable_columns[0]).ilike(
                 f'%{search_term}%'
