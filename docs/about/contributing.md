@@ -58,11 +58,7 @@ If this is your first pull request:
     ```bash
     pip install -r requirements.txt
     ```
-5. Install `ruff`:
-    ```bash
-    pip install ruff
-    ```
-6. Run tests and `Ruff` linter formatter to confirm the setup:
+5. Run tests and `Ruff` linter to confirm the setup:
     ```bash
     python -m unittest discover -s tests -t .
     python -m ruff check .
@@ -72,7 +68,8 @@ If this is your first pull request:
 
 ### Security Issues
 
-For security vulnerabilities, **do not open an issue**. Instead, email [dairoandres123@gmail.com](mailto:dairoandres123@gmail.com).
+For security vulnerabilities, **do not open an issue**. Instead,
+email [dairoandres123@gmail.com](mailto:dairoandres123@gmail.com).
 
 In order to determine whether you are dealing with a security issue, ask
 yourself these two questions:
@@ -133,30 +130,76 @@ To suggest a feature:
         -------
         int
             Sum of the integers.
+
+        Examples
+        --------
+        >>> add(1, 2)
+        3
         """
         return a + b
     ```
 
 ### Commit Message Format
 
-- Use a prefix to categorize your commit:
-    - `ci:` for CI/CD changes.
-    - `test:` Update tests/* files.
-    - `dist:` Changes to dependencies, e.g. `requirements.txt`.
-    - `minor:` Small changes.
-    - `docs:` Updates to documentation. `doc` is also a valid prefix.
-    - `fix:` Bug fixes.
-    - `refactor:` Refactor of existing code.
-    - `nit:` Small code review changes mainly around style or syntax.
-    - `feat:` New features.
-- Examples:
-    ```
-    feat: add support for PostgreSQL database connections
-    fix: fix a bug in the database connection
-    ci: update the CI workflow
-    test: add tests for the new feature
-    docs: update the documentation
-    ```
+Use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+format for commit messages. It says that the commit message consists of a
+**header**, a **body** and a **footer**. The header has a special format that
+includes a [**type**](#types), an **optional scope** and a **subject**:
+
+```
+<type>(<optional scope>): <subject>
+<BLANK LINE>
+<optional body>
+<BLANK LINE>
+<optional footer>
+```
+
+Any line of the commit message cannot be longer 100 characters! This allows the
+message to be easier to read on GitHub as well as in various git tools.
+
+The footer should contain a [closing reference to an issue](https://help.github.com/articles/closing-issues-via-commit-messages/)
+if any.
+
+#### Types
+
+- `build`: Changes that affect the build system or external dependencies.
+  Example: "build: Update build-backend in pyproject.toml".
+- `ci`: Changes to the CI configuration files and scripts.
+  Example: "ci: Add GitHub Actions workflow for testing".
+- `docs`: Documentation only changes.
+  Example: "docs: Add documentation for new feature".
+- `feat`: A new feature.
+  Example: "feat: Add support for PostgreSQL database connections".
+- `fix`: A bug fix.
+  Example: "fix: Resolve issue with incorrect date display".
+- `perf`: A code change that improves performance.
+  Example: "perf: Optimize database query for faster response times".
+- `refactor`: A code change that neither fixes a bug nor adds a feature,
+  for example, renaming a variable.
+  Example: "refactor: Extract user profile component".
+- `revert`: Described [below](#revert).
+- `style`: Changes that do not affect the meaning of the code
+  (white-space, formatting, missing semi-colons, etc).
+  Example: "style: Apply code formatting according to PEP 8".
+- `test`: Adding missing tests or correcting existing tests.
+  Example: "test: Add unit tests for user service".
+- `chore`: Other changes that don't modify src or test files.
+  Example: "chore: Update dependencies to latest versions".
+
+#### Revert
+
+If the commit reverts a previous commit, it should begin with `revert:`,
+followed by the header of the reverted commit. In the body it should say:
+"This reverts commit <hash> because of <reason>.", where the hash is the SHA of
+the commit being reverted.
+
+Example:
+```
+revert: feat: Add support for PostgreSQL database connections
+
+This reverts commit 1234567890abcdef1234567890abcdef12345678 because it
+caused a breaking change.
+```
 
 ### Pull Request Checklist
 
@@ -175,5 +218,4 @@ Before submitting a pull request:
 5. Provide a clear and descriptive pull request title and description.
 
 Pull requests titles should be short and descriptive, and should not exceed
-72 characters. Also, must follow the specified
-[commit message format](#commit-message-format).
+72 characters. Also, must follow the specified [commit message format](#commit-message-format).
