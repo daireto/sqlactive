@@ -1,4 +1,9 @@
-"""This module defines ``ActiveRecordMixin`` class."""
+"""Active Record implementation for SQLAlchemy models.
+
+This module provides the ActiveRecordMixin class which implements
+the Active Record pattern for SQLAlchemy models, allowing for more
+intuitive and chainable database operations with async/await support.
+"""
 
 from collections.abc import Sequence
 from typing import Any, Literal, overload
@@ -9,7 +14,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_scoped_session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import Select, select
-from sqlalchemy.sql._typing import _ColumnsClauseArgument
+from sqlalchemy.sql._typing import _ColumnsClauseArgument  # type: ignore
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -103,8 +108,8 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     __abstract__ = True
 
     @classproperty
-    def query(cls) -> Select[tuple[Self]]:
-        """Returns a new ``sqlalchemy.sql.Select`` instance
+    def query(cls) -> Select[tuple[Self]]:  # noqa: N805
+        """Return a new ``sqlalchemy.sql.Select`` instance
         for the model.
 
         This is a shortcut for ``select(cls)``.
@@ -119,11 +124,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> from sqlalchemy import select
         >>> select(User)
         'SELECT * FROM users'
+
         """
         return select(cls)  # type: ignore
 
     def fill(self, **kwargs) -> Self:
-        """Fills the object with values from ``kwargs``
+        """Fill the object with values from ``kwargs``
         without saving to the database.
 
         Returns
@@ -158,20 +164,21 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         'Bob Williams'
         >>> user.age
         30
+
         """
-        for name in kwargs.keys():
+        for name, value in kwargs.items():
             if not hasattr(self, name):
                 raise ModelAttributeError(name, self.__class__.__name__)
 
             if name in self.settable_attributes:
-                setattr(self, name, kwargs[name])
+                setattr(self, name, value)
             else:
                 raise NoSettableError(name, self.__class__.__name__)
 
         return self
 
     async def save(self) -> Self:
-        """Saves the current row.
+        """Save the current row.
 
         .. note::
             All database errors will trigger a rollback and be raised.
@@ -200,19 +207,21 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Usage:
         >>> user = User(name='Bob Williams', age=30)
         >>> await user.save()
+
         """
         async with self.AsyncSession() as session:
             try:
                 session.add(self)
                 await session.commit()
                 await session.refresh(self)
-                return self
             except SQLAlchemyError:
                 await session.rollback()
                 raise
+            else:
+                return self
 
     async def update(self, **kwargs) -> Self:
-        """Updates the current row with the provided values.
+        """Update the current row with the provided values.
 
         This is the same as calling ``self.fill(**kwargs).save()``.
 
@@ -239,11 +248,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> await user.update(name='Bob Williams', age=31)
         >>> user.name
         'Bob Williams'
+
         """
         return await self.fill(**kwargs).save()
 
     async def delete(self) -> None:
-        """Deletes the current row.
+        """Delete the current row.
 
         .. warning::
             This is not a soft delete method. It will permanently delete
@@ -276,6 +286,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> await user.delete()
         >>> await User.find(username='Bob324').one_or_none()
         None
+
         """
         async with self.AsyncSession() as session:
             try:
@@ -291,7 +302,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def insert(cls, **kwargs) -> Self:
-        """Inserts a new row and returns the saved instance.
+        """Insert a new row and returns the saved instance.
 
         Returns
         -------
@@ -313,6 +324,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.insert(name='Bob Williams', age=30)
         >>> user.name
         'Bob Williams'
+
         """
         return await cls().fill(**kwargs).save()
 
@@ -325,7 +337,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def save_all(
         cls, rows: Sequence[Self], refresh: bool = False
     ) -> None:
-        """Saves multiple rows in a single transaction.
+        """Save multiple rows in a single transaction.
 
         When using this method to update existing rows, instances are
         not refreshed after commit by default. Accessing the attributes
@@ -400,6 +412,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         DetachedInstanceError: Instance User(id=at)0x...> is not bound to a Session...
+
         """
         async with cls.AsyncSession() as session:
             try:
@@ -416,7 +429,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def insert_all(
         cls, rows: Sequence[Self], refresh: bool = False
     ) -> None:
-        """Inserts multiple rows in a single transaction.
+        """Insert multiple rows in a single transaction.
 
         This is mostly a shortcut for ``save_all()``
         when inserting new rows.
@@ -435,7 +448,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     async def update_all(
         cls, rows: Sequence[Self], refresh: bool = False
     ) -> None:
-        """Updates multiple rows in a single transaction.
+        """Update multiple rows in a single transaction.
 
         This is mostly a shortcut for ``save_all()``
         when updating existing rows.
@@ -457,7 +470,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def delete_all(cls, rows: Sequence[Self]) -> None:
-        """Deletes multiple rows in a single transaction.
+        """Delete multiple rows in a single transaction.
 
         .. warning::
             This is not a soft delete method. It will permanently delete
@@ -495,6 +508,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> await User.delete_all(users)
         >>> await User.where(name__endswith='Doe').all()
         []
+
         """
         async with cls.AsyncSession() as session:
             try:
@@ -507,7 +521,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def destroy(cls, *ids: object) -> None:
-        """Deletes multiple rows by their primary key.
+        """Delete multiple rows by their primary key.
 
         This method can only be used if the model has a single primary
         key. Otherwise, it will raise a ``CompositePrimaryKeyError``
@@ -551,6 +565,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> await User.destroy(1, 2)
         >>> await User.where(name__endswith='Doe').all()
         []
+
         """
         async with cls.AsyncSession() as session:
             try:
@@ -573,7 +588,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         subquery: Sequence[EagerLoadPath] | None = None,
         schema: EagerSchema | None = None,
     ) -> Self | None:
-        """Fetches a row by primary key or ``None`` if no result is found.
+        """Fetch a row by primary key or ``None`` if no result is found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
@@ -626,6 +641,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.get(100)  # does not exist
         >>> user
         None
+
         """
         criteria = pk if isinstance(pk, dict) else {cls.primary_key_name: pk}
         async_query = cls.get_async_query()
@@ -648,7 +664,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         subquery: Sequence[EagerLoadPath] | None = None,
         schema: EagerSchema | None = None,
     ) -> Self:
-        """Fetches a row by primary key or raises a
+        """Fetch a row by primary key or raises a
         ``sqlalchemy.exc.NoResultFound`` exception
         if no result is found.
 
@@ -704,16 +720,17 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         sqlalchemy.exc.NoResultFound: User with id '100' was not found
+
         """
         cursor = await cls.get(pk, join=join, subquery=subquery, schema=schema)
         if not cursor:
-            raise NoResultFound(f'{cls.__name__} with id {pk!r} was not found')
+            raise NoResultFound
 
         return cursor
 
     @classmethod
     async def scalars(cls) -> ScalarResult[Self]:
-        """Returns a ``sqlalchemy.engine.ScalarResult`` instance
+        """Return a ``sqlalchemy.engine.ScalarResult`` instance
         containing all results.
 
         Returns
@@ -743,6 +760,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = result.all()
         >>> users
         [User(id=2)]
+
         """
         async_query = cls.get_async_query()
         return await async_query.scalars()
@@ -769,7 +787,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def first(cls, scalar: bool = True):
-        """Fetches the first row or ``None`` if no results are found.
+        """Fetch the first row or ``None`` if no results are found.
 
         If ``scalar`` is ``True``, returns a scalar value (default).
 
@@ -815,6 +833,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...                  .first(scalar=False)
         >>> user
         ('Bob Williams', 30)
+
         """
         async_query = cls.get_async_query()
         return await async_query.first(scalar)
@@ -837,7 +856,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def one(cls, scalar: bool = True):
-        """Fetches one row or raises a ``sqlalchemy.exc.NoResultFound``
+        """Fetch one row or raises a ``sqlalchemy.exc.NoResultFound``
         exception if no results are found.
 
         If multiple results are found, it will raise a
@@ -890,7 +909,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.one()
         Traceback (most recent call last):
             ...
-        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one was required
+        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one...
 
         Selecting specific columns:
         >>> user = await User.where(name='John Doe')
@@ -903,6 +922,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...                  .one(scalar=False)
         >>> user
         ('John Doe', 30)
+
         """
         async_query = cls.get_async_query()
         return await async_query.one(scalar)
@@ -929,7 +949,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def one_or_none(cls, scalar: bool = True):
-        """Fetches one row or ``None`` if no results are found.
+        """Fetch one row or ``None`` if no results are found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
@@ -981,7 +1001,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> user = await User.one_or_none()
         Traceback (most recent call last):
             ...
-        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one was required
+        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one...
 
         Selecting specific columns:
         >>> user = await User.where(name='John Doe')
@@ -994,6 +1014,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...                  .one_or_none(scalar=False)
         >>> user
         ('John Doe', 30)
+
         """
         async_query = cls.get_async_query()
         return await async_query.one_or_none(scalar)
@@ -1020,7 +1041,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     async def all(cls, scalars: bool = True):
-        """Fetches all rows.
+        """Fetch all rows.
 
         If ``scalars`` is ``True``, returns scalar values (default).
 
@@ -1064,13 +1085,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ...                   .all(scalars=False)
         >>> users
         [('John Doe', 30), ('Jane Doe', 32), ...]
+
         """
         async_query = cls.get_async_query()
         return await async_query.all(scalars)
 
     @classmethod
     async def count(cls) -> int:
-        """Fetches the number of rows.
+        """Fetch the number of rows.
 
         Returns
         -------
@@ -1083,6 +1105,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> count = await User.count()
         >>> count
         34
+
         """
         async_query = cls.get_async_query()
         return await async_query.count()
@@ -1154,6 +1177,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> users = await User.unique(scalars=False)
         >>> users
         <sqlalchemy.engine.result.Result object at 0x...>
+
         """
         async_query = cls.get_async_query()
         return await async_query.unique(scalars)
@@ -1337,7 +1361,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def select(cls, *entities: _ColumnsClauseArgument[Any]):
-        """Replaces the columns clause with the given entities.
+        """Replace the columns clause with the given entities.
 
         The existing set of FROMs are maintained, including those
         implied by the current columns clause.
@@ -1366,17 +1390,18 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Usage:
         >>> async_query = User.order_by('-created_at')
         >>> async_query
-        'SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC'
+        'SELECT users.id, ... FROM users ORDER BY users.created_at DESC'
         >>> async_query.select(User.name, User.age)
         >>> async_query
         'SELECT users.name, users.age FROM users ORDER BY users.created_at DESC'
+
         """
         async_query = cls.get_async_query()
         return async_query.select(*entities)
 
     @classmethod
     def distinct(cls) -> AsyncQuery[Self]:
-        """Applies DISTINCT to the SELECT statement overall.
+        """Apply DISTINCT to the SELECT statement overall.
 
         Returns
         -------
@@ -1399,13 +1424,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         'SELECT users.id, users.username, users.name, ... FROM users'
         >>> User.distinct()
         'SELECT DISTINCT users.id, users.username, users.name, ... FROM users'
+
         """
         async_query = cls.get_async_query()
         return async_query.distinct()
 
     @classmethod
     def options(cls, *args: ExecutableOption) -> AsyncQuery[Self]:
-        """Applies the given list of mapper options.
+        """Apply the given list of mapper options.
 
         .. warning::
             Quoting from the `joined eager loading docs <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading>`_:
@@ -1480,6 +1506,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         InvalidRequestError: The unique() method must be invoked on this Result...
+
         """
         async_query = cls.get_async_query()
         return async_query.options(*args)
@@ -1488,7 +1515,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def where(
         cls, *criteria: ColumnElement[bool], **filters: Any
     ) -> AsyncQuery[Self]:
-        """Applies one or more WHERE criteria to the query.
+        """Apply one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1541,6 +1568,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ... ).all()
         >>> users
         [User(id=2)]
+
         """
         async_query = cls.get_async_query()
         return async_query.where(*criteria, **filters)
@@ -1565,7 +1593,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         search_term: str,
         columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> AsyncQuery[Self]:
-        """Applies a search filter to the query.
+        """Apply a search filter to the query.
 
         Searches for ``search_term`` in the searchable columns of
         the model. If ``columns`` are provided, searches only these
@@ -1620,6 +1648,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ... ).all()
         >>> users
         [User(id=2)]
+
         """
         async_query = cls.get_async_query()
         return async_query.search(search_term=search_term, columns=columns)
@@ -1628,7 +1657,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
     def order_by(
         cls, *columns: ColumnExpressionOrStrLabelArgument
     ) -> AsyncQuery[Self]:
-        """Applies one or more ORDER BY criteria to the query.
+        """Apply one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1678,6 +1707,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         ... ).all()
         >>> posts
         [Post(id=1), Post(id=4), ...]
+
         """
         async_query = cls.get_async_query()
         return async_query.order_by(*columns)
@@ -1695,7 +1725,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         *columns: ColumnExpressionOrStrLabelArgument,
         select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
     ) -> AsyncQuery[Self]:
-        """Applies one or more GROUP BY criteria to the query.
+        """Apply one or more GROUP BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1759,13 +1789,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         >>> rows = async_query.all(scalars=False)
         >>> rows
         [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+
         """
         async_query = cls.get_async_query()
         return async_query.group_by(*columns, select_columns=select_columns)
 
     @classmethod
     def offset(cls, offset: int) -> AsyncQuery[Self]:
-        """Applies one OFFSET criteria to the query.
+        """Apply one OFFSET criteria to the query.
 
         Parameters
         ----------
@@ -1804,6 +1835,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         ValueError: offset must be >= 0
+
         """
         async_query = cls.get_async_query()
         return async_query.offset(offset)
@@ -1815,7 +1847,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def limit(cls, limit: int) -> AsyncQuery[Self]:
-        """Applies one LIMIT criteria to the query.
+        """Apply one LIMIT criteria to the query.
 
         Parameters
         ----------
@@ -1854,6 +1886,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         ValueError: limit must be >= 0
+
         """
         async_query = cls.get_async_query()
         return async_query.limit(limit)
@@ -1870,7 +1903,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def join(cls, *paths: EagerLoadPath) -> AsyncQuery[Self]:
-        """Joined eager loading using LEFT OUTER JOIN.
+        """Apply joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
         if ``True``, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
@@ -1932,6 +1965,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Traceback (most recent call last):
             ...
         ValueError: expected boolean for second element of tuple, got str: 'inner'
+
         """
         async_query = cls.get_async_query()
         return async_query.join(*paths, model=cls)
@@ -2050,13 +2084,14 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         [Post(id=1), Post(id=2), ...]
         >>> user.posts[0].comments  # loaded using SELECT IN
         [Comment(id=1), Comment(id=2), ...]
+
         """
         async_query = cls.get_async_query()
         return async_query.with_subquery(*paths, model=cls)
 
     @classmethod
     def with_schema(cls, schema: EagerSchema) -> AsyncQuery[Self]:
-        """Joined, subqueryload and selectinload eager loading.
+        """Apply joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
         nested relationships in separate queries.
@@ -2094,7 +2129,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
+        schema : EagerSchema
             Dictionary defining the loading strategy.
 
         Returns
@@ -2138,6 +2173,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         [Comment(id=1), Comment(id=2), ...]
         >>> user.posts[0].comments[0].user
         User(id=1)
+
         """
         async_query = cls.get_async_query()
         return async_query.with_schema(schema)
@@ -2157,6 +2193,90 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         group_attrs: Sequence[str] | None = None,
         schema: EagerSchema | None = None,
     ) -> AsyncQuery[Self]:
+        """Create an async smart query combining filtering, sorting,
+        grouping and eager loading.
+
+        Does magic `Django-like joins <https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships>`_
+        like:
+        >>> post___user___name__startswith='Bob'
+
+        Does filtering, sorting, grouping and eager loading at the
+        same time. And if, say, filters, sorting and grouping need
+        the same join, it will be done only once.
+
+        It also supports SQLAlchemy syntax like:
+        >>> db.query(User).filter(User.id == 1, User.name == 'Bob')
+        >>> db.query(User).filter(or_(User.id == 1, User.name == 'Bob'))
+        >>> db.query(Post).order_by(Post.rating.desc())
+        >>> db.query(Post).order_by(desc(Post.rating), asc(Post.user_id))
+
+        .. note::
+            For more flexibility, you can use the ``filter_expr``,
+            ``order_expr``, ``columns_expr`` and ``eager_expr`` methods.
+            See the `API Reference <https://daireto.github.io/sqlactive/api/smart-query-mixin/#api-reference>`_
+            for more details.
+
+        Parameters
+        ----------
+        criteria : Sequence[ColumnElement[bool]] | None, optional
+            SQLAlchemy syntax filter expressions, by default None.
+        filters : DjangoFilters | None, optional
+            Django-like filter expressions, by default None.
+        sort_columns : Sequence[ColumnExpressionOrStrLabelArgument] | None, optional
+            Standalone sort columns, by default None.
+        sort_attrs : Sequence[str] | None, optional
+            Django-like sort expressions, by default None.
+        group_columns : Sequence[ColumnExpressionOrStrLabelArgument] | None, optional
+            Standalone group columns, by default None.
+        group_attrs : Sequence[str] | None, optional
+            Django-like group expressions, by default None.
+        schema : EagerSchema | None, optional
+            Schema for the eager loading, by default None.
+
+        Returns
+        -------
+        AsyncQuery[Self]
+            Async query instance for chaining.
+
+        Examples
+        --------
+        Assume a model ``User``:
+        >>> from sqlactive import ActiveRecordBaseModel
+        >>> class User(ActiveRecordBaseModel):
+        ...     __tablename__ = 'users'
+        ...     id: Mapped[int] = mapped_column(primary_key=True)
+        ...     username: Mapped[str] = mapped_column()
+        ...     name: Mapped[str] = mapped_column()
+        ...     age: Mapped[int] = mapped_column()
+        ...     posts: Mapped[list['Post']] = relationship(
+        ...         back_populates='user'
+        ...     )
+        ...     comments: Mapped[list['Comment']] = relationship(
+        ...         back_populates='user'
+        ...     )
+
+        Usage:
+        >>> query = User.smart_query(
+        ...     criteria=(or_(User.age == 30, User.age == 32),),
+        ...     filters={'username__like': '%8'},
+        ...     sort_columns=(User.username,),
+        ...     sort_attrs=('age',),
+        ...     schema={
+        ...         User.posts: JOINED,
+        ...         User.comments: (SUBQUERY, {
+        ...             Comment.post: SELECT_IN
+        ...         })
+        ...     },
+        ... )
+        >>> users = await query.unique_all()
+        >>> [user.username for user in users]
+        ['Bob28', 'Ian48', 'Jessica3248']
+        >>> users[0].posts[0].title
+        'Lorem ipsum'
+        >>> users[0].comments[0].post.title
+        'Lorem ipsum'
+
+        """
         smart_query = super().smart_query(
             query=cls.query,
             criteria=criteria,
@@ -2171,7 +2291,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @classmethod
     def get_async_query(cls, query: Query | None = None) -> AsyncQuery[Self]:
-        """Returns an ``AsyncQuery`` instance with
+        """Return an ``AsyncQuery`` instance with
         the provided ``sqlalchemy.sql.Select`` instance.
 
         If no ``sqlalchemy.sql.Select`` instance is provided,
@@ -2189,6 +2309,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
         Examples
         --------
+        Assume a model ``User``:
         >>> from sqlactive import ActiveRecordBaseModel
         >>> class User(ActiveRecordBaseModel):
         ...     __tablename__ = 'users'
@@ -2204,6 +2325,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         'Bob Williams'
         >>> bob.age
         30
+
         """
         if query is None:
             return AsyncQuery[cls](cls.query)
@@ -2215,7 +2337,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         reason="Use 'primary_key_name' property instead.",
     )
     def get_primary_key_name(cls) -> str:
-        """Gets the primary key name of the model.
+        """Get the primary key name of the model.
 
         .. deprecated:: 0.2
             This method will be removed in future versions.
@@ -2250,20 +2372,29 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         Usage:
         >>> User.get_primary_key_name()
         'id'
+
         """
         return cls.primary_key_name
 
     @classmethod
     def set_session(cls, session: async_scoped_session[AsyncSession]) -> None:
+        """Set the async session factory.
+
+        Parameters
+        ----------
+        session : async_scoped_session[AsyncSession]
+            Async session factory.
+
+        """
         super().set_session(session)
         AsyncQuery.set_session(session)
 
     async def __aenter__(self) -> Self:
-        """Saves the instance to the database temporarily.
+        """Save the instance to the database temporarily.
         The instance will be deleted on exit.
         """
         return await self.save()
 
     async def __aexit__(self, *_) -> None:
-        """Deletes the instance saved on entry."""
+        """Delete the instance saved on entry."""
         await self.delete()
