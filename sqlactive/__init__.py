@@ -1,8 +1,6 @@
-"""
-**SQLActive**
+"""A lightweight and asynchronous ActiveRecord-style wrapper for SQLAlchemy.
 
-SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper
-for SQLAlchemy. Bring Django-like queries, automatic timestamps, nested
+Bring Django-like queries, automatic timestamps, nested
 eager loading, and serialization/deserialization for SQLAlchemy models.
 
 Documentation: https://daireto.github.io/sqlactive/
@@ -229,14 +227,14 @@ from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 
 __all__ = [
+    'JOINED',
+    'SELECT_IN',
+    'SUBQUERY',
     'ActiveRecordBaseModel',
     'ActiveRecordMixin',
+    'DBConnection',
     'SerializationMixin',
     'TimestampMixin',
-    'JOINED',
-    'SUBQUERY',
-    'SELECT_IN',
-    'DBConnection',
     'execute',
 ]
 
