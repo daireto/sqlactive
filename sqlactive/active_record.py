@@ -334,9 +334,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.insert(**kwargs)
 
     @classmethod
-    async def save_all(
-        cls, rows: Sequence[Self], refresh: bool = False
-    ) -> None:
+    async def save_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Save multiple rows in a single transaction.
 
         When using this method to update existing rows, instances are
@@ -426,9 +424,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
                 raise
 
     @classmethod
-    async def insert_all(
-        cls, rows: Sequence[Self], refresh: bool = False
-    ) -> None:
+    async def insert_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Insert multiple rows in a single transaction.
 
         This is mostly a shortcut for ``save_all()``
@@ -445,9 +441,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return await cls.save_all(rows, refresh)
 
     @classmethod
-    async def update_all(
-        cls, rows: Sequence[Self], refresh: bool = False
-    ) -> None:
+    async def update_all(cls, rows: Sequence[Self], refresh: bool = False) -> None:
         """Update multiple rows in a single transaction.
 
         This is mostly a shortcut for ``save_all()``
@@ -775,15 +769,11 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def first(
-        cls, scalar: Literal[False]
-    ) -> Row[tuple[Any, ...]] | None: ...
+    async def first(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     @classmethod
-    async def first(
-        cls, scalar: bool
-    ) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def first(cls, scalar: bool = True):
@@ -943,9 +933,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def one_or_none(
-        cls, scalar: bool
-    ) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def one_or_none(cls, scalar: bool = True):
@@ -1029,9 +1017,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def all(
-        cls, scalars: Literal[False]
-    ) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(cls, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
     @classmethod
@@ -1120,9 +1106,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique(
-        cls, scalars: Literal[False]
-    ) -> Result[tuple[Any, ...]]: ...
+    async def unique(cls, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
 
     @overload
     @classmethod
@@ -1198,9 +1182,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_first(
-        cls, scalar: bool
-    ) -> Self | Row[tuple[Any, ...]] | None: ...
+    async def unique_first(cls, scalar: bool) -> Self | Row[tuple[Any, ...]] | None: ...
 
     @classmethod
     async def unique_first(cls, scalar: bool = True):
@@ -1230,9 +1212,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_one(
-        cls, scalar: Literal[False]
-    ) -> Row[tuple[Any, ...]]: ...
+    async def unique_one(cls, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
 
     @overload
     @classmethod
@@ -1262,9 +1242,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
 
     @overload
     @classmethod
-    async def unique_one_or_none(
-        cls, scalar: Literal[True]
-    ) -> Self | None: ...
+    async def unique_one_or_none(cls, scalar: Literal[True]) -> Self | None: ...
 
     @overload
     @classmethod
@@ -1512,9 +1490,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.options(*args)
 
     @classmethod
-    def where(
-        cls, *criteria: ColumnElement[bool], **filters: Any
-    ) -> AsyncQuery[Self]:
+    def where(cls, *criteria: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]:
         """Apply one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -1574,16 +1550,12 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.where(*criteria, **filters)
 
     @classmethod
-    def filter(
-        cls, *criteria: ColumnElement[bool], **filters: Any
-    ) -> AsyncQuery[Self]:
+    def filter(cls, *criteria: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]:
         """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
 
     @classmethod
-    def find(
-        cls, *criteria: ColumnElement[bool], **filters: Any
-    ) -> AsyncQuery[Self]:
+    def find(cls, *criteria: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]:
         """Synonym for ``where()``."""
         return cls.where(*criteria, **filters)
 
@@ -1654,9 +1626,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.search(search_term=search_term, columns=columns)
 
     @classmethod
-    def order_by(
-        cls, *columns: ColumnExpressionOrStrLabelArgument
-    ) -> AsyncQuery[Self]:
+    def order_by(cls, *columns: ColumnExpressionOrStrLabelArgument) -> AsyncQuery[Self]:
         """Apply one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
@@ -1713,9 +1683,7 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         return async_query.order_by(*columns)
 
     @classmethod
-    def sort(
-        cls, *columns: ColumnExpressionOrStrLabelArgument
-    ) -> AsyncQuery[Self]:
+    def sort(cls, *columns: ColumnExpressionOrStrLabelArgument) -> AsyncQuery[Self]:
         """Synonym for ``order_by()``."""
         return cls.order_by(*columns)
 
@@ -2183,13 +2151,9 @@ class ActiveRecordMixin(SessionMixin, SmartQueryMixin):
         cls,
         criteria: Sequence[ColumnElement[bool]] | None = None,
         filters: DjangoFilters | None = None,
-        sort_columns: (
-            Sequence[ColumnExpressionOrStrLabelArgument] | None
-        ) = None,
+        sort_columns: (Sequence[ColumnExpressionOrStrLabelArgument] | None) = None,
         sort_attrs: Sequence[str] | None = None,
-        group_columns: (
-            Sequence[ColumnExpressionOrStrLabelArgument] | None
-        ) = None,
+        group_columns: (Sequence[ColumnExpressionOrStrLabelArgument] | None) = None,
         group_attrs: Sequence[str] | None = None,
         schema: EagerSchema | None = None,
     ) -> AsyncQuery[Self]:
