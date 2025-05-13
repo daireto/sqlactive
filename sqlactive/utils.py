@@ -1,3 +1,5 @@
+"""Utilities for SQLActive."""
+
 from collections.abc import Callable, Generator
 from typing import Any, Generic, Literal, overload
 
@@ -6,10 +8,11 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 
 from .definitions import JOINED, SELECT_IN, SUBQUERY
+from .exceptions import FilterTypeError, InvalidJoinMethodError, RootClassNotFoundError
 from .types import EagerSchema, Query, T
 
 
-class classproperty(Generic[T]):
+class classproperty(Generic[T]):  # noqa: N801
     """Decorator for a Class-level property.
 
     Usage:
@@ -25,17 +28,15 @@ class classproperty(Generic[T]):
 
     fget: Callable[[Any], T]
 
-    def __init__(self, func: Callable[[Any], T]) -> None:
+    def __init__(self, func: Callable[[Any], T]) -> None:  # noqa: D107
         self.fget = func
 
-    def __get__(self, _: object, owner_cls: type | None = None) -> T:
+    def __get__(self, _: object, owner_cls: type | None = None) -> T:  # noqa: D105
         return self.fget(owner_cls)
 
 
 @overload
-def get_query_root_cls(
-    query: Query[T], raise_on_none: Literal[True]
-) -> type[T]: ...
+def get_query_root_cls(query: Query[T], raise_on_none: Literal[True]) -> type[T]: ...
 
 
 @overload
@@ -44,10 +45,8 @@ def get_query_root_cls(
 ) -> type[T] | None: ...
 
 
-def get_query_root_cls(
-    query: Query[T], raise_on_none: bool = False
-) -> type[T] | None:
-    """Returns the root class of a query.
+def get_query_root_cls(query: Query[T], raise_on_none: bool = False) -> type[T] | None:
+    """Return the root class of a query.
 
     Returns the class of the first column of the query, this is:
     - When selecting specific columns, returns the class of
@@ -71,7 +70,7 @@ def get_query_root_cls(
 
     Raises
     ------
-    ValueError
+    RootClassNotFoundError
         If no root class is found and ``raise_on_none`` is True.
 
     Examples
@@ -116,7 +115,8 @@ def get_query_root_cls(
     >>> get_query_root_cls(query, raise_on_none=True)
     Traceback (most recent call last):
         ...
-    ValueError: could not find root class of query: <...>
+    RootClassNotFoundError: could not find root class of query: <...>
+
     """
     for col_desc in query.column_descriptions:
         entity = col_desc.get('entity')
@@ -124,7 +124,7 @@ def get_query_root_cls(
             return entity
 
     if raise_on_none:
-        raise ValueError(f'could not find root class of query: {query}')
+        raise RootClassNotFoundError(repr(query))
 
     return None
 
@@ -198,8 +198,9 @@ def flatten_nested_filter_keys(
 
     Raises
     ------
-    TypeError
+    FilterTypeError
         If ``filters`` is not a dict or list.
+
     """
     if isinstance(filters, dict):
         for key, value in filters.items():
@@ -211,16 +212,13 @@ def flatten_nested_filter_keys(
         for f in filters:
             yield from flatten_nested_filter_keys(f)
     else:
-        raise TypeError(
-            'expected dict or list in filters, '
-            f'got {type(filters).__name__}: {filters!r}'
-        )
+        raise FilterTypeError(filters)
 
 
 def create_eager_load_option(
     attr: InstrumentedAttribute[Any], join_method: str
 ) -> _AbstractLoad:
-    """Returns an eager loading option for the given attr.
+    """Return an eager loading option for the given attr.
 
     Parameters
     ----------
@@ -238,6 +236,7 @@ def create_eager_load_option(
     ------
     InvalidJoinMethodError
         If join method is not supported.
+
     """
     if join_method == JOINED:
         return joinedload(attr)
@@ -248,13 +247,11 @@ def create_eager_load_option(
     if join_method == SELECT_IN:
         return selectinload(attr)
 
-    raise ValueError(
-        f'invalid join method: {join_method!r} for {attr.key!r}',
-    )
+    raise InvalidJoinMethodError(attr.key, join_method)
 
 
 def eager_expr_from_schema(schema: EagerSchema) -> list[_AbstractLoad]:
-    """Creates eager loading expressions from
+    """Create eager loading expressions from
     the provided ``schema`` recursively.
 
     To see the example, see the
@@ -262,13 +259,14 @@ def eager_expr_from_schema(schema: EagerSchema) -> list[_AbstractLoad]:
 
     Parameters
     ----------
-    schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
+    schema : EagerSchema
         Schema for the eager loading.
 
     Returns
     -------
     list[_AbstractLoad]
         Eager loading expressions.
+
     """
     result = []
     for path, value in schema.items():
@@ -281,9 +279,7 @@ def eager_expr_from_schema(schema: EagerSchema) -> list[_AbstractLoad]:
 
         load_option = create_eager_load_option(path, join_method)
         if inner_schema:
-            load_option = load_option.options(
-                *eager_expr_from_schema(inner_schema)
-            )
+            load_option = load_option.options(*eager_expr_from_schema(inner_schema))
 
         result.append(load_option)
 
