@@ -1,14 +1,14 @@
-"""This module defines ``ActiveRecordBaseModel`` class."""
+"""Base model that inherits from all main mixins:
+``ActiveRecordMixin``, ``SerializationMixin`` and ``TimestampMixin``.
+"""
 
 from .active_record import ActiveRecordMixin
 from .serialization import SerializationMixin
 from .timestamp import TimestampMixin
 
 
-class ActiveRecordBaseModel(
-    ActiveRecordMixin, SerializationMixin, TimestampMixin
-):
-    """This is intended to be a base class for all models.
+class ActiveRecordBaseModel(ActiveRecordMixin, SerializationMixin, TimestampMixin):
+    """Base model class that use the Active Record pattern.
 
     Inherits from:
 
