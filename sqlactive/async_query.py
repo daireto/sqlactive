@@ -1,4 +1,11 @@
-"""This module defines ``AsyncQuery`` class."""
+"""Async wrapper for ``sqlalchemy.sql.Select``.
+
+The ``AsyncQuery`` class provides a set of helper methods for
+asynchronously executing the query.
+
+It implements the functionality of both ``SessionMixin`` and
+``SmartQueryMixin`` mixins.
+"""
 
 from collections.abc import Sequence
 from typing import Any, Generic, Literal, overload
@@ -6,12 +13,12 @@ from typing import Any, Generic, Literal, overload
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.orm import joinedload, selectinload, subqueryload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql._typing import _ColumnsClauseArgument
+from sqlalchemy.sql._typing import _ColumnsClauseArgument  # type: ignore
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.functions import func
 
-from .exceptions import RelationError
+from .exceptions import EagerLoadPathTupleError, NegativeIntegerError, RelationError
 from .session import SessionMixin
 from .smart_query import SmartQueryMixin
 from .types import (
@@ -92,7 +99,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     """The wrapped ``sqlalchemy.sql.Select`` instance."""
 
     def __init__(self, query: Query) -> None:
-        """Builds an async wrapper for SQLAlchemy ``Query``.
+        """Build an async wrapper for SQLAlchemy ``Query``.
 
         .. warning::
             You must provide a session by calling
@@ -102,23 +109,25 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ----------
         query : Query
             The ``sqlalchemy.sql.Select`` instance.
+
         """
         self.query = query
 
     async def execute(self) -> Result[Any]:
-        """Executes the query and returns a ``sqlalchemy.engine.Result``
+        """Execute the query and returns a ``sqlalchemy.engine.Result``
         instance containing the results.
 
         Returns
         -------
         Result[Any]
             Result of the query.
+
         """
         async with self.AsyncSession() as session:
             return await session.execute(self.query)
 
     async def scalars(self) -> ScalarResult[T]:
-        """Returns a ``sqlalchemy.engine.ScalarResult`` instance
+        """Return a ``sqlalchemy.engine.ScalarResult`` instance
         containing all results.
 
         Returns
@@ -150,6 +159,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> users = result.all()
         >>> users
         [User(id=2)]
+
         """
         return (await self.execute()).scalars()
 
@@ -160,15 +170,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def first(self, scalar: Literal[True]) -> T | None: ...
 
     @overload
-    async def first(
-        self, scalar: Literal[False]
-    ) -> Row[tuple[Any, ...]] | None: ...
+    async def first(self, scalar: Literal[False]) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     async def first(self, scalar: bool) -> T | Row[tuple[Any, ...]] | None: ...
 
     async def first(self, scalar: bool = True):
-        """Fetches the first row or ``None`` if no results are found.
+        """Fetch the first row or ``None`` if no results are found.
 
         If ``scalar`` is ``True``, returns a scalar value (default).
 
@@ -216,6 +224,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ...                         .first(scalar=False)
         >>> user
         ('Bob Williams', 30)
+
         """
         if scalar:
             return (await self.scalars()).first()
@@ -235,7 +244,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def one(self, scalar: bool) -> T | Row[tuple[Any, ...]]: ...
 
     async def one(self, scalar: bool = True):
-        """Fetches one row or raises a ``sqlalchemy.exc.NoResultFound``
+        """Fetch one row or raises a ``sqlalchemy.exc.NoResultFound``
         exception if no results are found.
 
         If multiple results are found, it will raise a
@@ -291,7 +300,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> user = await async_query.one()
         Traceback (most recent call last):
             ...
-        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one was required
+        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one...
 
         Selecting specific columns:
         >>> user = await async_query.where(name='John Doe')
@@ -304,6 +313,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ...                  .one(scalar=False)
         >>> user
         ('John Doe', 30)
+
         """
         if scalar:
             return (await self.scalars()).one()
@@ -322,12 +332,10 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def one_or_none(
-        self, scalar: bool
-    ) -> T | Row[tuple[Any, ...]] | None: ...
+    async def one_or_none(self, scalar: bool) -> T | Row[tuple[Any, ...]] | None: ...
 
     async def one_or_none(self, scalar: bool = True):
-        """Fetches one row or ``None`` if no results are found.
+        """Fetch one row or ``None`` if no results are found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
@@ -383,7 +391,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> user = await async_query.one_or_none()
         Traceback (most recent call last):
             ...
-        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one was required
+        sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one...
 
         Selecting specific columns:
         >>> user = await async_query.where(name='John Doe')
@@ -396,6 +404,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ...                         .one_or_none(scalar=False)
         >>> user
         ('John Doe', 30)
+
         """
         if scalar:
             return (await self.scalars()).one_or_none()
@@ -409,9 +418,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def all(self, scalars: Literal[True]) -> Sequence[T]: ...
 
     @overload
-    async def all(
-        self, scalars: Literal[False]
-    ) -> Sequence[Row[tuple[Any, ...]]]: ...
+    async def all(self, scalars: Literal[False]) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
     async def all(
@@ -419,7 +426,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     ) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]: ...
 
     async def all(self, scalars: bool = True):
-        """Fetches all rows.
+        """Fetch all rows.
 
         If ``scalars`` is ``True``, returns scalar values (default).
 
@@ -465,6 +472,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ...                          .all(scalars=False)
         >>> users
         [('John Doe', 30), ('Jane Doe', 32), ...]
+
         """
         if scalars:
             return (await self.scalars()).all()
@@ -472,7 +480,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return (await self.execute()).all()
 
     async def count(self) -> int:
-        """Fetches the number of rows.
+        """Fetch the number of rows.
 
         Returns
         -------
@@ -487,6 +495,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> count = await async_query.count()
         >>> count
         34
+
         """
         self._set_count_query()
         return (await self.execute()).scalars().one()
@@ -498,9 +507,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def unique(self, scalars: Literal[True]) -> ScalarResult[T]: ...
 
     @overload
-    async def unique(
-        self, scalars: Literal[False]
-    ) -> Result[tuple[Any, ...]]: ...
+    async def unique(self, scalars: Literal[False]) -> Result[tuple[Any, ...]]: ...
 
     @overload
     async def unique(
@@ -555,6 +562,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> users = await async_query.unique(scalars=False)
         >>> users
         <sqlalchemy.engine.result.Result object at 0x...>
+
         """
         if scalars:
             return (await self.scalars()).unique()
@@ -573,9 +581,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
-    async def unique_first(
-        self, scalar: bool
-    ) -> T | Row[tuple[Any, ...]] | None: ...
+    async def unique_first(self, scalar: bool) -> T | Row[tuple[Any, ...]] | None: ...
 
     async def unique_first(self, scalar: bool = True):
         """Similar to ``first()`` but applies unique filtering to the
@@ -600,9 +606,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def unique_one(self, scalar: Literal[True]) -> T: ...
 
     @overload
-    async def unique_one(
-        self, scalar: Literal[False]
-    ) -> Row[tuple[Any, ...]]: ...
+    async def unique_one(self, scalar: Literal[False]) -> Row[tuple[Any, ...]]: ...
 
     @overload
     async def unique_one(self, scalar: bool) -> T | Row[tuple[Any, ...]]: ...
@@ -704,7 +708,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return (await self.execute()).scalars().unique().one()
 
     def select(self, *entities: _ColumnsClauseArgument[Any]) -> Self:
-        """Replaces the columns clause with the given entities.
+        """Replace the columns clause with the given entities.
 
         The existing set of FROMs are maintained, including those
         implied by the current columns clause.
@@ -735,21 +739,20 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> async_query = AsyncQuery(query)
         >>> async_query.order_by('-created_at')
         >>> async_query
-        'SELECT users.id, users.username, users.name, ... FROM users ORDER BY users.created_at DESC'
+        'SELECT users.id, users.username, ... FROM users ORDER BY users.created_at DESC'
         >>> async_query.select(User.name, User.age)
         >>> async_query
         'SELECT users.name, users.age FROM users ORDER BY users.created_at DESC'
+
         """
         if not entities:
             return self
 
-        self.query = self.query.with_only_columns(
-            *entities, maintain_column_froms=True
-        )
+        self.query = self.query.with_only_columns(*entities, maintain_column_froms=True)
         return self
 
     def distinct(self) -> Self:
-        """Applies DISTINCT to the SELECT statement overall.
+        """Apply DISTINCT to the SELECT statement overall.
 
         Returns
         -------
@@ -774,12 +777,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         'SELECT users.id, users.username, users.name, ... FROM users'
         >>> async_query.distinct()
         'SELECT DISTINCT users.id, users.username, users.name, ... FROM users'
+
         """
         self.query = self.query.distinct()
         return self
 
     def options(self, *args: ExecutableOption) -> Self:
-        """Applies the given list of mapper options.
+        """Apply the given list of mapper options.
 
         .. warning::
             Quoting from the `joined eager loading docs <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading>`_:
@@ -856,12 +860,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         Traceback (most recent call last):
             ...
         InvalidRequestError: The unique() method must be invoked on this Result...
+
         """
         self.query = self.query.options(*args)
         return self
 
     def where(self, *criteria: ColumnElement[bool], **filters: Any) -> Self:
-        """Applies one or more WHERE criteria to the query.
+        """Apply one or more WHERE criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -919,6 +924,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ... ).all()
         >>> users
         [User(id=2)]
+
         """
         self.query = self.smart_query(
             query=self.query, criteria=criteria, filters=filters
@@ -938,7 +944,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         search_term: str,
         columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> Self:
-        """Applies a search filter to the query.
+        """Apply a search filter to the query.
 
         Searches for ``search_term`` in the searchable columns of
         the model. If ``columns`` are provided, searches only these
@@ -995,6 +1001,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ... ).all()
         >>> users
         [User(id=2)]
+
         """
         self.query = self.apply_search_filter(
             query=self.query, search_term=search_term, columns=columns
@@ -1002,7 +1009,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return self
 
     def order_by(self, *columns: ColumnExpressionOrStrLabelArgument) -> Self:
-        """Applies one or more ORDER BY criteria to the query.
+        """Apply one or more ORDER BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1054,6 +1061,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         ... ).all()
         >>> posts
         [Post(id=1), Post(id=4), ...]
+
         """
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
         self.query = self.smart_query(
@@ -1070,7 +1078,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         *columns: ColumnExpressionOrStrLabelArgument,
         select_columns: Sequence[_ColumnsClauseArgument[Any]] | None = None,
     ) -> Self:
-        """Applies one or more GROUP BY criteria to the query.
+        """Apply one or more GROUP BY criteria to the query.
 
         It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1138,6 +1146,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> rows = async_query.all(scalars=False)
         >>> rows
         [(4, 'John Doe', 1), (5, 'Jane Doe', 1), ...]
+
         """
         if select_columns:
             self.select(*select_columns)
@@ -1151,7 +1160,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return self
 
     def offset(self, offset: int) -> Self:
-        """Applies one OFFSET criteria to the query.
+        """Apply one OFFSET criteria to the query.
 
         Parameters
         ----------
@@ -1165,7 +1174,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         Raises
         ------
-        ValueError
+        NegativeIntegerError
             If ``offset`` is negative.
 
         Examples
@@ -1191,10 +1200,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> async_query.offset(-1)
         Traceback (most recent call last):
             ...
-        ValueError: offset must be >= 0
+        NegativeIntegerError: offset must be >= 0, got -1
+
         """
         if offset < 0:
-            raise ValueError('offset must be >= 0')
+            raise NegativeIntegerError(name='offset', value=offset)
 
         self.query = self.query.offset(offset)
         return self
@@ -1204,7 +1214,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return self.offset(skip)
 
     def limit(self, limit: int) -> Self:
-        """Applies one LIMIT criteria to the query.
+        """Apply one LIMIT criteria to the query.
 
         Parameters
         ----------
@@ -1218,7 +1228,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         Raises
         ------
-        ValueError
+        NegativeIntegerError
             If ``limit`` is negative.
 
         Examples
@@ -1244,10 +1254,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         >>> async_query.limit(-1)
         Traceback (most recent call last):
             ...
-        ValueError: limit must be >= 0
+        NegativeIntegerError: limit must be >= 0, got -1
+
         """
         if limit < 0:
-            raise ValueError('limit must be >= 0')
+            raise NegativeIntegerError(name='limit', value=limit)
 
         self.query = self.query.limit(limit)
         return self
@@ -1260,10 +1271,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         """Synonym for ``limit()``."""
         return self.limit(top)
 
-    def join(
-        self, *paths: EagerLoadPath, model: type[T] | None = None
-    ) -> Self:
-        """Joined eager loading using LEFT OUTER JOIN.
+    def join(self, *paths: EagerLoadPath, model: type[T] | None = None) -> Self:
+        """Apply joined eager loading using LEFT OUTER JOIN.
 
         When a tuple is passed, the second element must be boolean, and
         if ``True``, the join is INNER JOIN, otherwise LEFT OUTER JOIN.
@@ -1330,10 +1339,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         Traceback (most recent call last):
             ...
         ValueError: expected boolean for second element of tuple, got str: 'inner'
+
         """
-        return self._apply_eager_loading_options(
-            *paths, joined=True, model=model
-        )
+        return self._apply_eager_loading_options(*paths, joined=True, model=model)
 
     def with_subquery(
         self, *paths: EagerLoadPath, model: type[T] | None = None
@@ -1455,11 +1463,12 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         [Post(id=1), Post(id=2), ...]
         >>> user.posts[0].comments  # loaded using SELECT IN
         [Comment(id=1), Comment(id=2), ...]
+
         """
         return self._apply_eager_loading_options(*paths, model=model)
 
     def with_schema(self, schema: EagerSchema) -> Self:
-        """Joined, subqueryload and selectinload eager loading.
+        """Apply joined, subqueryload and selectinload eager loading.
 
         Useful for complex cases where you need to load
         nested relationships in separate queries.
@@ -1497,7 +1506,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         Parameters
         ----------
-        schema : dict[InstrumentedAttribute[Any], str | tuple[str, dict[InstrumentedAttribute[Any], Any]] | dict]
+        schema : EagerSchema
             Dictionary defining the loading strategy.
 
         Returns
@@ -1543,22 +1552,23 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         [Comment(id=1), Comment(id=2), ...]
         >>> user.posts[0].comments[0].user
         User(id=1)
+
         """
         return self.options(*self.eager_expr(schema or {}))
 
     def __str__(self) -> str:
-        """Returns the raw SQL query."""
+        """Return the raw SQL query."""
         return str(self.query)
 
     def __repr__(self) -> str:
-        """Returns the raw SQL query."""
+        """Return the raw SQL query."""
         return str(self)
 
     def _split_columns_and_attrs(
         self,
         columns_and_attrs: Sequence[ColumnExpressionOrStrLabelArgument],
     ) -> tuple[list[str], list[str]]:
-        """Splits columns and attrs.
+        """Split columns and attrs.
 
         Parameters
         ----------
@@ -1569,6 +1579,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         -------
         tuple[list[str], list[str]]
             A tuple of columns and attrs.
+
         """
         columns = []
         attrs = []
@@ -1581,12 +1592,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return columns, attrs
 
     def _apply_eager_loading_options(
-        self,
-        *paths: EagerLoadPath,
-        joined: bool = False,
-        model: type[T] | None = None,
+        self, *paths: EagerLoadPath, joined: bool = False, model: type[T] | None = None
     ) -> Self:
-        """Applies the eager loading options from the given paths.
+        """Apply the eager loading options from the given paths.
 
         Takes paths like::
 
@@ -1618,10 +1626,11 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         Raises
         ------
-        TypeError
+        EagerLoadPathTupleError
             If the second element of tuple is not boolean.
         RelationError
             If relationship does not exist.
+
         """
         options = []
         for path in paths:
@@ -1629,10 +1638,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
             if isinstance(path, tuple):
                 attr, use_selectin = path
                 if not isinstance(use_selectin, bool):
-                    raise TypeError(
-                        f'expected boolean for second element of tuple, '
-                        f'got {type(use_selectin).__name__}: {use_selectin!r}'
-                    )
+                    raise EagerLoadPathTupleError(path)
 
             # simple paths like User.posts, User.comments
             else:
@@ -1653,7 +1659,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return self.options(*options)
 
     def _set_count_query(self) -> None:
-        """Sets the count aggregate function to the query."""
+        """Set the count aggregate function to the query."""
         self.query = self.query.with_only_columns(
             func.count(), maintain_column_froms=True
         ).order_by(None)
