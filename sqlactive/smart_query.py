@@ -1,4 +1,9 @@
-"""This module defines ``SmartQueryMixin`` class."""
+"""Smart query mixin for SQLAlchemy models.
+
+Provides smart query functionality for SQLAlchemy models,
+allowing you to filter, sort, group and eager load data in a single
+query, making it easier to retrieve specific data from the database.
+"""
 
 from collections.abc import Generator, Sequence
 from typing import Any
@@ -35,64 +40,62 @@ from .utils import (
     get_query_root_cls,
 )
 
-Aliases = dict[
-    str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]
-]
+_Aliases = dict[str, tuple[AliasedClass[InspectionMixin], InstrumentedAttribute[Any]]]
+
+_RELATION_SPLITTER = '___'
+"""Separator used to split relationship name from attribute name."""
+
+_OPERATOR_SPLITTER = '__'
+"""Separator used to split operator from attribute name."""
+
+_DESC_PREFIX = '-'
+"""Prefix used to mark descending order."""
+
+_OPERATORS: dict[str, OperationFunction | OperatorType] = {
+    'isnull': lambda c, v: (c == None) if v else (c != None),  # noqa: E711
+    'exact': operators.eq,
+    'eq': operators.eq,  # equal
+    'ne': operators.ne,  # not equal or is not (for None)
+    'gt': operators.gt,  # greater than , >
+    'ge': operators.ge,  # greater than or equal, >=
+    'lt': operators.lt,  # lower than, <
+    'le': operators.le,  # lower than or equal, <=
+    'in': operators.in_op,
+    'notin': operators.notin_op,
+    'between': lambda c, v: c.between(v[0], v[1]),
+    'like': operators.like_op,
+    'ilike': operators.ilike_op,
+    'startswith': operators.startswith_op,
+    'istartswith': lambda c, v: c.ilike(v + '%'),
+    'endswith': operators.endswith_op,
+    'iendswith': lambda c, v: c.ilike('%' + v),
+    'contains': lambda c, v: c.ilike(f'%{v}%'),
+    'year': lambda c, v: extract('year', c) == v,
+    'year_ne': lambda c, v: extract('year', c) != v,
+    'year_gt': lambda c, v: extract('year', c) > v,
+    'year_ge': lambda c, v: extract('year', c) >= v,
+    'year_lt': lambda c, v: extract('year', c) < v,
+    'year_le': lambda c, v: extract('year', c) <= v,
+    'month': lambda c, v: extract('month', c) == v,
+    'month_ne': lambda c, v: extract('month', c) != v,
+    'month_gt': lambda c, v: extract('month', c) > v,
+    'month_ge': lambda c, v: extract('month', c) >= v,
+    'month_lt': lambda c, v: extract('month', c) < v,
+    'month_le': lambda c, v: extract('month', c) <= v,
+    'day': lambda c, v: extract('day', c) == v,
+    'day_ne': lambda c, v: extract('day', c) != v,
+    'day_gt': lambda c, v: extract('day', c) > v,
+    'day_ge': lambda c, v: extract('day', c) >= v,
+    'day_lt': lambda c, v: extract('day', c) < v,
+    'day_le': lambda c, v: extract('day', c) <= v,
+}
+"""Django-like operators mapping."""
 
 
 class SmartQueryMixin(InspectionMixin):
     """Mixin for SQLAlchemy models to provide smart query methods."""
 
     __abstract__ = True
-
-    _RELATION_SPLITTER = '___'
-    """Separator used to split relationship name from attribute name."""
-
-    _OPERATOR_SPLITTER = '__'
-    """Separator used to split operator from attribute name."""
-
-    _DESC_PREFIX = '-'
-    """Prefix used to mark descending order."""
-
-    _operators: dict[str, OperationFunction | OperatorType] = {
-        'isnull': lambda c, v: (c == None) if v else (c != None),  # noqa: E711
-        'exact': operators.eq,
-        'eq': operators.eq,  # equal
-        'ne': operators.ne,  # not equal or is not (for None)
-        'gt': operators.gt,  # greater than , >
-        'ge': operators.ge,  # greater than or equal, >=
-        'lt': operators.lt,  # lower than, <
-        'le': operators.le,  # lower than or equal, <=
-        'in': operators.in_op,
-        'notin': operators.notin_op,
-        'between': lambda c, v: c.between(v[0], v[1]),
-        'like': operators.like_op,
-        'ilike': operators.ilike_op,
-        'startswith': operators.startswith_op,
-        'istartswith': lambda c, v: c.ilike(v + '%'),
-        'endswith': operators.endswith_op,
-        'iendswith': lambda c, v: c.ilike('%' + v),
-        'contains': lambda c, v: c.ilike(f'%{v}%'),
-        'year': lambda c, v: extract('year', c) == v,
-        'year_ne': lambda c, v: extract('year', c) != v,
-        'year_gt': lambda c, v: extract('year', c) > v,
-        'year_ge': lambda c, v: extract('year', c) >= v,
-        'year_lt': lambda c, v: extract('year', c) < v,
-        'year_le': lambda c, v: extract('year', c) <= v,
-        'month': lambda c, v: extract('month', c) == v,
-        'month_ne': lambda c, v: extract('month', c) != v,
-        'month_gt': lambda c, v: extract('month', c) > v,
-        'month_ge': lambda c, v: extract('month', c) >= v,
-        'month_lt': lambda c, v: extract('month', c) < v,
-        'month_le': lambda c, v: extract('month', c) <= v,
-        'day': lambda c, v: extract('day', c) == v,
-        'day_ne': lambda c, v: extract('day', c) != v,
-        'day_gt': lambda c, v: extract('day', c) > v,
-        'day_ge': lambda c, v: extract('day', c) >= v,
-        'day_lt': lambda c, v: extract('day', c) < v,
-        'day_le': lambda c, v: extract('day', c) <= v,
-    }
-    """Django-like operators mapping."""
 
     @classmethod
     def filter_expr(cls, **filters: object) -> list[ColumnElement[Any]]:
@@ -223,6 +226,7 @@ class SmartQueryMixin(InspectionMixin):
         ...     *alias.filter_expr(rating=5, user_id__in=[1,2])
         ... )
         'SELECT * FROM post_1 WHERE post_1.rating=5 AND post_1.user_id IN [1, 2]'
+
         """
         mapper, _class = cls._get_mapper()
 
@@ -239,14 +243,13 @@ class SmartQueryMixin(InspectionMixin):
             else:
                 # determine attribute name and operator
                 # if they are explicitly set (say, id__between), take them
-                if cls._OPERATOR_SPLITTER in attr:
-                    attr_name, op_name = attr.rsplit(cls._OPERATOR_SPLITTER, 1)
-                    op = cls._operators.get(op_name)
+                if _OPERATOR_SPLITTER in attr:
+                    attr_name, op_name = attr.rsplit(_OPERATOR_SPLITTER, 1)
+                    op = _OPERATORS.get(op_name)
                     if not op:
                         raise OperatorError(
                             op_name,
-                            f'expression {attr!r} has incorrect operator: '
-                            f'{op_name!r}',
+                            f'expression {attr!r} has incorrect operator: {op_name!r}',
                         )
 
                 # assume equality operator for other cases (say, id=1)
@@ -257,8 +260,7 @@ class SmartQueryMixin(InspectionMixin):
                     raise NoFilterableError(
                         attr_name,
                         _class.__name__,
-                        f'expression {attr!r} has incorrect attribute: '
-                        f'{attr_name!r}',
+                        f'expression {attr!r} has incorrect attribute: {attr_name!r}',
                     )
 
                 column = getattr(mapper, attr_name)
@@ -268,7 +270,7 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def order_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
-        """Transforms Django-style order expressions into
+        """Transform Django-style order expressions into
         SQLAlchemy expressions.
 
         Takes list of columns to order by like::
@@ -346,27 +348,26 @@ class SmartQueryMixin(InspectionMixin):
         [desc(Post.rating), asc(Post.title)]
         >>> db.query(alias).order_by(*alias.order_expr('-rating', 'title'))
         'SELECT * FROM posts_1 ORDER BY posts_1.rating DESC, posts_1.title ASC'
+
         """
         mapper, _class = cls._get_mapper()
 
         expressions: list[ColumnElement[Any]] = []
         for attr in columns:
-            fn, attr = (
-                (desc, attr[1:])
-                if attr.startswith(cls._DESC_PREFIX)
-                else (asc, attr)
+            fn, attr_name = (
+                (desc, attr[1:]) if attr.startswith(_DESC_PREFIX) else (asc, attr)
             )
-            if attr not in _class.sortable_attributes:
-                raise NoSortableError(attr, _class.__name__)
+            if attr_name not in _class.sortable_attributes:
+                raise NoSortableError(attr_name, _class.__name__)
 
-            expr = fn(getattr(mapper, attr))
+            expr = fn(getattr(mapper, attr_name))
             expressions.append(expr)
 
         return expressions
 
     @classmethod
     def columns_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
-        """Transforms column names into
+        """Transform column names into
         SQLAlchemy model attributes.
 
         Takes list of column names like::
@@ -437,7 +438,8 @@ class SmartQueryMixin(InspectionMixin):
         'SELECT posts.user_id, max(posts.rating) FROM posts GROUP BY posts.user_id'
         >>> db.query(Post.user_id, Post.rating)
         ...   .group_by(*Post.columns_expr('user_id', 'rating'))
-        'SELECT posts.user_id, posts.rating FROM posts GROUP BY posts.user_id, posts.rating'
+        'SELECT posts.user_id, posts.rating FROM posts'
+        'GROUP BY posts.user_id, posts.rating'
 
         Using alias:
         >>> alias = aliased(Post)
@@ -452,7 +454,9 @@ class SmartQueryMixin(InspectionMixin):
         'SELECT posts_1.user_id FROM posts_1 GROUP BY posts_1.user_id'
         >>> db.query(alias.user_id, alias.rating)
         ...   .group_by(*alias.columns_expr('user_id', 'rating'))
-        'SELECT posts_1.user_id, posts_1.rating FROM posts_1 GROUP BY posts_1.user_id, posts_1.rating'
+        'SELECT posts_1.user_id, posts_1.rating FROM posts_1'
+        'GROUP BY posts_1.user_id, posts_1.rating'
+
         """
         mapper, _class = cls._get_mapper()
 
@@ -467,7 +471,7 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def eager_expr(cls, schema: EagerSchema) -> list[_AbstractLoad]:
-        """Transforms an eager loading defined schema into
+        """Transform an eager loading defined schema into
         SQLAlchemy eager loading expressions.
 
         Takes a schema like::
@@ -544,6 +548,7 @@ class SmartQueryMixin(InspectionMixin):
         'Bob Williams'
         >>> post1.comments[0].user.name
         'Bob Williams'
+
         """
         return eager_expr_from_schema(schema)
 
@@ -553,17 +558,13 @@ class SmartQueryMixin(InspectionMixin):
         query: Query,
         criteria: Sequence[ColumnElement[bool]] | None = None,
         filters: DjangoFilters | None = None,
-        sort_columns: (
-            Sequence[ColumnExpressionOrStrLabelArgument] | None
-        ) = None,
+        sort_columns: (Sequence[ColumnExpressionOrStrLabelArgument] | None) = None,
         sort_attrs: Sequence[str] | None = None,
-        group_columns: (
-            Sequence[ColumnExpressionOrStrLabelArgument] | None
-        ) = None,
+        group_columns: (Sequence[ColumnExpressionOrStrLabelArgument] | None) = None,
         group_attrs: Sequence[str] | None = None,
         schema: EagerSchema | None = None,
     ) -> Query:
-        """Creates a query combining filtering, sorting, grouping
+        """Create a query combining filtering, sorting, grouping
         and eager loading.
 
         Does magic `Django-like joins <https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships>`_
@@ -632,6 +633,7 @@ class SmartQueryMixin(InspectionMixin):
         'Lorem ipsum'
         >>> users[0].comments[0].post.title
         'Lorem ipsum'
+
         """
         filters = filters or {}
         sort_attrs = sort_attrs or []
@@ -649,9 +651,7 @@ class SmartQueryMixin(InspectionMixin):
             query = query.filter(*criteria)
 
         if filters:
-            query = query.filter(
-                *cls._recurse_filters(filters, root_cls, aliases)
-            )
+            query = query.filter(*cls._recurse_filters(filters, root_cls, aliases))
 
         # Sorting
         if sort_columns:
@@ -680,7 +680,7 @@ class SmartQueryMixin(InspectionMixin):
         search_term: str,
         columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> Query:
-        """Applies a search filter to the query.
+        """Apply a search filter to the query.
 
         Searches for ``search_term`` in the searchable columns
         of the model. If ``columns`` are provided, searches only
@@ -705,6 +705,7 @@ class SmartQueryMixin(InspectionMixin):
         To learn how to use this method, see the
         ``sqlactive.active_record.ActiveRecordMixin.search`` method.
         It uses this method internally.
+
         """
         root_cls = get_query_root_cls(query, raise_on_none=True)
 
@@ -726,12 +727,11 @@ class SmartQueryMixin(InspectionMixin):
                 f'%{search_term}%'
             )
 
-        query = query.filter(criteria)  # type: ignore
-        return query
+        return query.filter(criteria)  # type: ignore
 
     @classmethod
     def _get_mapper(cls) -> tuple[AliasedClass | type[Self], type[Self]]:
-        """Returns the appropriate mapper and class
+        """Return the appropriate mapper and class
         for the current entity.
         """
         return (
@@ -747,8 +747,8 @@ class SmartQueryMixin(InspectionMixin):
         filters: DjangoFilters,
         sort_attrs: Sequence[str],
         group_attrs: Sequence[str],
-    ) -> Aliases:
-        """Returns aliases for the query.
+    ) -> _Aliases:
+        """Return aliases for the query.
 
         Parameters
         ----------
@@ -765,10 +765,11 @@ class SmartQueryMixin(InspectionMixin):
         -------
         Aliases
             Aliases for the query.
+
         """
         attrs = (
             list(flatten_nested_filter_keys(filters))
-            + [s.lstrip(cls._DESC_PREFIX) for s in sort_attrs]
+            + [s.lstrip(_DESC_PREFIX) for s in sort_attrs]
             + list(group_attrs)
         )
 
@@ -782,7 +783,7 @@ class SmartQueryMixin(InspectionMixin):
         root_cls: type[InspectionMixin],
         columns: Sequence[str | InstrumentedAttribute[Any]] | None = None,
     ) -> list[str]:
-        """Returns a list of searchable columns.
+        """Return a list of searchable columns.
 
         If ``columns`` are provided, returns only these columns.
 
@@ -802,6 +803,7 @@ class SmartQueryMixin(InspectionMixin):
         ------
         NoSearchableError
             If column is not searchable.
+
         """
         searchable_columns = []
         if columns:
@@ -814,8 +816,7 @@ class SmartQueryMixin(InspectionMixin):
 
             return searchable_columns
 
-        else:
-            return root_cls.searchable_attributes
+        return root_cls.searchable_attributes
 
     @classmethod
     def _make_aliases_from_attrs(
@@ -823,9 +824,9 @@ class SmartQueryMixin(InspectionMixin):
         entity: type[InspectionMixin] | AliasedClass[InspectionMixin],
         entity_path: str,
         attrs: list[str],
-        aliases: Aliases,
+        aliases: _Aliases,
     ) -> None:
-        """Takes a list of attributes and makes aliases from them.
+        """Take a list of attributes and makes aliases from them.
 
         It overwrites the provided ``aliases`` dictionary.
 
@@ -872,21 +873,20 @@ class SmartQueryMixin(InspectionMixin):
         ------
         RelationError
             If relationship is not found.
+
         """
         relations: dict[str, list[str]] = {}
         for attr in attrs:
             # from attr (say, 'post___subject_ids')
             # take relationship name ('post') and
             # nested attribute ('subject_ids')
-            if cls._RELATION_SPLITTER in attr:
-                relation_name, nested_attr = attr.split(
-                    cls._RELATION_SPLITTER, 1
-                )
+            if _RELATION_SPLITTER in attr:
+                relation_name, nested_attr = attr.split(_RELATION_SPLITTER, 1)
                 relations.setdefault(relation_name, []).append(nested_attr)
 
         for relation_name, nested_attrs in relations.items():
             path = (
-                entity_path + cls._RELATION_SPLITTER + relation_name
+                entity_path + _RELATION_SPLITTER + relation_name
                 if entity_path
                 else relation_name
             )
@@ -897,9 +897,7 @@ class SmartQueryMixin(InspectionMixin):
                     f'incorrect relation path: {path!r}',
                 )
 
-            relationship: InstrumentedAttribute = getattr(
-                entity, relation_name
-            )
+            relationship: InstrumentedAttribute = getattr(entity, relation_name)
             alias: AliasedClass[InspectionMixin] = aliased(
                 relationship.property.mapper.class_
             )  # e.g. aliased(User) or aliased(Post)
@@ -908,7 +906,7 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def _recurse_filters(
-        cls, filters: DjangoFilters, root_cls: type[Self], aliases: Aliases
+        cls, filters: DjangoFilters, root_cls: type[Self], aliases: _Aliases
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
 
@@ -938,7 +936,7 @@ class SmartQueryMixin(InspectionMixin):
 
         Parameters
         ----------
-        filters : dict[str, Any] | dict[OperatorType, Any] | list[dict[str, Any]] | list[dict[OperatorType, Any]]
+        filters : DjangoFilters
             Django-like filter expressions.
         root_cls : type[SmartQueryMixin]
             Model class.
@@ -949,6 +947,7 @@ class SmartQueryMixin(InspectionMixin):
         ------
         Generator[object, None, None]
             Expression.
+
         """
         if isinstance(filters, dict):
             for attr, value in filters.items():
@@ -957,8 +956,8 @@ class SmartQueryMixin(InspectionMixin):
                     yield attr(*cls._recurse_filters(value, root_cls, aliases))
                     continue
 
-                if cls._RELATION_SPLITTER in attr:
-                    parts = attr.rsplit(cls._RELATION_SPLITTER, 1)
+                if _RELATION_SPLITTER in attr:
+                    parts = attr.rsplit(_RELATION_SPLITTER, 1)
                     entity, attr_name = aliases[parts[0]][0], parts[1]
                 else:
                     entity, attr_name = root_cls, attr
@@ -979,9 +978,9 @@ class SmartQueryMixin(InspectionMixin):
         query: Query,
         sort_attrs: Sequence[str],
         root_cls: type[Self],
-        aliases: Aliases,
+        aliases: _Aliases,
     ) -> Query:
-        """Applies an ORDER BY clause to the query.
+        """Apply an ORDER BY clause to the query.
 
         Sample input::
 
@@ -1016,14 +1015,16 @@ class SmartQueryMixin(InspectionMixin):
         -------
         Query
             Sorted query.
+
         """
-        for attr in sort_attrs:
-            if cls._RELATION_SPLITTER in attr:
+        for col in sort_attrs:
+            if _RELATION_SPLITTER in col:
                 prefix = ''
-                if attr.startswith(cls._DESC_PREFIX):
-                    prefix = cls._DESC_PREFIX
-                    attr = attr.lstrip(cls._DESC_PREFIX)
-                parts = attr.rsplit(cls._RELATION_SPLITTER, 1)
+                attr = col
+                if attr.startswith(_DESC_PREFIX):
+                    prefix = _DESC_PREFIX
+                    attr = attr.lstrip(_DESC_PREFIX)
+                parts = attr.rsplit(_RELATION_SPLITTER, 1)
                 entity, attr_name = aliases[parts[0]][0], prefix + parts[1]
             else:
                 entity, attr_name = root_cls, attr
@@ -1042,9 +1043,9 @@ class SmartQueryMixin(InspectionMixin):
         query: Query,
         group_attrs: Sequence[str],
         root_cls: type[Self],
-        aliases: Aliases,
+        aliases: _Aliases,
     ) -> Query:
-        """Applies a GROUP BY clause to the query.
+        """Apply a GROUP BY clause to the query.
 
         Sample input::
 
@@ -1079,10 +1080,11 @@ class SmartQueryMixin(InspectionMixin):
         -------
         Query
             Grouped query.
+
         """
         for attr in group_attrs:
-            if cls._RELATION_SPLITTER in attr:
-                parts = attr.rsplit(cls._RELATION_SPLITTER, 1)
+            if _RELATION_SPLITTER in attr:
+                parts = attr.rsplit(_RELATION_SPLITTER, 1)
                 entity, attr_name = aliases[parts[0]][0], parts[1]
             else:
                 entity, attr_name = root_cls, attr
