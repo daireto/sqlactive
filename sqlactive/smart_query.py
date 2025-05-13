@@ -1017,14 +1017,14 @@ class SmartQueryMixin(InspectionMixin):
             Sorted query.
 
         """
-        for col in sort_attrs:
-            if _RELATION_SPLITTER in col:
+        for attr in sort_attrs:
+            if _RELATION_SPLITTER in attr:
                 prefix = ''
-                attr = col
-                if attr.startswith(_DESC_PREFIX):
+                col = attr
+                if col.startswith(_DESC_PREFIX):
                     prefix = _DESC_PREFIX
-                    attr = attr.lstrip(_DESC_PREFIX)
-                parts = attr.rsplit(_RELATION_SPLITTER, 1)
+                    col = col.lstrip(_DESC_PREFIX)
+                parts = col.rsplit(_RELATION_SPLITTER, 1)
                 entity, attr_name = aliases[parts[0]][0], prefix + parts[1]
             else:
                 entity, attr_name = root_cls, attr
