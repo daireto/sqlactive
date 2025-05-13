@@ -1,8 +1,11 @@
 """Active Record implementation for SQLAlchemy models.
 
-This module provides the ActiveRecordMixin class which implements
-the Active Record pattern for SQLAlchemy models, allowing for more
-intuitive and chainable database operations with async/await support.
+Provides the ActiveRecordMixin class which implements the Active Record
+pattern for SQLAlchemy models, allowing for more intuitive and chainable
+database operations with async/await support.
+
+It implements the functionality of both ``SessionMixin`` and
+``SmartQueryMixin`` mixins.
 """
 
 from collections.abc import Sequence
