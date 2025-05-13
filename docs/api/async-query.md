@@ -1031,7 +1031,7 @@ def offset(offset: int) -> Self
 
 > **Raises**
 
-> - `ValueError`: If `offset` is negative.
+> - `NegativeIntegerError`: If `offset` is negative.
 
 > **Examples**
 
@@ -1048,7 +1048,7 @@ def offset(offset: int) -> Self
 > >>> async_query.offset(-1)
 > Traceback (most recent call last):
 >     ...
-> ValueError: offset must be >= 0
+> NegativeIntegerError: offset must be >= 0, got -1
 > ```
 
 #### skip
@@ -1077,7 +1077,7 @@ def limit(limit: int) -> Self
 
 > **Raises**
 
-> - `ValueError`: If `limit` is negative.
+> - `NegativeIntegerError`: If `limit` is negative.
 
 > **Examples**
 
@@ -1093,7 +1093,7 @@ def limit(limit: int) -> Self
 > >>> async_query.limit(-1)
 > Traceback (most recent call last):
 >     ...
-> ValueError: limit must be >= 0
+> NegativeIntegerError: limit must be >= 0, got -1
 > ```
 
 #### take
