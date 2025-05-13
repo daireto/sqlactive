@@ -1,4 +1,10 @@
-"""This module defines ``InspectionMixin`` class."""
+"""Inspection mixin for SQLAlchemy models.
+
+Provides attributes and properties inspection functionality
+for SQLAlchemy models.
+"""
+
+# ruff: noqa: N805
 
 from numbers import Number
 from typing import Any
@@ -21,7 +27,7 @@ class InspectionMixin(DeclarativeBase):
 
     @property
     def id_str(self) -> str:
-        """Returns a string representation of the primary key.
+        """Return a string representation of the primary key.
 
         If the primary key is composite, returns a comma-separated
         list of key-value pairs.
@@ -48,6 +54,7 @@ class InspectionMixin(DeclarativeBase):
         >>> sell = Sell(id=1, product_id=1)
         >>> sell.id_str
         'id=1, product_id=1'
+
         """
         mapped = []
         for pk in self.primary_keys_full:
@@ -61,7 +68,7 @@ class InspectionMixin(DeclarativeBase):
 
     @classproperty
     def columns(cls) -> list[str]:
-        """Returns a list of column names.
+        """Return a list of column names.
 
         Examples
         --------
@@ -77,12 +84,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.columns
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at']
+
         """
         return cls.__table__.columns.keys()
 
     @classproperty
     def string_columns(cls) -> list[str]:
-        """Returns a list of string column names.
+        """Return a list of string column names.
 
         Examples
         --------
@@ -98,14 +106,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.string_columns
         ['username', 'name']
+
         """
-        return [
-            c.key for c in cls.__table__.columns if c.type.python_type is str
-        ]
+        return [c.key for c in cls.__table__.columns if c.type.python_type is str]
 
     @classproperty
     def primary_keys_full(cls) -> tuple[Column[Any], ...]:
-        """Returns the columns that form the primary key.
+        """Return the columns that form the primary key.
 
         Examples
         --------
@@ -119,12 +126,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.primary_keys_full
         (Column('id', Integer(), table=<users>, primary_key=True, nullable=False),)
+
         """
         return cls.__mapper__.primary_key
 
     @classproperty
     def primary_keys(cls) -> list[str]:
-        """Returns the names of the primary key columns.
+        """Return the names of the primary key columns.
 
         Examples
         --------
@@ -138,12 +146,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.primary_keys
         ['id']
+
         """
         return [pk.key for pk in cls.primary_keys_full]
 
     @classproperty
     def primary_key_name(cls) -> str:
-        """Returns the primary key name of the model.
+        """Return the primary key name of the model.
 
         .. warning::
             This property can only be used if the model has a single
@@ -181,6 +190,7 @@ class InspectionMixin(DeclarativeBase):
         Traceback (most recent call last):
         ...
         CompositePrimaryKeyError: model 'Sell' has a composite primary key
+
         """
         if len(cls.primary_keys) > 1:
             raise CompositePrimaryKeyError(cls.__name__)
@@ -189,7 +199,7 @@ class InspectionMixin(DeclarativeBase):
 
     @classproperty
     def relations(cls) -> list[str]:
-        """Returns a list of relationship names.
+        """Return a list of relationship names.
 
         Examples
         --------
@@ -209,16 +219,15 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.relations
         ['posts', 'comments']
+
         """
         return [
-            c.key
-            for c in cls.__mapper__.attrs
-            if isinstance(c, RelationshipProperty)
+            c.key for c in cls.__mapper__.attrs if isinstance(c, RelationshipProperty)
         ]
 
     @classproperty
     def settable_relations(cls) -> list[str]:
-        """Returns a list of settable (not viewonly) relationship names.
+        """Return a list of settable (not viewonly) relationship names.
 
         Examples
         --------
@@ -253,14 +262,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> Product.settable_relations
         []
+
         """
-        return [
-            r for r in cls.relations if not getattr(cls, r).property.viewonly
-        ]
+        return [r for r in cls.relations if not getattr(cls, r).property.viewonly]
 
     @classproperty
     def hybrid_properties(cls) -> list[str]:
-        """Returns a list of hybrid property names.
+        """Return a list of hybrid property names.
 
         Examples
         --------
@@ -283,17 +291,14 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.hybrid_properties
         ['is_adult']
+
         """
         items = cls.__mapper__.all_orm_descriptors
-        return [
-            item.__name__
-            for item in items
-            if isinstance(item, hybrid_property)
-        ]
+        return [item.__name__ for item in items if isinstance(item, hybrid_property)]
 
     @classproperty
     def hybrid_methods_full(cls) -> dict[str, hybrid_method[..., Any]]:
-        """Returns a dict of hybrid methods.
+        """Return a dict of hybrid methods.
 
         Examples
         --------
@@ -316,17 +321,16 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.hybrid_methods_full
         {'older_than': hybrid_method(...)}
+
         """
         items = cls.__mapper__.all_orm_descriptors
         return {
-            item.func.__name__: item
-            for item in items
-            if type(item) is hybrid_method
+            item.func.__name__: item for item in items if type(item) is hybrid_method
         }
 
     @classproperty
     def hybrid_methods(cls) -> list[str]:
-        """Returns a list of hybrid method names.
+        """Return a list of hybrid method names.
 
         Examples
         --------
@@ -349,12 +353,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.hybrid_methods
         ['older_than']
+
         """
         return list(cls.hybrid_methods_full.keys())
 
     @classproperty
     def filterable_attributes(cls) -> list[str]:
-        """Returns a list of filterable attributes.
+        """Return a list of filterable attributes.
 
         These are all columns, relations, hybrid properties
         and hybrid methods.
@@ -384,18 +389,17 @@ class InspectionMixin(DeclarativeBase):
 
         Usage:
         >>> User.filterable_attributes
-        ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult', 'older_than']
+        [
+            'id', 'username', 'name', 'age', 'created_at', 'updated_at',
+            'posts', 'comments', 'is_adult', 'older_than'
+        ]
+
         """
-        return (
-            cls.columns
-            + cls.relations
-            + cls.hybrid_properties
-            + cls.hybrid_methods
-        )
+        return cls.columns + cls.relations + cls.hybrid_properties + cls.hybrid_methods
 
     @classproperty
     def sortable_attributes(cls) -> list[str]:
-        """Returns a list of sortable attributes.
+        """Return a list of sortable attributes.
 
         These are all columns and hybrid properties.
 
@@ -422,12 +426,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.sortable_attributes
         ['id', 'username', 'name', 'age', 'created_at', 'updated_at', 'is_adult']
+
         """
         return cls.columns + cls.hybrid_properties
 
     @classproperty
     def settable_attributes(cls) -> list[str]:
-        """Returns a list of settable attributes.
+        """Return a list of settable attributes.
 
         These are all columns, settable relations and hybrid properties.
 
@@ -453,13 +458,17 @@ class InspectionMixin(DeclarativeBase):
 
         Usage:
         >>> User.settable_attributes
-        ['username', 'name', 'age', 'created_at', 'updated_at', 'posts', 'comments', 'is_adult']
+        [
+            'username', 'name', 'age', 'created_at', 'updated_at',
+            'posts', 'comments', 'is_adult'
+        ]
+
         """
         return cls.columns + cls.settable_relations + cls.hybrid_properties
 
     @classproperty
     def searchable_attributes(cls) -> list[str]:
-        """Returns a list of searchable attributes.
+        """Return a list of searchable attributes.
 
         These are all string columns.
 
@@ -477,12 +486,13 @@ class InspectionMixin(DeclarativeBase):
         Usage:
         >>> User.searchable_attributes
         ['username', 'name']
+
         """
         return cls.string_columns
 
     @classmethod
     def get_class_of_relation(cls, relation_name: str) -> type[Self]:
-        """Gets the class of a relationship by its name.
+        """Get the class of a relationship by its name.
 
         Parameters
         ----------
@@ -518,14 +528,15 @@ class InspectionMixin(DeclarativeBase):
         Traceback (most recent call last):
             ...
         RelationError: no such relation: 'sells' in model 'User'
+
         """
         try:
             return cls.__mapper__.relationships[relation_name].mapper.class_
-        except KeyError:
-            raise RelationError(relation_name, cls.__name__)
+        except KeyError as e:
+            raise RelationError(relation_name, cls.__name__) from e
 
     def __repr__(self) -> str:
-        """Returns a string representation of the model.
+        """Return a string representation of the model.
 
         Representation format is
         ``ClassName(pk1=value1, pk2=value2, ...)``
@@ -539,5 +550,6 @@ class InspectionMixin(DeclarativeBase):
         >>> users = await User.find(name__endswith='Doe').all()
         >>> users
         [User(id=4), User(id=5)]
+
         """
         return f'{self.__class__.__name__}({self.id_str})'
