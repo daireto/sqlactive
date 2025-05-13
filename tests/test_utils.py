@@ -79,9 +79,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
                 [{'id__lt': 500}, {'related___property__in': (1, 2, 3)}]
             )
         )
-        self.assertCountEqual(
-            ['id__lt', 'related___property__in'], filter_keys
-        )
+        self.assertCountEqual(['id__lt', 'related___property__in'], filter_keys)
         with self.assertRaises(TypeError):
             filter_keys = list(
                 flatten_nested_filter_keys({or_: {'id__gt': 1000}, and_: True})

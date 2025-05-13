@@ -5,7 +5,9 @@ import logging
 from colorlog import ColoredFormatter
 
 LOG_LEVEL = logging.DEBUG
-LOG_FORMAT = '  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s'
+LOG_FORMAT = (
+    '  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s'
+)
 
 
 formatter = ColoredFormatter(LOG_FORMAT)

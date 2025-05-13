@@ -64,9 +64,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
                 'age': user.age,
                 'is_adult': user.is_adult,
             },
-            user.to_dict(
-                hybrid_attributes=True, exclude=['created_at', 'updated_at']
-            ),
+            user.to_dict(hybrid_attributes=True, exclude=['created_at', 'updated_at']),
         )
         self.assertDictEqual(
             {
@@ -133,9 +131,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
                 ensure_ascii=False,
                 default=str,
             ),
-            user.to_json(
-                hybrid_attributes=True, exclude=['created_at', 'updated_at']
-            ),
+            user.to_json(hybrid_attributes=True, exclude=['created_at', 'updated_at']),
         )
         self.assertEqual(
             json.dumps(
@@ -221,9 +217,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             ]
         )
         for i in range(len(user.posts)):
-            self.assertDictEqual(
-                EXPECTED_POSTS[i].to_dict(), user.posts[i].to_dict()
-            )
+            self.assertDictEqual(EXPECTED_POSTS[i].to_dict(), user.posts[i].to_dict())
 
         user = User.from_dict(
             {
@@ -308,6 +302,4 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
             '[{"id": 1, "title": "title", "body": "body", "rating": 0, "user_id": 1}, {"id": 2, "title": "title", "body": "body", "rating": 0, "user_id": 1}]'
         )
         for i in range(len(user.posts)):
-            self.assertDictEqual(
-                EXPECTED_POSTS[i].to_dict(), user.posts[i].to_dict()
-            )
+            self.assertDictEqual(EXPECTED_POSTS[i].to_dict(), user.posts[i].to_dict())

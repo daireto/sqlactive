@@ -137,15 +137,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
     async def test_insert(self):
         """Test for ``insert`` and ``create`` functions."""
         logger.info('Testing "insert" and "create" functions...')
-        user1 = await User.insert(
-            username='Test98', name='Test User 1', age=20
-        )
-        user2 = await User.insert(
-            username='Test95', name='Test User 2', age=20
-        )
-        user3 = await User.create(
-            username='Test92', name='Test User 3', age=20
-        )
+        user1 = await User.insert(username='Test98', name='Test User 1', age=20)
+        user2 = await User.insert(username='Test95', name='Test User 2', age=20)
+        user3 = await User.create(username='Test92', name='Test User 3', age=20)
         now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
         for user in [user1, user2, user3]:
             self.assertIsNotNone(user.id)
@@ -280,9 +274,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         user = None
         post = None
         with self.assertRaises(IntegrityError):
-            user = await User.insert(
-                username='Pablo123546', name='Test User 1', age=20
-            )
+            user = await User.insert(username='Pablo123546', name='Test User 1', age=20)
             post = await Post.insert(
                 title='Post 1', body='Lorem Ipsum', rating=4, user_id=user.id
             )
@@ -297,9 +289,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             [
                 User(username='Emily894', name='Emily Watson', age=27),
                 User(username='Kate6485', name='Kate Middleton', age=28),
-                User(
-                    username='Jennifer5215', name='Jennifer Lawrence', age=31
-                ),
+                User(username='Jennifer5215', name='Jennifer Lawrence', age=31),
             ]
         )
 
@@ -353,15 +343,11 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NoResultFound):
             await User.get_or_fail(0)
 
-        user = await User.get_or_fail(
-            2, join=[User.posts, (User.comments, True)]
-        )
+        user = await User.get_or_fail(2, join=[User.posts, (User.comments, True)])
         self.assertEqual(2, user.posts[0].id)
         self.assertEqual(3, user.comments[0].id)
         self.assertEqual(4, user.comments[1].id)
-        user = await User.get_or_fail(
-            2, subquery=[User.posts, (User.comments, True)]
-        )
+        user = await User.get_or_fail(2, subquery=[User.posts, (User.comments, True)])
         self.assertEqual(2, user.posts[0].id)
         self.assertEqual(3, user.comments[0].id)
         self.assertEqual(4, user.comments[1].id)
@@ -483,9 +469,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             self.assertEqual('Joe Smith', user.name)
         user = await User.find(username='Unknown').unique_one_or_none()
         self.assertIsNone(user)
-        user = await User.find(username='Joe156').unique_one_or_none(
-            scalar=False
-        )
+        user = await User.find(username='Joe156').unique_one_or_none(scalar=False)
         self.assertIsNotNone(user)
         if user:
             self.assertEqual('Joe Smith', user[0].name)
@@ -508,9 +492,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for ``select`` function."""
         logger.info('Testing "select" function...')
         async_query = User.select()
-        self.assertIn(
-            'SELECT users.id, users.username, users.name', str(async_query)
-        )
+        self.assertIn('SELECT users.id, users.username, users.name', str(async_query))
         async_query.order_by('-created_at')
         async_query.select(User.name, User.age)
         self.assertIn('SELECT users.name, users.age', str(async_query))
@@ -520,9 +502,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for ``distinct`` function."""
         logger.info('Testing "distinct" function...')
         async_query = User.distinct()
-        self.assertIn(
-            'DISTINCT users.id, users.username, users.name', str(async_query)
-        )
+        self.assertIn('DISTINCT users.id, users.username, users.name', str(async_query))
         all_ages = await User.select(User.age).all()
         self.assertEqual(34, len(all_ages))
         distinct_ages = await User.select(User.age).distinct().all()
@@ -605,11 +585,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         logger.info('Testing "order_by" and "sort" functions...')
         users = await User.find(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
-        users = (
-            await User.order_by(User.username)
-            .where(username__like='Ji%')
-            .all()
-        )
+        users = await User.order_by(User.username).where(username__like='Ji%').all()
         self.assertEqual('Jill874', users[0].username)
         users = await User.sort(User.age).where(username__like='Ji%').all()
         self.assertEqual('Jimmy156', users[0].username)
@@ -688,9 +664,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         """Test for ``with_subquery`` function."""
         logger.info('Testing "with_subquery" function...')
         users_count = len(await User.all())
-        users = await User.with_subquery(
-            User.posts, (User.comments, True)
-        ).all()
+        users = await User.with_subquery(User.posts, (User.comments, True)).all()
         self.assertEqual(users_count, len(users), 'message')
         self.assertEqual(
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',

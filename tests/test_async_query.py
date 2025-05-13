@@ -66,11 +66,7 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
         async_query = User.get_async_query()
         users = await async_query.filter(username__like='Ji%').all()
         self.assertEqual('Jim32', users[0].username)
-        users = (
-            await async_query.sort(User.username)
-            .filter(username__like='Ji%')
-            .all()
-        )
+        users = await async_query.sort(User.username).filter(username__like='Ji%').all()
         self.assertEqual('Jill874', users[0].username)
         async_query = Post.get_async_query()
         posts = await async_query.sort('-rating', 'user___name').all()
