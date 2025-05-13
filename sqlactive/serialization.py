@@ -1,4 +1,8 @@
-"""This module defines ``SerializationMixin`` class."""
+"""Serialization mixin for SQLAlchemy models.
+
+Provides serialization and deserialization functionality
+for SQLAlchemy models.
+"""
 
 import json
 from collections.abc import Iterable
@@ -6,8 +10,7 @@ from typing import Any, overload
 
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from sqlactive.exceptions import ModelAttributeError
-
+from .exceptions import ModelAttributeError
 from .inspection import InspectionMixin
 from .types import Self
 
@@ -24,7 +27,7 @@ class SerializationMixin(InspectionMixin):
         exclude: list[str] | None = None,
         nested_exclude: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Serializes the model to a dictionary.
+        """Serialize the model to a dictionary.
 
         Parameters
         ----------
@@ -62,13 +65,14 @@ class SerializationMixin(InspectionMixin):
         >>> user.to_dict()
         >>> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, ...}
         >>> user.to_dict(nested=True)
-        >>> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts': [...], ...}
+        >>> {'id': 1, 'username': 'user1', 'name': 'John', ..., 'posts': [...], ...}
         >>> user.to_dict(hybrid_attributes=True)
-        >>> {'id': 1, 'username': 'user1', 'name': 'John', 'age': 30, 'posts_count': 3, ...}
+        >>> {'id': 1, 'username': 'user1', 'name': 'John', ..., 'posts_count': 3, ...}
         >>> user.to_dict(exclude=['id', 'username'])
         >>> {'name': 'John', 'age': 30, ...}
+
         """
-        result = dict()
+        result = {}
 
         if exclude is None:
             view_cols = self.columns
@@ -101,7 +105,7 @@ class SerializationMixin(InspectionMixin):
                             for o in obj
                             if isinstance(o, SerializationMixin)
                         ]
-                except DetachedInstanceError:
+                except DetachedInstanceError:  # noqa: PERF203
                     continue
 
         return result
@@ -116,7 +120,7 @@ class SerializationMixin(InspectionMixin):
         indent: int | str | None = None,
         sort_keys: bool = False,
     ) -> str:
-        """Serializes the model to JSON.
+        """Serialize the model to JSON.
 
         Calls the ``to_dict()`` method and dumps it to JSON.
 
@@ -174,6 +178,7 @@ class SerializationMixin(InspectionMixin):
         {"id": 1, "username": "user1", "name": "John", "age": 30, "posts_count": 3, ...}
         >>> user.to_json(exclude=['id', 'username'])
         {"name": "John", "age": 30, ...}
+
         """
         dumped_model = self.to_dict(
             nested=nested,
@@ -256,17 +261,19 @@ class SerializationMixin(InspectionMixin):
         >>> user = await User.from_dict({'name': 'John', 'age': 30})
         >>> user.to_dict()
         {'name': 'John', 'age': 30, ...}
-        >>> users = await User.from_dict([{'name': 'John', 'age': 30}, {'name': 'Jane', 'age': 25}])
+        >>> data = [{'name': 'John', 'age': 30}, {'name': 'Jane', 'age': 25}]
+        >>> users = await User.from_dict(data)
         >>> users[0].to_dict()
         {'name': 'John', 'age': 30, ...}
         >>> users[1].to_dict()
         {'name': 'Jane', 'age': 25, ...}
+
         """
         if isinstance(data, list):
             return [cls.from_dict(d, exclude, nested_exclude) for d in data]
 
         obj = cls()
-        for name in data.keys():
+        for name in data:
             if exclude is not None and name in exclude:
                 continue
 
@@ -278,9 +285,7 @@ class SerializationMixin(InspectionMixin):
                 setattr(
                     obj,
                     name,
-                    relation_class.from_dict(
-                        data[name], exclude=nested_exclude
-                    ),
+                    relation_class.from_dict(data[name], exclude=nested_exclude),
                 )
                 continue
 
@@ -339,11 +344,13 @@ class SerializationMixin(InspectionMixin):
         >>> user = await User.from_json('{"name": "John", "age": 30}')
         >>> user.to_dict()
         {'name': 'John', 'age': 30, ...}
-        >>> users = await User.from_json('[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]')
+        >>> json_str = '[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]'
+        >>> users = await User.from_json(json_str)
         >>> users[0].to_dict()
         {'name': 'John', 'age': 30, ...}
         >>> users[1].to_dict()
         {'name': 'Jane', 'age': 25, ...}
+
         """
         data = json.loads(json_string)
         return cls.from_dict(data, exclude, nested_exclude)
