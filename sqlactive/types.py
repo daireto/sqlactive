@@ -1,3 +1,5 @@
+"""Types for SQLActive."""
+
 import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -17,9 +19,7 @@ T = TypeVar('T')
 
 Query = Select[tuple[T, ...]]
 
-EagerLoadPath = (
-    InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
-)
+EagerLoadPath = InstrumentedAttribute[Any] | tuple[InstrumentedAttribute[Any], bool]
 
 ColumnElementOrAttr = ColumnElement[Any] | InstrumentedAttribute[Any]
 

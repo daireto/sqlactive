@@ -1,4 +1,7 @@
-"""This module defines ``TimestampMixin`` class."""
+"""Timestamp mixin for SQLAlchemy models.
+
+Provides automatic timestamp functionality for SQLAlchemy models.
+"""
 
 from datetime import datetime
 

@@ -1,6 +1,14 @@
-"""This module defines ``SessionMixin`` class."""
+"""Session mixin for SQLAlchemy models.
 
-from sqlalchemy.ext.asyncio import AsyncSession as AS, async_scoped_session
+Provides functions for handling asynchronous scoped sessions.
+
+The base model must have a session in order to perform any database
+operation. Always call the ``set_session`` method before performing
+any operation.
+"""
+
+from sqlalchemy.ext.asyncio import AsyncSession as SQLAlchemyAsyncSession
+from sqlalchemy.ext.asyncio import async_scoped_session
 
 from .exceptions import NoSessionError
 from .utils import classproperty
@@ -9,26 +17,27 @@ from .utils import classproperty
 class SessionMixin:
     """Mixin to handle sessions."""
 
-    _session: async_scoped_session[AS] | None = None
+    _session: async_scoped_session[SQLAlchemyAsyncSession] | None = None
 
     @classmethod
-    def set_session(cls, session: async_scoped_session[AS]) -> None:
-        """Sets the async session factory.
+    def set_session(cls, session: async_scoped_session[SQLAlchemyAsyncSession]) -> None:
+        """Set the async session factory.
 
         Parameters
         ----------
         session : async_scoped_session[AsyncSession]
             Async session factory.
+
         """
         cls._session = session
 
     @classmethod
     def close_session(cls) -> None:
-        """Closes the async session."""
+        """Close the async session."""
         cls._session = None
 
     @classproperty
-    def AsyncSession(cls) -> async_scoped_session[AS]:
+    def AsyncSession(cls) -> async_scoped_session[SQLAlchemyAsyncSession]:  # noqa: N805, N802
         """Async session factory.
 
         Usage::
@@ -41,8 +50,8 @@ class SessionMixin:
         ------
         NoSessionError
             If no session is available.
+
         """
         if cls._session is not None:
             return cls._session
-        else:
-            raise NoSessionError()
+        raise NoSessionError
