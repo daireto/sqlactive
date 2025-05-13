@@ -1,4 +1,4 @@
-"""This module defines ``DBConnection`` class."""
+"""Database connection helper."""
 
 from asyncio import current_task
 from typing import Any
@@ -18,7 +18,9 @@ from .types import RowType
 
 
 class DBConnection:
-    """Provides functions for connecting to a database
+    """Database connection helper.
+
+    Provides functions for connecting to a database
     and initializing tables.
 
     The ``init_db`` method can be called to initialize
@@ -98,6 +100,7 @@ class DBConnection:
         **kw : Any
             Keyword arguments to be passed to the
             ``sqlalchemy.ext.asyncio.create_async_engine`` function.
+
         """
         self.async_engine = create_async_engine(url, **kw)
         self.async_sessionmaker = async_sessionmaker(
@@ -110,7 +113,7 @@ class DBConnection:
     async def init_db(
         self, base_model: type[ActiveRecordBaseModel] | None = None
     ) -> None:
-        """Initializes the database tables.
+        """Initialize the database tables.
 
         If your base model is not ``ActiveRecordBaseModel`` you
         must pass your base model class to this method in the
@@ -139,7 +142,7 @@ class DBConnection:
     async def close(
         self, base_model: type[ActiveRecordBaseModel] | None = None
     ) -> None:
-        """Closes the database connection and sets the ``session``
+        """Close the database connection and sets the ``session``
         attribute of the base model to ``None``.
 
         If your base model is not ``ActiveRecordBaseModel``
@@ -174,9 +177,11 @@ async def execute(
     params: _CoreAnyExecuteParams | None = None,
     **kwargs,
 ) -> Result[RowType]:
-    """Executes a statement using the ``AsyncSession``
+    """Execute a statement using the ``AsyncSession``
     of the ``ActiveRecordBaseModel`` and return a buffered
-    ``sqlalchemy.engine.Result`` object::
+    ``sqlalchemy.engine.Result`` object.
+
+    Example::
 
         query = select(User.age, func.count(User.id)).group_by(User.age)
         result = await execute(query)
