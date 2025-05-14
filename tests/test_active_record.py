@@ -18,7 +18,9 @@ from sqlactive import JOINED, SELECT_IN, SUBQUERY
 from sqlactive.conn import DBConnection
 from sqlactive.exceptions import (
     CompositePrimaryKeyError,
+    EagerLoadPathTupleError,
     ModelAttributeError,
+    NegativeIntegerError,
     NoSearchableColumnsError,
     NoSearchableError,
     NoSettableError,
@@ -628,7 +630,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, len(users))
         users = await User.skip(2).where(username__like='Ji%').all()
         self.assertEqual(1, len(users))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NegativeIntegerError):
             await User.offset(-1).where(username__like='Ji%').all()
 
     async def test_limit(self):
@@ -640,7 +642,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(users))
         users = await User.top(1).where(username__like='Ji%').all()
         self.assertEqual(1, len(users))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NegativeIntegerError):
             await User.limit(-1).where(username__like='Ji%').all()
 
     async def test_join(self):
@@ -653,7 +655,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             users[0].comments[0].body,
         )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(EagerLoadPathTupleError):
             await User.join(User.posts, (User.comments, 1)).all()  # type: ignore
         with self.assertRaises(RelationError):
             await User.join(Post.comments).all()  # type: ignore
@@ -670,7 +672,7 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
             users[0].comments[0].body,
         )
-        with self.assertRaises(TypeError):
+        with self.assertRaises(EagerLoadPathTupleError):
             await User.with_subquery(User.posts, (User.comments, 1)).all()  # type: ignore
         with self.assertRaises(RelationError):
             await User.with_subquery(Post.comments).all()  # type: ignore
