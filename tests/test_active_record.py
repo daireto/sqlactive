@@ -65,6 +65,29 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await User.get(user_id))
         self.assertEqual(34, len(await User.all()))
 
+    def test_getitem(self):
+        """Test for ``__getitem__`` method."""
+        logger.info('Testing "__getitem__" method...')
+        user = User(username='Test1000', name='Test User', age=20)
+        self.assertEqual('Test1000', user['username'])
+        self.assertEqual('Test User', user['name'])
+        self.assertEqual(20, user['age'])
+        with self.assertRaises(ModelAttributeError):
+            user['foo']
+
+    def test_setitem(self):
+        """Test for ``__setitem__`` method."""
+        logger.info('Testing "__setitem__" method...')
+        user = User(username='Test1000', name='Test User', age=20)
+        user['name'] = 'Test User 2'
+        self.assertEqual('Test User 2', user.name)
+        user['age'] = 30
+        self.assertEqual(30, user.age)
+        with self.assertRaises(ModelAttributeError):
+            user['foo'] = 'bar'
+        with self.assertRaises(NoSettableError):
+            user['older_than'] = True
+
     def test_get_primary_key_name(self):
         """Test for ``_get_primary_key_name`` function."""
         logger.info('Testing "_get_primary_key_name" function...')
@@ -658,9 +681,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(EagerLoadPathTupleError):
             await User.join(User.posts, (User.comments, 1)).all()  # type: ignore
         with self.assertRaises(RelationError):
-            await User.join(Post.comments).all()  # type: ignore
+            await User.join(Post.comments).all()
         with self.assertRaises(RelationError):
-            await User.join((Post.comments, True)).all()  # type: ignore
+            await User.join((Post.comments, True)).all()
 
     async def test_with_subquery(self):
         """Test for ``with_subquery`` function."""
@@ -675,9 +698,9 @@ class TestActiveRecordMixin(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(EagerLoadPathTupleError):
             await User.with_subquery(User.posts, (User.comments, 1)).all()  # type: ignore
         with self.assertRaises(RelationError):
-            await User.with_subquery(Post.comments).all()  # type: ignore
+            await User.with_subquery(Post.comments).all()
         with self.assertRaises(RelationError):
-            await User.with_subquery((Post.comments, True)).all()  # type: ignore
+            await User.with_subquery((Post.comments, True)).all()
 
     async def test_with_schema(self):
         """Test for ``with_schema`` function."""
