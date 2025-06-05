@@ -104,14 +104,17 @@ class DBConnection:
         """
         self.async_engine = create_async_engine(url, **kw)
         self.async_sessionmaker = async_sessionmaker(
-            bind=self.async_engine, expire_on_commit=False
+            bind=self.async_engine,
+            expire_on_commit=False,
         )
         self.async_scoped_session = async_scoped_session(
-            self.async_sessionmaker, scopefunc=current_task
+            self.async_sessionmaker,
+            scopefunc=current_task,
         )
 
     async def init_db(
-        self, base_model: type[ActiveRecordBaseModel] | None = None
+        self,
+        base_model: type[ActiveRecordBaseModel] | None = None,
     ) -> None:
         """Initialize the database tables.
 
@@ -140,10 +143,10 @@ class DBConnection:
             await conn.run_sync(base_model.metadata.create_all)
 
     async def close(
-        self, base_model: type[ActiveRecordBaseModel] | None = None
+        self,
+        base_model: type[ActiveRecordBaseModel] | None = None,
     ) -> None:
-        """Close the database connection and sets the ``session``
-        attribute of the base model to ``None``.
+        """Close both the database connection and the session.
 
         If your base model is not ``ActiveRecordBaseModel``
         you should pass your base model class to this method
@@ -177,14 +180,7 @@ async def execute(
     params: _CoreAnyExecuteParams | None = None,
     **kwargs,
 ) -> Result[RowType]:
-    """Execute a statement using the ``AsyncSession``
-    of the ``ActiveRecordBaseModel`` and return a buffered
-    ``sqlalchemy.engine.Result`` object.
-
-    Example::
-
-        query = select(User.age, func.count(User.id)).group_by(User.age)
-        result = await execute(query)
+    """Execute a native SQLAlchemy statement.
 
     The ``statement``, ``params`` and ``kwargs`` arguments
     of this function are the same as the arguments
@@ -214,6 +210,17 @@ async def execute(
         If you are not using the ``DBConnection`` class to initialize
         your base model, you can call its ``set_session`` method
         to set the session.
+
+    Examples
+    --------
+    >>> query = select(User.age, func.count(User.id)).group_by(User.age)
+    >>> result = await execute(query)
+    >>> result
+    <sqlalchemy.engine.result.Result object at 0x...>
+    >>> users = result.all()
+    >>> users
+    [(20, 1), (22, 4), (25, 12)]
+
     """
     if not base_model:
         base_model = ActiveRecordBaseModel

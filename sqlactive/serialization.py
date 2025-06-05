@@ -105,7 +105,7 @@ class SerializationMixin(InspectionMixin):
                             for o in obj
                             if isinstance(o, SerializationMixin)
                         ]
-                except DetachedInstanceError:  # noqa: PERF203
+                except DetachedInstanceError:
                     continue
 
         return result

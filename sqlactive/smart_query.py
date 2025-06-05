@@ -99,14 +99,13 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def filter_expr(cls, **filters: object) -> list[ColumnElement[Any]]:
-        """Transform Django-style filters into
-        SQLAlchemy expressions.
+        """Transform Django-style filters into SQLAlchemy expressions.
 
         Takes keyword arguments like::
 
             {'rating': 5, 'user_id__in': [1,2]}
 
-        and returns list of expressions like::
+        and return list of expressions like::
 
             [Post.rating == 5, Post.user_id.in_([1,2])]
 
@@ -270,14 +269,13 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def order_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
-        """Transform Django-style order expressions into
-        SQLAlchemy expressions.
+        """Transform Django-style order expressions into SQLAlchemy expressions.
 
         Takes list of columns to order by like::
 
             ['-rating', 'title']
 
-        and returns list of expressions like::
+        and return list of expressions like::
 
             [desc(Post.rating), asc(Post.title)]
 
@@ -367,14 +365,13 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def columns_expr(cls, *columns: str) -> list[ColumnElement[Any]]:
-        """Transform column names into
-        SQLAlchemy model attributes.
+        """Transform column names into SQLAlchemy model attributes.
 
         Takes list of column names like::
 
             ['user_id', 'rating']
 
-        and returns list of model attributes like::
+        and return list of model attributes like::
 
             [Post.user_id, Post.rating]
 
@@ -471,8 +468,7 @@ class SmartQueryMixin(InspectionMixin):
 
     @classmethod
     def eager_expr(cls, schema: EagerSchema) -> list[_AbstractLoad]:
-        """Transform an eager loading defined schema into
-        SQLAlchemy eager loading expressions.
+        """Build eager loading expressions from the provided schema.
 
         Takes a schema like::
 
@@ -483,7 +479,7 @@ class SmartQueryMixin(InspectionMixin):
                 })
             }
 
-        and returns eager loading expressions like::
+        and return eager loading expressions like::
 
             [
                 joinedload(Post.user),
@@ -564,8 +560,7 @@ class SmartQueryMixin(InspectionMixin):
         group_attrs: Sequence[str] | None = None,
         schema: EagerSchema | None = None,
     ) -> Query:
-        """Create a query combining filtering, sorting, grouping
-        and eager loading.
+        """Create a query combining filtering, sorting, grouping and eager loading.
 
         Does magic `Django-like joins <https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships>`_
         like:
@@ -724,16 +719,14 @@ class SmartQueryMixin(InspectionMixin):
                 criteria = or_(criteria, search_conditions.pop(0))
         else:
             criteria = getattr(root_cls, searchable_columns[0]).ilike(
-                f'%{search_term}%'
+                f'%{search_term}%',
             )
 
         return query.filter(criteria)  # type: ignore
 
     @classmethod
     def _get_mapper(cls) -> tuple[AliasedClass | type[Self], type[Self]]:
-        """Return the appropriate mapper and class
-        for the current entity.
-        """
+        """Return the appropriate mapper and class for the current entity."""
         return (
             (cls, cls.__mapper__.class_)
             if isinstance(cls, AliasedClass)
@@ -785,7 +778,7 @@ class SmartQueryMixin(InspectionMixin):
     ) -> list[str]:
         """Return a list of searchable columns.
 
-        If ``columns`` are provided, returns only these columns.
+        If ``columns`` are provided, return only these columns.
 
         Parameters
         ----------
@@ -899,14 +892,17 @@ class SmartQueryMixin(InspectionMixin):
 
             relationship: InstrumentedAttribute = getattr(entity, relation_name)
             alias: AliasedClass[InspectionMixin] = aliased(
-                relationship.property.mapper.class_
+                relationship.property.mapper.class_,
             )  # e.g. aliased(User) or aliased(Post)
             aliases[path] = alias, relationship
             cls._make_aliases_from_attrs(alias, path, nested_attrs, aliases)
 
     @classmethod
     def _recurse_filters(
-        cls, filters: DjangoFilters, root_cls: type[Self], aliases: _Aliases
+        cls,
+        filters: DjangoFilters,
+        root_cls: type[Self],
+        aliases: _Aliases,
     ) -> Generator[Any, None, None]:
         """Parse filters recursively.
 

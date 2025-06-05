@@ -1,5 +1,6 @@
-"""Base model that inherits from all main mixins:
-``ActiveRecordMixin``, ``SerializationMixin`` and ``TimestampMixin``.
+"""Base model that inherits from all main mixins.
+
+Inherits from ``ActiveRecordMixin``, ``SerializationMixin`` and ``TimestampMixin``.
 """
 
 from .active_record import ActiveRecordMixin

@@ -53,7 +53,8 @@ class EagerLoadPathTupleError(SQLActiveError, ValueError):
 
         """
         super().__init__(
-            f'expected boolean for second element of tuple in {path!r}', note
+            f'expected boolean for second element of tuple in {path!r}',
+            note,
         )
 
 
@@ -114,7 +115,8 @@ class ModelAttributeError(SQLActiveError, AttributeError):
 
         """
         super().__init__(
-            f'no such attribute: {attr_name!r} in model {class_name}', note
+            f'no such attribute: {attr_name!r} in model {class_name}',
+            note,
         )
 
 
@@ -316,7 +318,8 @@ class RelationError(SQLActiveError, AttributeError):
 
         """
         super().__init__(
-            f'no such relation: {relation_name!r} in model {class_name}', note
+            f'no such relation: {relation_name!r} in model {class_name}',
+            note,
         )
 
 

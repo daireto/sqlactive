@@ -4,8 +4,6 @@ Provides attributes and properties inspection functionality
 for SQLAlchemy models.
 """
 
-# ruff: noqa: N805
-
 from numbers import Number
 from typing import Any
 
@@ -19,9 +17,7 @@ from .utils import classproperty
 
 
 class InspectionMixin(DeclarativeBase):
-    """Mixin for SQLAlchemy models to provide inspection methods
-    for attributes and properties.
-    """
+    """Mixin to provide inspection methods for attributes and properties."""
 
     __abstract__ = True
 
@@ -29,7 +25,7 @@ class InspectionMixin(DeclarativeBase):
     def id_str(self) -> str:
         """Return a string representation of the primary key.
 
-        If the primary key is composite, returns a comma-separated
+        If the primary key is composite, return a comma-separated
         list of key-value pairs.
 
         Examples
@@ -62,7 +58,7 @@ class InspectionMixin(DeclarativeBase):
             mapped.append(
                 f'{pk.key}={value}'
                 if isinstance(value, Number) or value is None
-                else f'{pk.key}="{value}"'
+                else f'{pk.key}="{value}"',
             )
         return ', '.join(mapped)
 

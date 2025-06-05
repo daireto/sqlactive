@@ -28,10 +28,10 @@ class classproperty(Generic[T]):  # noqa: N801
 
     fget: Callable[[Any], T]
 
-    def __init__(self, func: Callable[[Any], T]) -> None:  # noqa: D107
+    def __init__(self, func: Callable[[Any], T]) -> None:
         self.fget = func
 
-    def __get__(self, _: object, owner_cls: type | None = None) -> T:  # noqa: D105
+    def __get__(self, _: object, owner_cls: type | None = None) -> T:
         return self.fget(owner_cls)
 
 
@@ -41,19 +41,20 @@ def get_query_root_cls(query: Query[T], raise_on_none: Literal[True]) -> type[T]
 
 @overload
 def get_query_root_cls(
-    query: Query[T], raise_on_none: bool = False
+    query: Query[T],
+    raise_on_none: bool = False,
 ) -> type[T] | None: ...
 
 
 def get_query_root_cls(query: Query[T], raise_on_none: bool = False) -> type[T] | None:
     """Return the root class of a query.
 
-    Returns the class of the first column of the query, this is:
-    - When selecting specific columns, returns the class of
+    Return the class of the first column of the query, this is:
+    - When selecting specific columns, return the class of
         the first column (the same for functions like ``count()``).
-    - When selecting multiple classes, returns the class of
+    - When selecting multiple classes, return the class of
         the first class.
-    - When joining, returns the class of the first table.
+    - When joining, return the class of the first table.
 
     Parameters
     ----------
@@ -132,8 +133,7 @@ def get_query_root_cls(query: Query[T], raise_on_none: bool = False) -> type[T] 
 def flatten_nested_filter_keys(
     filters: dict | list,
 ) -> Generator[str, None, None]:
-    """Flatten the nested filters, extracting keys where
-    they correspond to Django-like query expressions.
+    """Flatten the nested Django-like filters.
 
     Takes filters like::
 
@@ -216,7 +216,8 @@ def flatten_nested_filter_keys(
 
 
 def create_eager_load_option(
-    attr: InstrumentedAttribute[Any], join_method: str
+    attr: InstrumentedAttribute[Any],
+    join_method: str,
 ) -> _AbstractLoad:
     """Return an eager loading option for the given attr.
 
@@ -251,8 +252,7 @@ def create_eager_load_option(
 
 
 def eager_expr_from_schema(schema: EagerSchema) -> list[_AbstractLoad]:
-    """Create eager loading expressions from
-    the provided ``schema`` recursively.
+    """Create eager loading expressions from the provided schema.
 
     To see the example, see the
     `eager_expr() method documentation <https://daireto.github.io/sqlactive/api/smart-query-mixin/#eager_expr>`_.

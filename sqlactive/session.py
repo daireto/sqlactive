@@ -37,7 +37,7 @@ class SessionMixin:
         cls._session = None
 
     @classproperty
-    def AsyncSession(cls) -> async_scoped_session[SQLAlchemyAsyncSession]:  # noqa: N805, N802
+    def AsyncSession(cls) -> async_scoped_session[SQLAlchemyAsyncSession]:  # noqa: N802
         """Async session factory.
 
         Usage::
