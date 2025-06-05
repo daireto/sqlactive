@@ -13,7 +13,7 @@ from typing import Any, Generic, Literal, overload
 from sqlalchemy.engine import Result, Row, ScalarResult
 from sqlalchemy.orm import joinedload, selectinload, subqueryload
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql._typing import _ColumnsClauseArgument  # type: ignore
+from sqlalchemy.sql._typing import _ColumnsClauseArgument
 from sqlalchemy.sql.base import ExecutableOption
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.functions import func
@@ -114,8 +114,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         self.query = query
 
     async def execute(self) -> Result[Any]:
-        """Execute the query and returns a ``sqlalchemy.engine.Result``
-        instance containing the results.
+        """Execute the query.
 
         Returns
         -------
@@ -127,8 +126,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
             return await session.execute(self.query)
 
     async def scalars(self) -> ScalarResult[T]:
-        """Return a ``sqlalchemy.engine.ScalarResult`` instance
-        containing all results.
+        """Execute the query and return the result as scalars.
 
         Returns
         -------
@@ -178,13 +176,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def first(self, scalar: bool = True):
         """Fetch the first row or ``None`` if no results are found.
 
-        If ``scalar`` is ``True``, returns a scalar value (default).
+        If ``scalar`` is ``True``, return a scalar value (default).
 
         Parameters
         ----------
         scalar : bool, optional
-            If ``True``, returns a scalar value (default).
-            If ``False``, returns a row.
+            If ``True``, return a scalar value (default).
+            If ``False``, return a row.
 
         Returns
         -------
@@ -244,19 +242,18 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def one(self, scalar: bool) -> T | Row[tuple[Any, ...]]: ...
 
     async def one(self, scalar: bool = True):
-        """Fetch one row or raises a ``sqlalchemy.exc.NoResultFound``
-        exception if no results are found.
+        """Fetch one row or raise an exception if no results are found.
 
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
-        If ``scalar`` is ``True``, returns a scalar value (default).
+        If ``scalar`` is ``True``, return a scalar value (default).
 
         Parameters
         ----------
         scalar : bool, optional
-            If ``True``, returns a scalar value (default).
-            If ``False``, returns a row.
+            If ``True``, return a scalar value (default).
+            If ``False``, return a row.
 
         Returns
         -------
@@ -328,7 +325,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def one_or_none(
-        self, scalar: Literal[False]
+        self,
+        scalar: Literal[False],
     ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
@@ -340,13 +338,13 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         If multiple results are found, it will raise a
         ``sqlalchemy.exc.MultipleResultsFound`` exception.
 
-        If ``scalar`` is ``True``, returns a scalar value (default).
+        If ``scalar`` is ``True``, return a scalar value (default).
 
         Parameters
         ----------
         scalar : bool, optional
-            If ``True``, returns a scalar value (default).
-            If ``False``, returns a row.
+            If ``True``, return a scalar value (default).
+            If ``False``, return a row.
 
         Returns
         -------
@@ -422,19 +420,20 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def all(
-        self, scalars: bool
+        self,
+        scalars: bool,
     ) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]: ...
 
     async def all(self, scalars: bool = True):
         """Fetch all rows.
 
-        If ``scalars`` is ``True``, returns scalar values (default).
+        If ``scalars`` is ``True``, return scalar values (default).
 
         Parameters
         ----------
         scalars : bool, optional
-            If ``True``, returns scalar values (default).
-            If ``False``, returns rows.
+            If ``True``, return scalar values (default).
+            If ``False``, return rows.
 
         Returns
         -------
@@ -511,14 +510,14 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def unique(
-        self, scalars: bool
+        self,
+        scalars: bool,
     ) -> ScalarResult[T] | Result[tuple[Any, ...]]: ...
 
     async def unique(self, scalars: bool = True):
-        """Similar to ``scalars()`` but applies unique filtering
-        to the objects returned in the result instance.
+        """Apply unique filtering to the result of the query.
 
-        If ``scalars`` is ``False``, returns
+        If ``scalars`` is ``False``, return
         a ``sqlalchemy.engine.Result`` instance instead of
         a ``sqlalchemy.engine.ScalarResult`` instance.
 
@@ -531,8 +530,8 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         Parameters
         ----------
         scalars : bool, optional
-            If ``True``, returns a ``sqlalchemy.engine.ScalarResult``
-            instance (default). If ``False``, returns a
+            If ``True``, return a ``sqlalchemy.engine.ScalarResult``
+            instance (default). If ``False``, return a
             ``sqlalchemy.engine.Result`` instance.
 
         Returns
@@ -577,17 +576,15 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def unique_first(
-        self, scalar: Literal[False]
+        self,
+        scalar: Literal[False],
     ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     async def unique_first(self, scalar: bool) -> T | Row[tuple[Any, ...]] | None: ...
 
     async def unique_first(self, scalar: bool = True):
-        """Similar to ``first()`` but applies unique filtering to the
-        objects returned by either ``sqlalchemy.engine.ScalarResult``
-        or ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalar``.
+        """Similar to ``first()`` with unique filtering applied.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -612,10 +609,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     async def unique_one(self, scalar: bool) -> T | Row[tuple[Any, ...]]: ...
 
     async def unique_one(self, scalar: bool = True):
-        """Similar to ``one()`` but applies unique filtering to the
-        objects returned by either ``sqlalchemy.engine.ScalarResult``
-        or ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalar``.
+        """Similar to ``one()`` with unique filtering applied.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -635,20 +629,18 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def unique_one_or_none(
-        self, scalar: Literal[False]
+        self,
+        scalar: Literal[False],
     ) -> Row[tuple[Any, ...]] | None: ...
 
     @overload
     async def unique_one_or_none(
-        self, scalar: bool
+        self,
+        scalar: bool,
     ) -> T | Row[tuple[Any, ...]] | None: ...
 
     async def unique_one_or_none(self, scalar: bool = True):
-        """Similar to ``one_or_none()`` but applies
-        unique filtering to the objects returned by either
-        ``sqlalchemy.engine.ScalarResult`` or
-        ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalar``.
+        """Similar to ``one_or_none()`` with unique filtering applied.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -668,19 +660,18 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
     @overload
     async def unique_all(
-        self, scalars: Literal[False]
+        self,
+        scalars: Literal[False],
     ) -> Sequence[Row[tuple[Any, ...]]]: ...
 
     @overload
     async def unique_all(
-        self, scalars: bool
+        self,
+        scalars: bool,
     ) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]: ...
 
     async def unique_all(self, scalars: bool = True):
-        """Similar to ``all()`` but applies unique filtering to the
-        objects returned by either ``sqlalchemy.engine.ScalarResult``
-        or ``sqlalchemy.engine.Result`` depending on the value
-        of ``scalars``.
+        """Similar to ``all()`` with unique filtering applied.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -693,8 +684,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return (await self.unique(scalars)).all()
 
     async def unique_count(self) -> int:
-        """Similar to ``count()`` but applies unique filtering to the
-        objects returned by ``sqlalchemy.engine.ScalarResult``.
+        """Similar to ``count()`` with unique filtering applied.
 
         .. note::
             This method is different from ``distinct()`` in that it
@@ -927,7 +917,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         """
         self.query = self.smart_query(
-            query=self.query, criteria=criteria, filters=filters
+            query=self.query,
+            criteria=criteria,
+            filters=filters,
         )
         return self
 
@@ -1004,7 +996,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
 
         """
         self.query = self.apply_search_filter(
-            query=self.query, search_term=search_term, columns=columns
+            query=self.query,
+            search_term=search_term,
+            columns=columns,
         )
         return self
 
@@ -1065,7 +1059,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         """
         sort_columns, sort_attrs = self._split_columns_and_attrs(columns)
         self.query = self.smart_query(
-            query=self.query, sort_columns=sort_columns, sort_attrs=sort_attrs
+            query=self.query,
+            sort_columns=sort_columns,
+            sort_attrs=sort_attrs,
         )
         return self
 
@@ -1344,7 +1340,9 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return self._apply_eager_loading_options(*paths, joined=True, model=model)
 
     def with_subquery(
-        self, *paths: EagerLoadPath, model: type[T] | None = None
+        self,
+        *paths: EagerLoadPath,
+        model: type[T] | None = None,
     ) -> Self:
         """Subqueryload or Selectinload eager loading.
 
@@ -1592,7 +1590,10 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
         return columns, attrs
 
     def _apply_eager_loading_options(
-        self, *paths: EagerLoadPath, joined: bool = False, model: type[T] | None = None
+        self,
+        *paths: EagerLoadPath,
+        joined: bool = False,
+        model: type[T] | None = None,
     ) -> Self:
         """Apply the eager loading options from the given paths.
 
@@ -1653,7 +1654,7 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
                 options.append(joinedload(attr, innerjoin=use_selectin))
             else:
                 options.append(
-                    selectinload(attr) if use_selectin else subqueryload(attr)
+                    selectinload(attr) if use_selectin else subqueryload(attr),
                 )
 
         return self.options(*options)
@@ -1661,5 +1662,6 @@ class AsyncQuery(SessionMixin, SmartQueryMixin, Generic[T]):
     def _set_count_query(self) -> None:
         """Set the count aggregate function to the query."""
         self.query = self.query.with_only_columns(
-            func.count(), maintain_column_froms=True
+            func.count(),
+            maintain_column_froms=True,
         ).order_by(None)
