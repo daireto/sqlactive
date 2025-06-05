@@ -5,13 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sqlactive"
 dynamic = ["version"]
-authors = [
-    { name="Dairo Mosquera", email="dairoandres123@gmail.com" },
-]
+authors = [{ name = "Dairo Mosquera", email = "dairoandres123@gmail.com" }]
 description = "SQLActive is a lightweight and asynchronous ActiveRecord-style wrapper for SQLAlchemy. Bring Django-like queries, automatic timestamps, nested eager loading, and serialization/deserialization for SQLAlchemy models."
 readme = "README.md"
 requires-python = ">=3.10"
-keywords=[
+keywords = [
     "sqlalchemy",
     "active record",
     "activerecord",
@@ -53,4 +51,4 @@ include = ["sqlactive*"]
 exclude = ["docs*", "tests*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "sqlactive.__version__"}
+version = { attr = "sqlactive.__version__" }
