@@ -232,7 +232,7 @@ user = await User.insert(username='John1234', name='John Doe', age=25)
 user  # <User #1>
 
 user.name = 'Johnny Doe'
-user.age = 30
+user['age'] = 30
 await user.save()
 user.name  # Johnny Doe
 
@@ -240,6 +240,7 @@ user = await User.get(1)
 user  # <User #1>
 
 await user.update(name='John Doe', age=20)
+user['name']  # John Doe
 user.age  # 20
 
 await user.delete()
