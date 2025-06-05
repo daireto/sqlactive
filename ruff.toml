@@ -1,0 +1,37 @@
+extend-exclude = ["tests"]
+
+[format]
+quote-style = "single"
+
+[lint]
+select = ["ALL"]
+ignore = [
+    "ANN002",
+    "ANN003",
+    "ANN401",
+    "D105",
+    "D107",
+    "D203",
+    "D213",
+    "E402",
+    "E501",
+    "FA100",
+    "FA102",
+    "FBT001",
+    "FBT002",
+    "N805",
+    "PD901",
+    "PERF203",
+    "PGH003",
+    "PLR0913",
+    "PTH123",
+    "S311",
+    "T201",
+    "TRY003",
+    "TD002",
+    "TD003",
+    "FIX002",
+]
+
+[lint.flake8-quotes]
+inline-quotes = "single"
