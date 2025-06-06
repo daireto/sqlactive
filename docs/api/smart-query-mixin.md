@@ -750,7 +750,7 @@ def filter_expr(**filters: object) -> list[ColumnElement[Any]]
 def order_expr(*columns: str) -> list[ColumnElement[Any]]
 ```
 
-> Transforms Django-style order expressions into SQLAlchemy expressions.
+> Transform Django-style order expressions into SQLAlchemy expressions.
 >
 > Takes list of columns to order by like:
 > ```python
@@ -820,7 +820,7 @@ def order_expr(*columns: str) -> list[ColumnElement[Any]]
 def columns_expr(*columns: str) -> list[ColumnElement[Any]]
 ```
 
-> Transforms column names into SQLAlchemy model attributes.
+> Transform column names into SQLAlchemy model attributes.
 >
 > Takes list of column names like:
 > ```python
@@ -903,8 +903,7 @@ def columns_expr(*columns: str) -> list[ColumnElement[Any]]
 def eager_expr(schema: EagerSchema) -> list[_AbstractLoad]
 ```
 
-> Transforms an eager loading defined schema into SQLAlchemy
-> eager loading expressions.
+> Build eager loading expressions from the provided schema.
 >
 > Takes a schema like:
 > ```python
@@ -983,7 +982,7 @@ def smart_query(
 ) -> Query:
 ```
 
-> Creates a query combining filtering, sorting, grouping and eager loading.
+> Create a query combining filtering, sorting, grouping and eager loading.
 
 > Does magic [`Django-like joins`](https://docs.djangoproject.com/en/1.10/topics/db/queries/#lookups-that-span-relationships)
 > like:
@@ -1060,7 +1059,7 @@ def apply_search_filter(
 ) -> Query
 ```
 
-> Applies a search filter to the query.
+> Apply a search filter to the query.
 
 > Searches for `search_term` in the [searchable columns](inspection-mixin.md#searchable_attributes)
 > of the model. If `columns` are provided, searches only these columns.

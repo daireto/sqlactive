@@ -393,7 +393,7 @@ Most of class properties are inherited from
 def query() -> Select[tuple[Self]]
 ```
 
-> Returns a new `sqlalchemy.sql.Select` instance for the model.
+> Return a new `sqlalchemy.sql.Select` for the model.
 
 > This is a shortcut for `select(cls)`.
 
@@ -419,7 +419,10 @@ def query() -> Select[tuple[Self]]
 def fill(**kwargs) -> Self
 ```
 
-> Fills the object with values from `kwargs` without saving to the database.
+> Fill the object with passed values.
+
+> Update the object's attributes with the provided values
+> without saving to the database.
 
 > **Parameters**
 
@@ -453,7 +456,7 @@ def fill(**kwargs) -> Self
 async def save() -> Self
 ```
 
-> Saves the current row.
+> Save the current row.
 
 > ???+ note
 >
@@ -480,7 +483,7 @@ async def save() -> Self
 async def update(**kwargs) -> Self
 ```
 
-> Updates the current row with the provided values.
+> Update the current row with the provided values.
 
 > This is the same as calling `self.fill(**kwargs).save()`.
 
@@ -509,7 +512,7 @@ async def update(**kwargs) -> Self
 async def delete() -> None
 ```
 
-> Deletes the current row.
+> Delete the current row.
 
 > ???+ danger
 >
@@ -551,7 +554,7 @@ async def remove() -> None
 async def insert(**kwargs) -> Self
 ```
 
-> Inserts a new row and returns the saved instance.
+> Insert a new row and return the saved instance.
 
 > **Parameters**
 
@@ -585,7 +588,7 @@ async def create(**kwargs) -> Self
 async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
-> Saves multiple rows in a single transaction.
+> Save multiple rows in a single transaction.
 
 > When using this method to update existing rows, instances are not
 > refreshed after commit by default. Accessing the attributes of the
@@ -662,7 +665,7 @@ async def save_all(rows: Sequence[Self], refresh: bool = False) -> None
 async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
-> Inserts multiple rows in a single transaction.
+> Insert multiple rows in a single transaction.
 
 > This is mostly a shortcut for [`save_all()`](#save_all)
 > when inserting new rows.
@@ -682,7 +685,7 @@ async def insert_all(rows: Sequence[Self], refresh: bool = False) -> None
 async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
 ```
 
-> Updates multiple rows in a single transaction.
+> Update multiple rows in a single transaction.
 
 > This is mostly a shortcut for [`save_all()`](#save_all)
 > when updating existing rows.
@@ -706,7 +709,7 @@ async def update_all(rows: Sequence[Self], refresh: bool = False) -> None
 async def delete_all(rows: Sequence[Self]) -> None
 ```
 
-> Deletes multiple rows in a single transaction.
+> Delete multiple rows in a single transaction.
 
 > ???+ danger
 >
@@ -742,7 +745,7 @@ async def delete_all(rows: Sequence[Self]) -> None
 async def destroy(*ids: object) -> None
 ```
 
-> Deletes multiple rows by their primary key.
+> Delete multiple rows by their primary key.
 
 > This method can only be used if the model has a single primary key.
 > Otherwise, it will raise a `CompositePrimaryKeyError` exception.
@@ -787,7 +790,7 @@ async def get(
 ) -> Self | None
 ```
 
-> Fetches a row by primary key or `None` if no result is found.
+> Fetch a row by primary key or return `None` if no result is found.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -837,8 +840,10 @@ async def get_or_fail(
 ) -> Self
 ```
 
-> Fetches a row by primary key or raises a `sqlalchemy.exc.NoResultFound`
-> exception if no result is found.
+> Fetch a row by primary key.
+
+> If no result is found, it will raise a `sqlalchemy.exc.NoResultFound`
+> exception.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -884,7 +889,7 @@ async def get_or_fail(
 async def scalars() -> ScalarResult[Self]
 ```
 
-> Returns a `sqlalchemy.engine.ScalarResult` instance containing all rows.
+> Fetch all rows as scalars.
 
 > **Returns**
 
@@ -913,7 +918,7 @@ async def scalars() -> ScalarResult[Self]
 async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Fetches the first row or `None` if no results are found.
+> Fetch the first row or return `None` if no results are found.
 
 > If `scalar` is `True`, returns a scalar value (default).
 
@@ -957,8 +962,10 @@ async def first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 ```
 
-> Fetches one row or raises a `sqlalchemy.exc.NoResultFound` exception
-> if no results are found.
+> Fetch one row.
+
+> If no result is found, it will raise a `sqlalchemy.exc.NoResultFound`
+> exception.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -1021,7 +1028,7 @@ async def one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Fetches one row or `None` if no results are found.
+> Fetch one row or return `None` if no results are found.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -1083,7 +1090,7 @@ async def one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
 ```
 
-> Fetches all rows.
+> Fetch all rows.
 
 > If `scalars` is `True`, returns scalar values (default).
 
@@ -1126,7 +1133,7 @@ async def all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, 
 async def count() -> int
 ```
 
-> Fetches the number of rows.
+> Fetch the number of rows.
 
 > **Returns**
 
@@ -1147,8 +1154,7 @@ async def count() -> int
 async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any, ...]]
 ```
 
-> Similar to [`scalars()`](#scalars) but applies unique filtering to
-> the objects returned in the result instance.
+> Return rows with unique filtering applied.
 
 > If `scalars` is `False`, returns a `sqlalchemy.engine.Result` instance
 > instead of a `sqlalchemy.engine.ScalarResult` instance.
@@ -1191,9 +1197,7 @@ async def unique(scalars: bool = True) -> ScalarResult[Self] | Result[tuple[Any,
 async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`first()`](#first) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `first()` with unique filtering applied.
 
 > ???+ note
 >
@@ -1211,9 +1215,7 @@ async def unique_first(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | Non
 async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 ```
 
-> Similar to [`one()`](#one) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `one()` with unique filtering applied.
 
 > ???+ note
 >
@@ -1231,9 +1233,7 @@ async def unique_one(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`one_or_none()`](#one_or_none) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `one_or_none()` with unique filtering applied.
 
 > ???+ note
 >
@@ -1252,9 +1252,7 @@ async def unique_one_or_none(scalar: bool = True) -> Self | Row[tuple[Any, ...]]
 async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tuple[Any, ...]]]
 ```
 
-> Similar to [`all()`](#all) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalars`.
+> Similar to `all()` with unique filtering applied.
 
 > ???+ note
 >
@@ -1272,8 +1270,7 @@ async def unique_all(scalars: bool = True) -> Sequence[Self] | Sequence[Row[tupl
 async def unique_count() -> int
 ```
 
-> Similar to [`count()`](#count) but applies unique filtering to
-> the objects returned by `sqlalchemy.engine.ScalarResult`.
+> Similar to `count()` with unique filtering applied.
 
 > ???+ note
 >
@@ -1291,7 +1288,7 @@ async def unique_count() -> int
 def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery[Self]
 ```
 
-> Replaces the columns clause with the given entities.
+> Replace the columns clause with the given entities.
 
 > The existing set of FROMs are maintained, including those implied by
 > the current columns clause.
@@ -1322,7 +1319,7 @@ def select(*entities: _ColumnsClauseArgument[Any]) -> AsyncQuery[Self]
 def distinct() -> AsyncQuery[Self]
 ```
 
-> Applies DISTINCT to the SELECT statement overall.
+> Apply DISTINCT to the SELECT statement overall.
 
 > **Returns**
 
@@ -1344,7 +1341,7 @@ def distinct() -> AsyncQuery[Self]
 def options(*args: ExecutableOption) -> AsyncQuery[Self]
 ```
 
-> Applies the given list of mapper options.
+> Apply the given list of mapper options.
 
 > ???+ warning
 >
@@ -1419,7 +1416,7 @@ def options(*args: ExecutableOption) -> AsyncQuery[Self]
 def where(*criteria: ColumnElement[bool], **filters: Any) -> AsyncQuery[Self]
 ```
 
-> Applies one or more WHERE criteria to the query.
+> Apply one or more WHERE criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1489,7 +1486,7 @@ def search(
 ) -> AsyncQuery[Self]
 ```
 
-> Applies a search filter to the query.
+> Apply a search filter to the query.
 
 > Searches for `search_term` in the
 > [searchable columns](inspection-mixin.md#searchable_attributes) of the model.
@@ -1544,7 +1541,7 @@ def search(
 def order_by(*columns: ColumnExpressionOrStrLabelArgument[Any]) -> AsyncQuery[Self]
 ```
 
-> Applies one or more ORDER BY criteria to the query.
+> Apply one or more ORDER BY criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1601,7 +1598,7 @@ def group_by(
 ) -> AsyncQuery[Self]
 ```
 
-> Applies one or more GROUP BY criteria to the query.
+> Apply one or more GROUP BY criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1651,7 +1648,7 @@ def group_by(
 def offset(offset: int) -> AsyncQuery[Self]
 ```
 
-> Applies an OFFSET clause to the query.
+> Apply one OFFSET criteria to the query.
 
 > **Parameters**
 
@@ -1697,7 +1694,7 @@ def skip(skip: int) -> AsyncQuery[Self]
 def limit(limit: int) -> AsyncQuery[Self]
 ```
 
-> Applies a LIMIT clause to the query.
+> Apply one LIMIT criteria to the query.
 
 > **Parameters**
 
@@ -1751,7 +1748,7 @@ def top(top: int) -> AsyncQuery[Self]
 def join(*paths: EagerLoadPath) -> AsyncQuery[Self]
 ```
 
-> Joined eager loading using LEFT OUTER JOIN.
+> Apply joined eager loading using LEFT OUTER JOIN.
 
 > When a tuple is passed, the second element must be boolean, and
 > if `True`, the join is `INNER JOIN`, otherwise `LEFT OUTER JOIN`.
@@ -1906,7 +1903,7 @@ def with_subquery(*paths: EagerLoadPath) -> AsyncQuery[Self]
 def with_schema(schema: EagerSchema) -> AsyncQuery[Self]
 ```
 
-> Joined, subqueryload and selectinload eager loading.
+> Apply joined, subqueryload and selectinload eager loading.
 
 > Useful for complex cases where you need to load nested relationships in
 > separate queries.
@@ -1983,9 +1980,9 @@ def smart_query(
 ) -> AsyncQuery[Self]
 ```
 
-> Creates a query combining filtering, sorting, grouping and eager loading.
-> Then, wraps the query into an [`AsyncQuery`](async-query.md) instance and
-> returns it.
+> Create an async smart query.
+
+> Smart queries combine filtering, sorting, grouping and eager loading.
 
 > See [`smart_query() from SmartQueryMixin`](smart-query-mixin.md#smart_query)
 > for details.
@@ -1997,8 +1994,7 @@ def smart_query(
 def get_async_query(query: Query | None = None) -> AsyncQuery[Self]
 ```
 
-> Returns an `AsyncQuery` instance with the provided
-> `sqlalchemy.sql.Select` instance.
+> Create an `AsyncQuery` instance.
 
 > If no `sqlalchemy.sql.Select` instance is provided,
 > it uses the `query` property of the model.
@@ -2034,7 +2030,7 @@ def get_primary_key_name() -> str
     This function is deprecated since version 0.2 and will be removed in future versions.
     Use [`primary_key_name`](inspection-mixin.md#primary_key_name) property instead.
 
-> Gets the primary key name of the model.
+> Get the primary key name of the model.
 
 > ???+ warning
 >

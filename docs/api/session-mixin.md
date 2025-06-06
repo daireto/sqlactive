@@ -38,7 +38,7 @@ def AsyncSession() -> async_scoped_session[AsyncSession]
 def set_session(session: async_scoped_session[AsyncSession])
 ```
 
-> Sets the async session factory.
+> Set the async session factory.
 
 > **Parameters**
 
@@ -75,4 +75,4 @@ def set_session(session: async_scoped_session[AsyncSession])
 def close_session()
 ```
 
-> Closes the async session.
+> Close the async session.

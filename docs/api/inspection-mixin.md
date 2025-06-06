@@ -117,7 +117,7 @@ functionality for SQLAlchemy models.
 def id_str() -> str
 ```
 
-> Returns a string representation of the primary key.
+> Return a string representation of the primary key.
 
 > If the primary key is composite, returns a comma-separated list of
 > key-value pairs.
@@ -142,7 +142,7 @@ def id_str() -> str
 def columns() -> list[str]
 ```
 
-> Returns a list of column names.
+> Return a list of column names.
 
 > **Examples**
 
@@ -158,7 +158,7 @@ def columns() -> list[str]
 def string_columns() -> list[str]
 ```
 
-> Returns a list of string column names.
+> Return a list of string column names.
 
 > **Examples**
 
@@ -174,7 +174,7 @@ def string_columns() -> list[str]
 def primary_keys_full() -> tuple[Column[Any], ...]
 ```
 
-> Returns the columns that form the primary key.
+> Return the columns that form the primary key.
 
 > **Examples**
 
@@ -190,7 +190,7 @@ def primary_keys_full() -> tuple[Column[Any], ...]
 def primary_keys() -> list[str]
 ```
 
-> Returns the names of the primary key columns.
+> Return the names of the primary key columns.
 
 > **Examples**
 
@@ -206,7 +206,7 @@ def primary_keys() -> list[str]
 def primary_key_name() -> str
 ```
 
-> Returns the primary key name of the model.
+> Return the primary key name of the model.
 
 > ???+ warning
 >
@@ -236,7 +236,7 @@ def primary_key_name() -> str
 def relations() -> list[str]
 ```
 
-> Returns a list of relationship names.
+> Return a list of relationship names.
 
 > **Examples**
 
@@ -252,7 +252,7 @@ def relations() -> list[str]
 def settable_relations() -> list[str]
 ```
 
-> Returns a list of settable (not viewonly) relationship names.
+> Return a list of settable (not viewonly) relationship names.
 
 > **Examples**
 
@@ -270,7 +270,7 @@ def settable_relations() -> list[str]
 def hybrid_properties() -> list[str]
 ```
 
-> Returns a list of hybrid property names.
+> Return a list of hybrid property names.
 
 > **Examples**
 
@@ -286,7 +286,7 @@ def hybrid_properties() -> list[str]
 def hybrid_methods_full() -> dict[str, hybrid_method[..., Any]]
 ```
 
-> Returns a dict of hybrid methods.
+> Return a dict of hybrid methods.
 
 > **Examples**
 
@@ -302,7 +302,7 @@ def hybrid_methods_full() -> dict[str, hybrid_method[..., Any]]
 def hybrid_methods() -> list[str]
 ```
 
-> Returns a list of hybrid method names.
+> Return a list of hybrid method names.
 
 > **Examples**
 
@@ -318,7 +318,7 @@ def hybrid_methods() -> list[str]
 def filterable_attributes() -> list[str]
 ```
 
-> Returns a list of filterable attributes.
+> Return a list of filterable attributes.
 
 > These are all columns, relations, hybrid properties and hybrid methods.
 
@@ -336,7 +336,7 @@ def filterable_attributes() -> list[str]
 def sortable_attributes() -> list[str]
 ```
 
-> Returns a list of sortable attributes.
+> Return a list of sortable attributes.
 
 > These are all columns and hybrid properties.
 
@@ -354,7 +354,7 @@ def sortable_attributes() -> list[str]
 def settable_attributes() -> list[str]
 ```
 
-> Returns a list of settable attributes.
+> Return a list of settable attributes.
 
 > These are all columns, settable relations and hybrid properties.
 
@@ -372,7 +372,7 @@ def settable_attributes() -> list[str]
 def searchable_attributes() -> list[str]
 ```
 
-> Returns a list of searchable attributes.
+> Return a list of searchable attributes.
 
 > These are all string columns.
 
@@ -391,7 +391,7 @@ def searchable_attributes() -> list[str]
 def __repr__() -> str
 ```
 
-> Returns a string representation of the model.
+> Return a string representation of the model.
 
 > Representation format is `ClassName(pk1=value1, pk2=value2, ...)`
 
@@ -415,7 +415,7 @@ def __repr__() -> str
 def get_class_of_relation(relation_name: str) -> type[Self]
 ```
 
-> Gets the class of a relationship by its name.
+> Get the class of a relationship by its name.
 
 > **Parameters**
 

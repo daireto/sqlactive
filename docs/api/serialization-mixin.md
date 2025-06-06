@@ -117,7 +117,7 @@ def to_dict(
 ) -> dict[str, Any]
 ```
 
-> Serializes the model to a dictionary.
+> Serialize the model to a dictionary.
 
 > **Parameters**
 
@@ -161,7 +161,7 @@ def to_json(
 ) -> str
 ```
 
-> Serializes the model to JSON.
+> Serialize the model to JSON.
 
 > Calls the [`to_dict()`](#to_dict) method and dumps it to JSON.
 
@@ -213,7 +213,7 @@ def from_dict(
 ) -> Self | list[Self]
 ```
 
-> Deserializes a dictionary to the model.
+> Deserialize a dictionary to the model.
 
 > Sets the attributes of the model with the values of the dictionary.
 
@@ -259,7 +259,7 @@ def from_json(
 ) -> Any
 ```
 
-> Deserializes a JSON string to the model.
+> Deserialize a JSON string to the model.
 
 > Loads the JSON string and sets the attributes of the model with the values
 > of the JSON object using the `from_dict` method.

@@ -216,8 +216,7 @@ users = await async_query.all()
 async def execute() -> Result[Any]
 ```
 
-> Executes the query and returns a `sqlalchemy.engine.Result`
-> instance containing the results.
+> Execute the query.
 
 > **Returns**
 
@@ -229,7 +228,7 @@ async def execute() -> Result[Any]
 async def scalars() -> ScalarResult[T]
 ```
 
-> Returns a `sqlalchemy.engine.ScalarResult` instance containing all rows.
+> Execute the query and return the result as scalars.
 
 > **Returns**
 
@@ -259,7 +258,7 @@ async def scalars() -> ScalarResult[T]
 async def first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
-> Fetches the first row or `None` if no results are found.
+> Fetch the first row or `None` if no results are found.
 
 > If `scalar` is `True`, returns a scalar value (default).
 
@@ -305,8 +304,7 @@ async def first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 async def one(scalar: bool = True) -> T | Row[tuple[Any, ...]]
 ```
 
-> Fetches one row or raises a `sqlalchemy.exc.NoResultFound` exception
-> if no results are found.
+> Fetch one row or raise an exception if no results are found.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -371,7 +369,7 @@ async def one(scalar: bool = True) -> T | Row[tuple[Any, ...]]
 async def one_or_none(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
-> Fetches one row or `None` if no results are found.
+> Fetch one row or `None` if no results are found.
 
 > If multiple results are found, it will raise a
 > `sqlalchemy.exc.MultipleResultsFound` exception.
@@ -437,7 +435,7 @@ async def one_or_none(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 async def all(scalars: bool = True) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]
 ```
 
-> Fetches all rows.
+> Fetch all rows.
 
 > If `scalars` is `True`, returns scalar values (default).
 
@@ -482,7 +480,7 @@ async def all(scalars: bool = True) -> Sequence[T] | Sequence[Row[tuple[Any, ...
 async def count() -> int
 ```
 
-> Fetches the number of rows.
+> Fetch the number of rows.
 
 > **Returns**
 
@@ -504,8 +502,7 @@ async def count() -> int
 async def unique(scalars: bool = True) -> ScalarResult[T] | Result[tuple[Any, ...]]
 ```
 
-> Similar to [`scalars()`](#scalars) but applies unique filtering to
-> the objects returned in the result instance.
+> Apply unique filtering to the result of the query.
 
 > If `scalars` is `False`, returns a `sqlalchemy.engine.Result` instance
 > instead of a `sqlalchemy.engine.ScalarResult` instance.
@@ -549,9 +546,7 @@ async def unique(scalars: bool = True) -> ScalarResult[T] | Result[tuple[Any, ..
 async def unique_first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`first()`](#first) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `first()` with unique filtering applied.
 
 > ???+ note
 >
@@ -568,9 +563,7 @@ async def unique_first(scalar: bool = True) -> T | Row[tuple[Any, ...]] | None
 async def unique_one(scalar: bool) -> T | Row[tuple[Any, ...]]
 ```
 
-> Similar to [`one()`](#one) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `one()` with unique filtering applied.
 
 > ???+ note
 >
@@ -587,9 +580,7 @@ async def unique_one(scalar: bool) -> T | Row[tuple[Any, ...]]
 async def unique_one_or_none(scalar: bool) -> T | Row[tuple[Any, ...]] | None
 ```
 
-> Similar to [`one_or_none()`](#one_or_none) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalar`.
+> Similar to `one_or_none()` with unique filtering applied.
 
 > ???+ note
 >
@@ -607,9 +598,7 @@ async def unique_one_or_none(scalar: bool) -> T | Row[tuple[Any, ...]] | None
 async def unique_all(scalars: bool) -> Sequence[T] | Sequence[Row[tuple[Any, ...]]]
 ```
 
-> Similar to [`all()`](#all) but applies unique filtering to
-> the objects returned by either `sqlalchemy.engine.ScalarResult`
-> or `sqlalchemy.engine.Result` depending on the value of `scalars`.
+> Similar to `all()` with unique filtering applied.
 
 > ???+ note
 >
@@ -626,8 +615,7 @@ async def unique_all(scalars: bool) -> Sequence[T] | Sequence[Row[tuple[Any, ...
 async def unique_count() -> int
 ```
 
-> Similar to [`count()`](#count) but applies unique filtering to
-> the objects returned by `sqlalchemy.engine.ScalarResult`.
+> Similar to `count()` with unique filtering applied.
 
 > ???+ note
 >
@@ -644,7 +632,7 @@ async def unique_count() -> int
 def select(*entities: _ColumnsClauseArgument[Any]) -> Self
 ```
 
-> Replaces the columns clause with the given entities.
+> Replace the columns clause with the given entities.
 
 > The existing set of FROMs are maintained, including those implied by
 > the current columns clause.
@@ -676,7 +664,7 @@ def select(*entities: _ColumnsClauseArgument[Any]) -> Self
 def distinct() -> Self
 ```
 
-> Applies DISTINCT to the SELECT statement overall.
+> Apply DISTINCT to the SELECT statement overall.
 
 > **Returns**
 
@@ -699,7 +687,7 @@ def distinct() -> Self
 def options(*args: ExecutableOption) -> Self
 ```
 
-> Applies the given list of mapper options.
+> Apply the given list of mapper options.
 
 > ???+ warning
 >
@@ -775,7 +763,7 @@ def options(*args: ExecutableOption) -> Self
 def where(*criteria: ColumnElement[bool], **filters: Any) -> Self
 ```
 
-> Applies one or more WHERE criteria to the query.
+> Apply one or more WHERE criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -853,7 +841,7 @@ def search(
 ) -> Self
 ```
 
-> Applies a search filter to the query.
+> Apply a search filter to the query.
 
 > Searches for `search_term` in the
 > [searchable columns](inspection-mixin.md#searchable_attributes) of the model.
@@ -909,7 +897,7 @@ def search(
 def order_by(*columns: ColumnExpressionOrStrLabelArgument) -> Self
 ```
 
-> Applies one or more ORDER BY criteria to the query.
+> Apply one or more ORDER BY criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -966,7 +954,7 @@ def group_by(
 ) -> Self
 ```
 
-> Applies one or more GROUP BY criteria to the query.
+> Apply one or more GROUP BY criteria to the query.
 
 > It supports both Django-like syntax and SQLAlchemy syntax.
 
@@ -1019,7 +1007,7 @@ def group_by(
 def offset(offset: int) -> Self
 ```
 
-> Applies an OFFSET clause to the query.
+> Apply one OFFSET criteria to the query.
 
 > **Parameters**
 
@@ -1065,7 +1053,7 @@ def skip(skip: int) -> Self
 def limit(limit: int) -> Self
 ```
 
-> Applies a LIMIT clause to the query.
+> Apply one LIMIT criteria to the query.
 
 > **Parameters**
 
@@ -1120,7 +1108,7 @@ def join(
 ) -> Self
 ```
 
-> Joined eager loading using LEFT OUTER JOIN.
+> Apply joined eager loading using LEFT OUTER JOIN.
 
 > When a tuple is passed, the second element must be boolean, and
 > if `True`, the join is `INNER JOIN`, otherwise `LEFT OUTER JOIN`.
@@ -1279,7 +1267,7 @@ def with_subquery(
 def with_schema(schema: EagerSchema) -> Self
 ```
 
-> Joined, subqueryload and selectinload eager loading.
+> Apply joined, subqueryload and selectinload eager loading.
 
 > Useful for complex cases where you need to load nested relationships in
 > separate queries.
