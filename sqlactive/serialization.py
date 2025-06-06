@@ -219,7 +219,7 @@ class SerializationMixin(InspectionMixin):
         exclude: list[str] | None = None,
         nested_exclude: list[str] | None = None,
     ) -> Self | list[Self]:
-        """Deserializes a dictionary to the model.
+        """Deserialize a dictionary to the model.
 
         Sets the attributes of the model with the values
         of the dictionary.
@@ -303,7 +303,7 @@ class SerializationMixin(InspectionMixin):
         exclude: list[str] | None = None,
         nested_exclude: list[str] | None = None,
     ) -> Any:
-        """Deserializes a JSON string to the model.
+        """Deserialize a JSON string to the model.
 
         Loads the JSON string and sets the attributes of the model
         with the values of the JSON object using the ``from_dict``
