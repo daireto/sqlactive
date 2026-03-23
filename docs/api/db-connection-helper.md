@@ -41,8 +41,7 @@ The `DBConnection` class has the following methods:
 
 #### init_db
 
-Initialize the database tables. It also sets the session of the base model to
-the `async_scoped_session` async session factory:
+Initialize the database tables for the given base models:
 
 ```python
 from sqlactive import DBConnection
@@ -53,7 +52,7 @@ asyncio.run(conn.init_db()) # Initialize the database
 ```
 
 If your base model is not `ActiveRecordBaseModel` you must pass
-your base model class to this method in the `base_model` argument:
+your base model. You can also initialize multiple base models at once:
 
 ```python
 from sqlactive import DBConnection, ActiveRecordBaseModel
@@ -67,12 +66,13 @@ class BaseModel(ActiveRecordBaseModel):
 DATABASE_URL = 'sqlite+aiosqlite://'
 conn = DBConnection(DATABASE_URL, echo=True)
 asyncio.run(conn.init_db(BaseModel)) # Pass your base model
+# or
+asyncio.run(conn.init_db(BaseModel, AnotherBaseModel)) # Pass multiple base models
 ```
 
 #### close
 
-Close the database connection. It also sets the session of the base model
-to `None`:
+Close the database connection and remove the session:
 
 ```python
 from sqlactive import DBConnection
@@ -83,26 +83,5 @@ asyncio.run(conn.init_db())
 
 # Perform operations...
 
-asyncio.run(conn.close()) # Close the database connection
-```
-
-If your base model is not `ActiveRecordBaseModel` you should pass
-your base model cl0ass to this method in the `base_model` argument:
-
-```python
-from sqlactive import DBConnection, ActiveRecordBaseModel
-
-# Note that it does not matter if your base model
-# inherits from `ActiveRecordBaseModel`, you still
-# need to pass it to this method
-class BaseModel(ActiveRecordBaseModel):
-    __abstract__ = True
-
-DATABASE_URL = 'sqlite+aiosqlite://'
-conn = DBConnection(DATABASE_URL, echo=True)
-asyncio.run(conn.init_db())
-
-# Perform operations...
-
-asyncio.run(conn.close(BaseModel)) # Pass your base model
+asyncio.run(conn.close()) # Close the database connection and remove the sessions
 ```

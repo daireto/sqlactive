@@ -67,12 +67,3 @@ def set_session(session: async_scoped_session[AsyncSession])
 > # Set the session
 > ActiveRecordBaseModel.set_session(async_scoped_session(AsyncSession))
 > ```
-
-#### close_session
-
-```python
-@classmethod
-def close_session()
-```
-
-> Close the async session.
