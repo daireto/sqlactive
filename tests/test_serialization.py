@@ -27,7 +27,7 @@ class TestSerializationMixin(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close(BaseModel))
+            asyncio.run(cls.conn.close())
 
     async def test_to_dict(self):
         """Test for ``to_dict`` function."""

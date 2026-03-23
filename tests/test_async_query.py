@@ -26,7 +26,7 @@ class TestAsyncQuery(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close(BaseModel))
+            asyncio.run(cls.conn.close())
 
     async def test_init(self):
         """Test for ``fill`` function."""

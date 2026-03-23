@@ -1,10 +1,15 @@
 import unittest
 
+from sqlalchemy.exc import UnboundExecutionError
+
 from sqlactive.base_model import ActiveRecordBaseModel
-from sqlactive.conn import DBConnection
+# from sqlactive.conn import DBConnection
 
 from ._logger import logger
-from ._models import BaseModel
+# from ._models import BaseModel
+from ._models import BaseModel, User
+from sqlalchemy.sql import func, select
+from sqlactive.conn import DBConnection, execute
 
 
 class TestDBConnection(unittest.IsolatedAsyncioTestCase):
@@ -24,4 +29,8 @@ class TestDBConnection(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(BaseModel._session)
 
         logger.info('Testing "close" function...')
-        await conn.close(BaseModel)
+        await conn.close()
+
+        with self.assertRaises(UnboundExecutionError):
+            query = select(User.age, func.count(User.id)).group_by(User.age)
+            await execute(conn.async_scoped_session, query)

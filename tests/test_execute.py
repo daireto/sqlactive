@@ -29,33 +29,13 @@ class TestExecuteFunction(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close(BaseModel))
+            asyncio.run(cls.conn.close())
 
     async def test_execute(self):
         """Test for ``sqlactive.conn.execute`` function."""
         logger.info('Testing "execute" function...')
         query = select(User.age, func.count(User.id)).group_by(User.age)
-        result = await execute(query, BaseModel)
-        self.assertEqual((19, 1), next(result))
-        self.assertEqual((24, 1), next(result))
-        self.assertEqual((25, 2), next(result))
-        self.assertEqual((26, 2), next(result))
-        self.assertEqual((27, 3), next(result))
-        with self.assertRaises(NoSessionError):
-            query = select(User.age, func.count(User.id)).group_by(User.age)
-            await execute(query)
-
-    async def test_execute_without_base_model(self):
-        """Test for ``sqlactive.conn.execute`` function
-        without passing a base model.
-        """
-        logger.info('Testing "execute" function without base model...')
-        with self.assertRaises(NoSessionError):
-            query = select(User.age, func.count(User.id)).group_by(User.age)
-            await execute(query)
-        ActiveRecordBaseModel.set_session(self.conn.async_scoped_session)
-        query = select(User.age, func.count(User.id)).group_by(User.age)
-        result = await execute(query)
+        result = await execute(self.conn.async_scoped_session, query)
         self.assertEqual((19, 1), next(result))
         self.assertEqual((24, 1), next(result))
         self.assertEqual((25, 2), next(result))

@@ -34,7 +34,7 @@ class TestSmartQueryMixin(unittest.IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         if hasattr(cls, 'conn'):
             logger.info('Closing DB connection...')
-            asyncio.run(cls.conn.close(BaseModel))
+            asyncio.run(cls.conn.close())
 
     def test_get_query_root_cls(self):
         """Test for ``get_query_root_cls`` function."""
