@@ -31,11 +31,6 @@ class SessionMixin:
         """
         cls._session = session
 
-    @classmethod
-    def close_session(cls) -> None:
-        """Close the async session."""
-        cls._session = None
-
     @classproperty
     def AsyncSession(cls) -> async_scoped_session[SQLAlchemyAsyncSession]:  # noqa: N802
         """Async session factory.
